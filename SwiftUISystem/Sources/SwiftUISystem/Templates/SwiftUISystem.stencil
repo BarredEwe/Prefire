@@ -1,0 +1,37 @@
+// swiftlint:disable all
+
+import SwiftUI
+import SwiftUISystem
+
+public enum UISystemViews {
+    public static let views: [SystemView] = {
+        var views: [SystemView] = []
+
+        {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
+        for state in {{ type.name }}.State.allCases {
+            views.append(
+                SystemView(
+                    content: {
+                        WrapperView(
+                            content: {
+                                AnyView(
+                                    {{ type.name }}.previews
+                                )
+                            },
+                            closure: {
+                                {{ type.name }}.state = state
+                            }
+                        )
+                    },
+                    name: String(String(describing: {{ type.name }}.self).split(separator: "_").first!),
+                    state: String(String(reflecting: state).split(separator: ".").last!),
+                    type: {{ type.name }}.viewType,
+                    story: {{ type.name }}.story
+                )
+            )
+        }
+        {% endfor %}
+
+        return views.sorted(by: { $0.name > $1.name || $0.type.rawValue > $1.type.rawValue || $0.story ?? "" > $1.story ?? "" })
+    }()
+}

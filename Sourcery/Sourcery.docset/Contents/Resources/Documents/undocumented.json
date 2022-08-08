@@ -1,0 +1,257 @@
+{
+  "warnings": [
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Annotations.swift",
+      "line": 3,
+      "symbol": "Annotations",
+      "symbol_kind": "source.lang.swift.decl.typealias",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Documentation.swift",
+      "line": 3,
+      "symbol": "Documentation",
+      "symbol_kind": "source.lang.swift.decl.typealias",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Documentation.swift",
+      "line": 7,
+      "symbol": "Documented.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Enum.swift",
+      "line": 86,
+      "symbol": "EnumCase.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/GenericRequirement.swift",
+      "line": 7,
+      "symbol": "GenericRequirement.Relationship",
+      "symbol_kind": "source.lang.swift.decl.enum",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/GenericRequirement.swift",
+      "line": 21,
+      "symbol": "GenericRequirement.leftType",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/GenericRequirement.swift",
+      "line": 22,
+      "symbol": "GenericRequirement.rightType",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/GenericRequirement.swift",
+      "line": 30,
+      "symbol": "GenericRequirement.init(leftType:rightType:relationship:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Method.swift",
+      "line": 64,
+      "symbol": "MethodParameter.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Method.swift",
+      "line": 106,
+      "symbol": "Array.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Method.swift",
+      "line": 112,
+      "symbol": "ClosureParameter",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Method.swift",
+      "line": 198,
+      "symbol": "Array.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Method.swift",
+      "line": 330,
+      "symbol": "Method.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Modifier.swift",
+      "line": 3,
+      "symbol": "SourceryModifier",
+      "symbol_kind": "source.lang.swift.decl.typealias",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Modifier.swift",
+      "line": 14,
+      "symbol": "Modifier.init(name:detail:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Modifier.swift",
+      "line": 19,
+      "symbol": "Modifier.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Subscript.swift",
+      "line": 59,
+      "symbol": "Subscript.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Type.swift",
+      "line": 228,
+      "symbol": "Type.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Type.swift",
+      "line": 337,
+      "symbol": "Type.path",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Array.swift",
+      "line": 30,
+      "symbol": "ArrayType.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Closure.swift",
+      "line": 66,
+      "symbol": "ClosureType.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Dictionary.swift",
+      "line": 39,
+      "symbol": "DictionaryType.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Generic.swift",
+      "line": 17,
+      "symbol": "GenericType.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Generic.swift",
+      "line": 24,
+      "symbol": "GenericType.description",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Tuple.swift",
+      "line": 60,
+      "symbol": "TupleElement.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Tuple.swift",
+      "line": 84,
+      "symbol": "Array.asSource",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/Tuple.swift",
+      "line": 88,
+      "symbol": "Array.asTypeName",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/TypeName.swift",
+      "line": 161,
+      "symbol": "TypeName.description",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/TypeName/TypeName.swift",
+      "line": 218,
+      "symbol": "TypeName.unknown(description:attributes:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.static",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/AST/Variable.swift",
+      "line": 60,
+      "symbol": "Variable.documentation",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Array+Parallel.swift",
+      "line": 9,
+      "symbol": "Array.parallelFlatMap(transform:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Array+Parallel.swift",
+      "line": 13,
+      "symbol": "Array.parallelCompactMap(transform:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Array+Parallel.swift",
+      "line": 17,
+      "symbol": "Array.parallelMap(transform:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Array+Parallel.swift",
+      "line": 27,
+      "symbol": "Array.parallelPerform(transform:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Diffable.swift",
+      "line": 11,
+      "symbol": "Diffable",
+      "symbol_kind": "source.lang.swift.decl.protocol",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/merowing/work/private/Sourcery/SourceryRuntime/Sources/Diffable.swift",
+      "line": 39,
+      "symbol": "DiffableResult",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    }
+  ],
+  "source_directory": "/Users/merowing/work/private/Sourcery"
+}
