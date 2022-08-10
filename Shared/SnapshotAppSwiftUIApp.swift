@@ -13,6 +13,7 @@ struct SnapshotAppSwiftUIApp: App {
         WindowGroup {
 //            ContentView()
             MainMenu()
+                .preferredColorScheme(.light)
         }
     }
 }

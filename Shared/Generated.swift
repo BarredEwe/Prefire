@@ -10,22 +10,22 @@ public enum UISystemViews {
     public static let views: [SystemViewModel] = {
         var views: [SystemViewModel] = []
 
-        for state in ButtonTest_Previews.State.allCases {
+        for state in GreenButton_Previews.State.allCases {
             views.append(
                 SystemViewModel(
                     content: {
                         WrapperView(
                             content: {
                                 AnyView(
-                                    ButtonTest_Previews.previews
+                                    GreenButton_Previews.previews
                                 )
                             },
                             closure: {
-                                ButtonTest_Previews.state = state
+                                GreenButton_Previews.state = state
                             }
                         )
                     },
-                    name: String(String(describing: ButtonTest_Previews.self).split(separator: "_").first!),
+                    name: String(String(describing: GreenButton_Previews.self).split(separator: "_").first!),
                     state: String(String(reflecting: state).split(separator: ".").last!)
                 )
             )

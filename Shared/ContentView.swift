@@ -10,15 +10,14 @@ import Foundation
 import SwiftUISystem
 
 extension CGFloat {
-    static let scale: CGFloat = 0.6
+    static let scale: CGFloat = 0.55
+    static let infoViewHeight: CGFloat = 42
 }
 
 struct ContentView: View {
-    @State var navigationLinkTriggerer: Bool = false
-    @State var selectedId: String = ""
-
-    @State var views: [SystemViewModel] = UISystemViews.views
-
+    @State private var navigationLinkTriggerer: Bool = false
+    @State private var selectedId: String = ""
+    @State private var views: [SystemViewModel] = UISystemViews.views
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     
     private var sections: [String] = (NSOrderedSet(array: UISystemViews.views.compactMap { $0.name }).array as? [String]) ?? []
@@ -53,7 +52,7 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    func componentList(for name: String) -> some View {
+    private func componentList(for name: String) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top, spacing: 16) {
                 ForEach($views) { $view in
@@ -64,38 +63,19 @@ struct ContentView: View {
                         }) {
                             VStack(alignment: .center, spacing: 0) {
                                 miniView(for: view)
-                                    .modifier(LoadingTimeModifier(completion: { loadingTime in
+                                    .modifier(LoadingTimeModifier { loadingTime in
                                         view.renderTime = loadingTime
-                                    }))
-                                    .onPreferenceChange(ViewTypePreferenceKey.self, perform: { viewType in
-                                        view.type = viewType
                                     })
+                                    .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
+                                        view.type = viewType
+                                    }
                                     .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
                                         view.story = userStory
                                     }
 
                                 Divider()
 
-                                HStack(alignment: .center, spacing: 8) {
-                                    Text(view.state.capitalized)
-                                        .font(.caption.bold())
-                                        .padding()
-                                    Spacer()
-
-//                                    if let userStory = view.story {
-//                                        Text(userStory)
-//                                            .font(.title2.bold())
-//                                            .padding(.horizontal)
-//                                            .padding(.vertical, 8)
-//                                    }
-
-                                    if let renderTime = view.renderTime {
-                                        Text(renderTime)
-                                            .font(.caption.bold())
-                                            .padding(8)
-                                    }
-                                }
-                                .frame(width: UIScreen.main.bounds.width * .scale)
+                                infoView(for: view)
                             }
                             .background(Color.white)
                             .cornerRadius(16)
@@ -109,19 +89,53 @@ struct ContentView: View {
         }
     }
 
-    func miniView(for view: SystemViewModel) -> some View {
+    @ViewBuilder
+    private func miniView(for view: SystemViewModel) -> some View {
         view.content()
             .disabled(true)
             // change to GeoReader
             .frame(width: UIScreen.main.bounds.width)
             .transformIf(view.type == .screen) { view in
-                view.frame(height: UIScreen.main.bounds.height - safeAreaInsets.top + safeAreaInsets.bottom)
+                view.frame(height: UIScreen.main.bounds.height - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
             }
             .modifier(StaticContentSizeModifier(scale: .scale))
     }
 
     @ViewBuilder
-    var selectedView: some View {
+    private func infoView(for view: SystemViewModel) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("State")
+                    .font(.caption.smallCaps())
+                Text(view.state.capitalized)
+                    .font(.caption.weight(.heavy))
+            }
+            .padding(8)
+
+            Spacer()
+
+//                                    if let userStory = view.story {
+//                                        Text(userStory)
+//                                            .font(.title2.bold())
+//                                            .padding(.horizontal)
+//                                            .padding(.vertical, 8)
+//                                    }
+
+            if let renderTime = view.renderTime {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("Render time")
+                        .font(.caption.smallCaps())
+                    Text(renderTime)
+                        .font(.caption.weight(.heavy))
+                }
+                .padding(8)
+            }
+        }
+        .frame(width: UIScreen.main.bounds.width * .scale, height: .infoViewHeight)
+    }
+
+    @ViewBuilder
+    private var selectedView: some View {
         let wrapperView = views.first(where: { $0.id == selectedId })
         VStack {
             wrapperView?.content()
@@ -145,21 +159,18 @@ struct ContentView_Previews: PreviewProvider {
 //
 
 private struct LoadingTimeModifier: ViewModifier {
-    var formatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.nanosecond]
-        return formatter
-    }()
-    @State
-    var createDate: Date = Date()
+    @State private var createDate: Date? = Date()
     var completion: (String) -> Void
 
     func body(content: Content) -> some View {
         content
             .onAppear {
+                guard let createDate = createDate else { return }
                 // Нужно сохранять в массив средних значений по id
                 let diffTime = Date().timeIntervalSince(createDate) * 1000
                 completion(String(diffTime.truncatingRemainder(dividingBy: 1000).rounded()) + " ms")
+
+                self.createDate = nil
             }
     }
 }
@@ -189,7 +200,7 @@ struct ScaleEffectButtonStyle: ButtonStyle {
         configuration.label
             .opacity(configuration.isPressed ? 0.9 : 1.0)
             .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.linear(duration: 0.1), value: configuration.isPressed)
+            .animation(.linear(duration: 0.15), value: configuration.isPressed)
     }
 }
 
@@ -207,20 +218,19 @@ extension View {
 
 private struct SafeAreaInsetsKey: EnvironmentKey {
     static var defaultValue: EdgeInsets {
-        (UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets ?? .zero).insets
+        UIApplication.shared.windows.first?.safeAreaInsets.swiftUiInsets ?? EdgeInsets()
     }
 }
 
-extension EnvironmentValues {
-
+public extension EnvironmentValues {
+    /// Отступы, которые используется для определения безопасной области для этого представления.
     var safeAreaInsets: EdgeInsets {
         self[SafeAreaInsetsKey.self]
     }
 }
 
 private extension UIEdgeInsets {
-
-    var insets: EdgeInsets {
+    var swiftUiInsets: EdgeInsets {
         EdgeInsets(top: top, leading: left, bottom: bottom, trailing: right)
     }
 }

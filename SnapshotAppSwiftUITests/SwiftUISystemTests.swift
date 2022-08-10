@@ -13,17 +13,17 @@ import SnapshotTesting
 
 class SwiftUISystemTests: XCTestCase {
 
-    func test_buttonTest() {
-        for state in ButtonTest_Previews.State.allCases {
+    func test_greenButton() {
+        for state in GreenButton_Previews.State.allCases {
             // When
             let view = WrapperView(
                 content: {
                     AnyView(
-                        ButtonTest_Previews.previews
+                        GreenButton_Previews.previews
                     )
                 },
                 closure: {
-                    ButtonTest_Previews.state = state
+                    GreenButton_Previews.state = state
                 }
             )
 
