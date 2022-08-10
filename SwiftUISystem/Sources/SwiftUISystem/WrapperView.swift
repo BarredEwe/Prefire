@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// To private
 public struct WrapperView: View { // TODO: Rename to .. mb convert to ViewMod
     var content: AnyView?
 

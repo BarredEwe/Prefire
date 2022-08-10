@@ -7,12 +7,32 @@ import SwiftUI
 import SwiftUISystem
 
 public enum UISystemViews {
-    public static let views: [SystemView] = {
-        var views: [SystemView] = []
+    public static let views: [SystemViewModel] = {
+        var views: [SystemViewModel] = []
 
+        for state in ButtonTest_Previews.State.allCases {
+            views.append(
+                SystemViewModel(
+                    content: {
+                        WrapperView(
+                            content: {
+                                AnyView(
+                                    ButtonTest_Previews.previews
+                                )
+                            },
+                            closure: {
+                                ButtonTest_Previews.state = state
+                            }
+                        )
+                    },
+                    name: String(String(describing: ButtonTest_Previews.self).split(separator: "_").first!),
+                    state: String(String(reflecting: state).split(separator: ".").last!)
+                )
+            )
+        }
         for state in TestViewWithoutState_Previews.State.allCases {
             views.append(
-                SystemView(
+                SystemViewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -26,15 +46,13 @@ public enum UISystemViews {
                         )
                     },
                     name: String(String(describing: TestViewWithoutState_Previews.self).split(separator: "_").first!),
-                    state: String(String(reflecting: state).split(separator: ".").last!),
-                    type: TestViewWithoutState_Previews.viewType,
-                    story: TestViewWithoutState_Previews.story
+                    state: String(String(reflecting: state).split(separator: ".").last!)
                 )
             )
         }
         for state in TestView_Previews.State.allCases {
             views.append(
-                SystemView(
+                SystemViewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -48,13 +66,11 @@ public enum UISystemViews {
                         )
                     },
                     name: String(String(describing: TestView_Previews.self).split(separator: "_").first!),
-                    state: String(String(reflecting: state).split(separator: ".").last!),
-                    type: TestView_Previews.viewType,
-                    story: TestView_Previews.story
+                    state: String(String(reflecting: state).split(separator: ".").last!)
                 )
             )
         }
 
-        return views.sorted(by: { $0.name > $1.name || $0.type.rawValue > $1.type.rawValue || $0.story ?? "" > $1.story ?? "" })
+        return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
 }

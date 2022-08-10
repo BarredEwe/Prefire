@@ -1,0 +1,34 @@
+// swiftlint:disable all
+
+import XCTest
+import SwiftUI
+import SwiftUISystem
+
+@testable import SnapshotAppSwiftUI
+
+import SnapshotTesting
+
+class SwiftUISystemTests: XCTestCase {
+
+    {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
+    func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
+        for state in {{ type.name }}.State.allCases {
+            // When
+            let view = WrapperView(
+                content: {
+                    AnyView(
+                        {{ type.name }}.previews
+                    )
+                },
+                closure: {
+                    {{ type.name }}.state = state
+                }
+            )
+
+            // Then
+            assertSnapshot(matching: view, as: .image(layout: .sizeThatFits))
+        }
+    }
+
+    {% endfor %}
+}

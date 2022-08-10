@@ -12,6 +12,12 @@ let package = Package(
             targets: ["SwiftUISystem"]
         ),
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
+            from: "1.9.0"
+        )
+    ],
     targets: [
         .target(
             name: "SwiftUISystem",
@@ -20,7 +26,10 @@ let package = Package(
         ),
         .testTarget(
             name: "SwiftUISystemTests",
-            dependencies: ["SwiftUISystem"]
+            dependencies: [
+                "SwiftUISystem",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ]
         ),
     ]
 )

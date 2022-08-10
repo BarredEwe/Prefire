@@ -4,13 +4,13 @@ import SwiftUI
 import SwiftUISystem
 
 public enum UISystemViews {
-    public static let views: [SystemView] = {
-        var views: [SystemView] = []
+    public static let views: [SystemViewModel] = {
+        var views: [SystemViewModel] = []
 
         {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
         for state in {{ type.name }}.State.allCases {
             views.append(
-                SystemView(
+                SystemViewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -24,14 +24,12 @@ public enum UISystemViews {
                         )
                     },
                     name: String(String(describing: {{ type.name }}.self).split(separator: "_").first!),
-                    state: String(String(reflecting: state).split(separator: ".").last!),
-                    type: {{ type.name }}.viewType,
-                    story: {{ type.name }}.story
+                    state: String(String(reflecting: state).split(separator: ".").last!)
                 )
             )
         }
         {% endfor %}
 
-        return views.sorted(by: { $0.name > $1.name || $0.type.rawValue > $1.type.rawValue || $0.story ?? "" > $1.story ?? "" })
+        return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
 }
