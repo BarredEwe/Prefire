@@ -16,6 +16,7 @@
 		9779D5E928A3ECBB0083DBD3 /* SwiftUISystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */; };
 		9779D5F128A3F1250083DBD3 /* SwiftUISystem in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F028A3F1250083DBD3 /* SwiftUISystem */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
+		9779D5F728A533CC0083DBD3 /* LoadingTimeModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */; };
 		97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BA130028A1AAE800CA8F36 /* MainMenu.swift */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +40,7 @@
 		9735EEFB289D5A8100309267 /* Generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Generated.swift; sourceTree = "<group>"; };
 		9779D5E628A3ECBA0083DBD3 /* SnapshotAppSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnapshotAppSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUISystemTests.swift; sourceTree = "<group>"; };
+		9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingTimeModifier.swift; sourceTree = "<group>"; };
 		97BA130028A1AAE800CA8F36 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,6 +79,7 @@
 		9735EE27289C5CF200309267 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				9779D5F528A533B90083DBD3 /* Others */,
 				9735EE47289C5E2100309267 /* Examples */,
 				9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */,
 				97BA130028A1AAE800CA8F36 /* MainMenu.swift */,
@@ -125,6 +128,14 @@
 				9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */,
 			);
 			path = SnapshotAppSwiftUITests;
+			sourceTree = "<group>";
+		};
+		9779D5F528A533B90083DBD3 /* Others */ = {
+			isa = PBXGroup;
+			children = (
+				9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */,
+			);
+			path = Others;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -282,6 +293,7 @@
 				9735EE49289C5F3A00309267 /* TestView.swift in Sources */,
 				9735EEFC289D5A8100309267 /* Generated.swift in Sources */,
 				9735EE3A289C5CF300309267 /* ContentView.swift in Sources */,
+				9779D5F728A533CC0083DBD3 /* LoadingTimeModifier.swift in Sources */,
 				9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
