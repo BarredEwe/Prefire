@@ -15,8 +15,9 @@ extension CGFloat {
 }
 
 struct ContentView: View {
-    @State private var navigationLinkTriggerer: Bool = false
+    @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
+    @State private var searchText = ""
     @State private var viewModels: [SystemViewModel] = UISystemViews.views
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     
@@ -25,27 +26,30 @@ struct ContentView: View {
     var body: some View {
         VStack {
             NavigationLink(
-                isActive: $navigationLinkTriggerer,
+                isActive: $navigationLinkTriggered,
                 destination: { selectedView },
                 label: { EmptyView() }
             )
 
             ScrollView {
                 ForEach(sections, id: \.self) { name in
-                    VStack(alignment: .leading) {
-                        Text(name)
-                            .font(.title.bold())
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, -8)
+                    if searchText.isEmpty || name.contains(searchText) {
+                        VStack(alignment: .leading) {
+                            Text(name)
+                                .font(.title.bold())
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, -8)
 
-                        componentList(for: name)
+                            componentList(for: name)
 
-                        if sections.last != name {
-                            Divider()
+                            if sections.last != name {
+                                Divider()
+                            }
                         }
                     }
                 }
             }
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "View name")
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("SwiftUI System")
@@ -59,7 +63,7 @@ struct ContentView: View {
                     if viewModel.name == name {
                         Button(action: {
                             selectedId = viewModel.id
-                            navigationLinkTriggerer.toggle()
+                            navigationLinkTriggered.toggle()
                         }) {
                             VStack(alignment: .center, spacing: 0) {
                                 miniView(for: viewModel)
