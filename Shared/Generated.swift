@@ -6,6 +6,8 @@
 import SwiftUI
 import SwiftUISystem
 
+@testable import SnapshotAppSwiftUI
+
 public enum UISystemViews {
     public static let views: [SystemViewModel] = {
         var views: [SystemViewModel] = []

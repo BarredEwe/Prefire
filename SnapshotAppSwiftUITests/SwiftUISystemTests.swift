@@ -7,9 +7,8 @@ import XCTest
 import SwiftUI
 import SwiftUISystem
 
-@testable import SnapshotAppSwiftUI
-
 import SnapshotTesting
+@testable import SnapshotAppSwiftUI
 
 class SwiftUISystemTests: XCTestCase {
 

@@ -204,7 +204,7 @@ extension View {
 
 private struct SafeAreaInsetsKey: EnvironmentKey {
     static var defaultValue: EdgeInsets {
-        UIApplication.shared.windows.first?.safeAreaInsets.swiftUiInsets ?? EdgeInsets()
+        (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.safeAreaInsets.swiftUiInsets ?? EdgeInsets()
     }
 }
 

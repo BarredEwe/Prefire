@@ -4,9 +4,8 @@ import XCTest
 import SwiftUI
 import SwiftUISystem
 
-@testable import SnapshotAppSwiftUI
-
 import SnapshotTesting
+@testable import {{ argument.mainTarget }}
 
 class SwiftUISystemTests: XCTestCase {
 

@@ -3,6 +3,8 @@
 import SwiftUI
 import SwiftUISystem
 
+@testable import {{ argument.mainTarget }}
+
 public enum UISystemViews {
     public static let views: [SystemViewModel] = {
         var views: [SystemViewModel] = []
