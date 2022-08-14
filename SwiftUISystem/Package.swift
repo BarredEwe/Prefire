@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftUISystem",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v14)],
     products: [
         .library(
             name: "SwiftUISystem",

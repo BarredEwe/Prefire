@@ -145,7 +145,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9735EE40289C5CF300309267 /* Build configuration list for PBXNativeTarget "SnapshotAppSwiftUI (iOS)" */;
 			buildPhases = (
-				9735EEFA289D5A1600309267 /* SwiftUI Stystem Generation */,
+				9735EEFA289D5A1600309267 /* SwiftUI System Generation */,
 				9735EE2B289C5CF300309267 /* Sources */,
 				9735EE2C289C5CF300309267 /* Frameworks */,
 				9735EE2D289C5CF300309267 /* Resources */,
@@ -245,7 +245,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		9735EEFA289D5A1600309267 /* SwiftUI Stystem Generation */ = {
+		9735EEFA289D5A1600309267 /* SwiftUI System Generation */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -255,7 +255,7 @@
 			);
 			inputPaths = (
 			);
-			name = "SwiftUI Stystem Generation";
+			name = "SwiftUI System Generation";
 			outputFileListPaths = (
 			);
 			outputPaths = (

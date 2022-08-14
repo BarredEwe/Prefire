@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  PreferenceKeys.swift
 //  
 //
 //  Created by Maksim Grishutin on 08.08.2022.

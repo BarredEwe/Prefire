@@ -13,6 +13,8 @@ class SwiftUISystemTests: XCTestCase {
     {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for state in {{ type.name }}.State.allCases {
+            var curViewType: SystemViewModel.ViewType = .screen
+
             // When
             let view = WrapperView(
                 content: {
@@ -24,11 +26,30 @@ class SwiftUISystemTests: XCTestCase {
                     {{ type.name }}.state = state
                 }
             )
+            .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
+                curViewType = viewType
+            }
+
+            view.loadPreferences()
 
             // Then
-            assertSnapshot(matching: view, as: .image(layout: .sizeThatFits))
+            assertSnapshot(
+                matching: curViewType == .screen ? AnyView(view) : AnyView(view.fixedSize()),
+                as: curViewType == .screen ? .image(layout: .device(config: .iPhoneX)) : .image(layout: .sizeThatFits)
+            )
         }
     }
 
     {% endfor %}
+}
+
+private extension View {
+    func loadPreferences() {
+        let window = UIWindow(frame: CGRect(origin: .zero, size: CGSize(width: 100, height: 100)))
+        window.isHidden = false
+        let viewController = UIHostingController(rootView: self)
+        window.rootViewController = viewController
+        viewController.view.setNeedsLayout()
+        viewController.view.layoutIfNeeded()
+    }
 }
