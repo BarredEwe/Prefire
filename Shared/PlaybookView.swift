@@ -104,7 +104,7 @@ public struct PlaybookView: View {
                                 }
                                 .background(colorScheme == .dark ? Color(UIColor.darkGray) : Color.white)
                                 .cornerRadius(16)
-                                .shadow(color: Color(UIColor.darkGray), radius: 8)
+                                .shadow(color: Color.gray, radius: 8)
                             }
                             .buttonStyle(ScaleEffectButtonStyle())
                         }
