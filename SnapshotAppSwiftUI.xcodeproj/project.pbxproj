@@ -18,7 +18,6 @@
 		9779D5F128A3F1250083DBD3 /* SwiftUISystem in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F028A3F1250083DBD3 /* SwiftUISystem */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
 		9779D5F728A533CC0083DBD3 /* LoadingTimeModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */; };
-		97A3317028AAAC8F00272486 /* File.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A3316F28AAAC8F00272486 /* File.swift */; };
 		97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BA130028A1AAE800CA8F36 /* MainMenu.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,7 +43,6 @@
 		9779D5E628A3ECBA0083DBD3 /* SnapshotAppSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnapshotAppSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUISystemTests.swift; sourceTree = "<group>"; };
 		9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingTimeModifier.swift; sourceTree = "<group>"; };
-		97A3316F28AAAC8F00272486 /* File.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = File.swift; sourceTree = "<group>"; };
 		97BA130028A1AAE800CA8F36 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -130,7 +128,6 @@
 			isa = PBXGroup;
 			children = (
 				9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */,
-				97A3316F28AAAC8F00272486 /* File.swift */,
 			);
 			path = SnapshotAppSwiftUITests;
 			sourceTree = "<group>";
@@ -311,7 +308,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9779D5E928A3ECBB0083DBD3 /* SwiftUISystemTests.swift in Sources */,
-				97A3317028AAAC8F00272486 /* File.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

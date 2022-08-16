@@ -11,6 +11,16 @@ import SnapshotTesting
 @testable import SnapshotAppSwiftUI
 
 class SwiftUISystemTests: XCTestCase {
+    private let deviceConfig: ViewImageConfig = .iPhoneX
+    private let requiredDevice = "iPhone13,2"
+    private let requiredOSVersion = 15
+
+    override func setUp() {
+        super.setUp()
+
+        checkEnvironments()
+        UIView.setAnimationsEnabled(false)
+    }
 
     func test_greenButton() {
         for state in GreenButton_Previews.State.allCases {
@@ -35,8 +45,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.fixedSize()),
-                as: curViewType == .screen ? .image(layout: .device(config: .iPhoneX)) : .image(layout: .sizeThatFits)
+                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
             )
         }
     }
@@ -64,8 +74,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.fixedSize()),
-                as: curViewType == .screen ? .image(layout: .device(config: .iPhoneX)) : .image(layout: .sizeThatFits)
+                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
             )
         }
     }
@@ -93,12 +103,25 @@ class SwiftUISystemTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.fixedSize()),
-                as: curViewType == .screen ? .image(layout: .device(config: .iPhoneX)) : .image(layout: .sizeThatFits)
+                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
+    // MARK: Private
+
+    private func checkEnvironments() {
+        let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]
+        let osVersion = ProcessInfo().operatingSystemVersion
+        guard deviceModel?.contains(requiredDevice) ?? false else {
+            fatalError("Switch to using iPhone 12 for these tests.")
+        }
+
+        guard osVersion.majorVersion == requiredOSVersion else {
+            fatalError("Switch to iOS \(requiredOSVersion) for these tests.")
+        }
+    }
 }
 
 private extension View {
