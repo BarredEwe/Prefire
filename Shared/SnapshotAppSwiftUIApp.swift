@@ -11,7 +11,6 @@ import SwiftUI
 struct SnapshotAppSwiftUIApp: App {
     var body: some Scene {
         WindowGroup {
-//            ContentView()
             MainMenu()
                 .preferredColorScheme(.light)
         }

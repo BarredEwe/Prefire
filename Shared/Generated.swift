@@ -8,13 +8,13 @@ import SwiftUISystem
 
 @testable import SnapshotAppSwiftUI
 
-public enum UISystemViews {
-    public static let views: [SystemViewModel] = {
-        var views: [SystemViewModel] = []
+public enum PreviewModels {
+    public static var models: [PreviewModel] = {
+        var views: [PreviewModel] = []
 
         for state in GreenButton_Previews.State.allCases {
             views.append(
-                SystemViewModel(
+                PreviewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -34,7 +34,7 @@ public enum UISystemViews {
         }
         for state in TestViewWithoutState_Previews.State.allCases {
             views.append(
-                SystemViewModel(
+                PreviewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -54,7 +54,7 @@ public enum UISystemViews {
         }
         for state in TestView_Previews.State.allCases {
             views.append(
-                SystemViewModel(
+                PreviewModel(
                     content: {
                         WrapperView(
                             content: {
@@ -75,4 +75,34 @@ public enum UISystemViews {
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
+
+    public static func loadViews() {
+        PreviewModels.models.enumerated().forEach { index, viewModel in
+            viewModel.content()
+                .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
+                    PreviewModels.models[index].type = viewType
+                }
+                .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
+                    PreviewModels.models[index].story = userStory
+                }
+                .loadView()
+        }
+    }
+}
+
+let window: UIWindow = {
+    let window = UIWindow(frame: CGRect(origin: .zero, size: CGSize(width: 100, height: 100)))
+    window.isHidden = false
+    return window
+}()
+
+class PreviewObservedObject: ObservableObject {}
+
+private extension View {
+    func loadView() {
+        let viewController = UIHostingController(rootView: self.environmentObject(PreviewObservedObject()))
+        window.rootViewController = viewController
+        viewController.view.setNeedsLayout()
+        viewController.view.layoutIfNeeded()
+    }
 }

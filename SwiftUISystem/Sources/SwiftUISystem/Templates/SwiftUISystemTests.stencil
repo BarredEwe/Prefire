@@ -12,7 +12,7 @@ class SwiftUISystemTests: XCTestCase {
     {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for state in {{ type.name }}.State.allCases {
-            var curViewType: SystemViewModel.ViewType = .screen
+            var curViewType: PreviewModel.ViewType = .screen
 
             // When
             let view = WrapperView(

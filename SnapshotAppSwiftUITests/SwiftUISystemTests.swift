@@ -14,7 +14,7 @@ class SwiftUISystemTests: XCTestCase {
 
     func test_greenButton() {
         for state in GreenButton_Previews.State.allCases {
-            var curViewType: SystemViewModel.ViewType = .screen
+            var curViewType: PreviewModel.ViewType = .screen
 
             // When
             let view = WrapperView(
@@ -43,7 +43,7 @@ class SwiftUISystemTests: XCTestCase {
 
     func test_testViewWithoutState() {
         for state in TestViewWithoutState_Previews.State.allCases {
-            var curViewType: SystemViewModel.ViewType = .screen
+            var curViewType: PreviewModel.ViewType = .screen
 
             // When
             let view = WrapperView(
@@ -72,7 +72,7 @@ class SwiftUISystemTests: XCTestCase {
 
     func test_testView() {
         for state in TestView_Previews.State.allCases {
-            var curViewType: SystemViewModel.ViewType = .screen
+            var curViewType: PreviewModel.ViewType = .screen
 
             // When
             let view = WrapperView(

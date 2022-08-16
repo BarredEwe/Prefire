@@ -14,16 +14,23 @@ extension CGFloat {
     static let infoViewHeight: CGFloat = 42
 }
 
-struct ContentView: View {
+public struct PlaybookView: View {
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
     @State private var searchText = ""
-    @State private var viewModels: [SystemViewModel] = UISystemViews.views
-    @Environment(\.safeAreaInsets) private var safeAreaInsets
-    
-    private var sections: [String] = (NSOrderedSet(array: UISystemViews.views.compactMap { $0.name }).array as? [String]) ?? []
+    @State private var viewModels: [PreviewModel] = PreviewModels.models
+    @State private var sections: [String] = PreviewModels.models.compactMap { $0.name }.uniqued()
 
-    var body: some View {
+    private let isComponent: Bool
+
+    public init(isComponent: Bool) {
+        self.isComponent = isComponent
+    }
+
+    public var body: some View {
         VStack {
             NavigationLink(
                 isActive: $navigationLinkTriggered,
@@ -35,7 +42,7 @@ struct ContentView: View {
                 ForEach(sections, id: \.self) { name in
                     if searchText.isEmpty || name.contains(searchText) {
                         VStack(alignment: .leading) {
-                            Text(name)
+                            Text(isComponent ? name : "📙 " + name)
                                 .font(.title.bold())
                                 .padding(.horizontal, 16)
                                 .padding(.bottom, -8)
@@ -49,7 +56,11 @@ struct ContentView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "View name")
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: isComponent ? "View name" : "User story"
+            )
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("SwiftUI System")
@@ -60,32 +71,43 @@ struct ContentView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top, spacing: 16) {
                 ForEach($viewModels) { $viewModel in
-                    if viewModel.name == name {
-                        Button(action: {
-                            selectedId = viewModel.id
-                            navigationLinkTriggered.toggle()
-                        }) {
-                            VStack(alignment: .center, spacing: 0) {
-                                miniView(for: viewModel)
-                                    .modifier(LoadingTimeModifier { loadingTime in
-                                        viewModel.renderTime = loadingTime
-                                    })
-                                    .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
-                                        viewModel.type = viewType
-                                    }
-                                    .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
-                                        viewModel.story = userStory
-                                    }
-
-                                Divider()
-
-                                infoView(for: viewModel)
+                    if viewModel.name == name || viewModel.story == name {
+                        VStack {
+                            if !isComponent {
+                                Text(viewModel.name)
+                                    .font(.callout.bold().monospaced())
                             }
-                            .background(Color.white)
-                            .cornerRadius(16)
-                            .shadow(radius: 8)
+
+                            Button(action: {
+                                selectedId = viewModel.id
+                                navigationLinkTriggered.toggle()
+                            }) {
+                                VStack(alignment: .center, spacing: 0) {
+                                    miniView(for: viewModel)
+                                        .modifier(LoadingTimeModifier { loadingTime in
+                                            viewModel.renderTime = loadingTime
+                                        })
+                                        .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
+                                            viewModel.type = viewType
+                                        }
+                                        .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
+                                            viewModel.story = userStory
+
+                                            if !isComponent {
+                                                sections = viewModels.compactMap { $0.story }.uniqued()
+                                            }
+                                        }
+
+                                    Divider()
+
+                                    infoView(for: viewModel)
+                                }
+                                .background(colorScheme == .dark ? Color(UIColor.darkGray) : Color.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color(UIColor.darkGray), radius: 8)
+                            }
+                            .buttonStyle(ScaleEffectButtonStyle())
                         }
-                        .buttonStyle(ScaleEffectButtonStyle())
                     }
                 }
             }
@@ -94,42 +116,38 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func miniView(for viewModel: SystemViewModel) -> some View {
+    private func miniView(for viewModel: PreviewModel) -> some View {
         viewModel.content()
             .disabled(true)
-            // change to GeoReader
             .frame(width: UIScreen.main.bounds.width)
             .transformIf(viewModel.type == .screen) { view in
                 view.frame(height: UIScreen.main.bounds.height - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
             }
-            .modifier(StaticContentSizeModifier(scale: .scale))
+            .modifier(ScaleModifier(scale: .scale))
     }
 
     @ViewBuilder
-    private func infoView(for viewModel: SystemViewModel) -> some View {
+    private func infoView(for viewModel: PreviewModel) -> some View {
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("State")
+                    .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.smallCaps())
                 Text(viewModel.state.capitalized)
+                    .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.weight(.heavy))
             }
             .padding(8)
 
             Spacer()
 
-//                                    if let userStory = viewModel.story {
-//                                        Text(userStory)
-//                                            .font(.title2.bold())
-//                                            .padding(.horizontal)
-//                                            .padding(.vertical, 8)
-//                                    }
-
             if let renderTime = viewModel.renderTime {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text("Render time")
+                        .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                         .font(.caption.smallCaps())
                     Text(renderTime)
+                        .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                         .font(.caption.weight(.heavy))
                 }
                 .padding(8)
@@ -153,31 +171,17 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            ContentView()
+            PlaybookView(isComponent: true)
         }
-        //        MainMenu()
     }
 }
 
 
-// MARK: - Additionals
+// MARK: - Additional
 
-private struct StaticContentSizeModifier: ViewModifier {
-    @State var size: CGSize = .zero
-    let scale: CGFloat
-
-    func body(content: Content) -> some View {
-        content
-            .background {
-                GeometryReader { proxy in
-                    Color.clear
-                        .onAppear {
-                            size = proxy.size
-                        }
-                }
-            }
-            .scaleEffect(scale)
-            .frame(width: size.width * scale, height: size.height * scale)
+private extension Array {
+    func uniqued() -> Self {
+        NSOrderedSet(array: self).array as! Self
     }
 }
 
@@ -191,7 +195,6 @@ struct ScaleEffectButtonStyle: ButtonStyle {
 }
 
 extension View {
-    /// Проверяет правдивость condition и если true, применяет изменения к View.
     @ViewBuilder
     func transformIf<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
         if condition {
@@ -209,7 +212,6 @@ private struct SafeAreaInsetsKey: EnvironmentKey {
 }
 
 public extension EnvironmentValues {
-    /// Отступы, которые используется для определения безопасной области для этого представления.
     var safeAreaInsets: EdgeInsets {
         self[SafeAreaInsetsKey.self]
     }

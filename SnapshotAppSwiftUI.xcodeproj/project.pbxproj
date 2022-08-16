@@ -8,15 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */; };
-		9735EE3A289C5CF300309267 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE29289C5CF200309267 /* ContentView.swift */; };
+		9735EE3A289C5CF300309267 /* PlaybookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE29289C5CF200309267 /* PlaybookView.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
 		9735EE55289C677200309267 /* SwiftUISystem in Frameworks */ = {isa = PBXBuildFile; productRef = 9735EE54289C677200309267 /* SwiftUISystem */; };
 		9735EEFC289D5A8100309267 /* Generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EEFB289D5A8100309267 /* Generated.swift */; };
+		9748E2C028AB837D00BA3C31 /* ScaleModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9748E2BF28AB837D00BA3C31 /* ScaleModifier.swift */; };
 		9779D5E928A3ECBB0083DBD3 /* SwiftUISystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */; };
 		9779D5F128A3F1250083DBD3 /* SwiftUISystem in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F028A3F1250083DBD3 /* SwiftUISystem */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
 		9779D5F728A533CC0083DBD3 /* LoadingTimeModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */; };
+		97A3317028AAAC8F00272486 /* File.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A3316F28AAAC8F00272486 /* File.swift */; };
 		97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BA130028A1AAE800CA8F36 /* MainMenu.swift */; };
 /* End PBXBuildFile section */
 
@@ -32,15 +34,17 @@
 
 /* Begin PBXFileReference section */
 		9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAppSwiftUIApp.swift; sourceTree = "<group>"; };
-		9735EE29289C5CF200309267 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9735EE29289C5CF200309267 /* PlaybookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybookView.swift; sourceTree = "<group>"; };
 		9735EE2A289C5CF300309267 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9735EE2F289C5CF300309267 /* SnapshotAppSwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SnapshotAppSwiftUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9735EE48289C5F3A00309267 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
 		9735EE51289C66DE00309267 /* SwiftUISystem */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = SwiftUISystem; sourceTree = "<group>"; };
 		9735EEFB289D5A8100309267 /* Generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Generated.swift; sourceTree = "<group>"; };
+		9748E2BF28AB837D00BA3C31 /* ScaleModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleModifier.swift; sourceTree = "<group>"; };
 		9779D5E628A3ECBA0083DBD3 /* SnapshotAppSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnapshotAppSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUISystemTests.swift; sourceTree = "<group>"; };
 		9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingTimeModifier.swift; sourceTree = "<group>"; };
+		97A3316F28AAAC8F00272486 /* File.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = File.swift; sourceTree = "<group>"; };
 		97BA130028A1AAE800CA8F36 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -83,7 +87,7 @@
 				9735EE47289C5E2100309267 /* Examples */,
 				9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */,
 				97BA130028A1AAE800CA8F36 /* MainMenu.swift */,
-				9735EE29289C5CF200309267 /* ContentView.swift */,
+				9735EE29289C5CF200309267 /* PlaybookView.swift */,
 				9735EEFB289D5A8100309267 /* Generated.swift */,
 				9735EE2A289C5CF300309267 /* Assets.xcassets */,
 			);
@@ -126,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				9779D5E828A3ECBB0083DBD3 /* SwiftUISystemTests.swift */,
+				97A3316F28AAAC8F00272486 /* File.swift */,
 			);
 			path = SnapshotAppSwiftUITests;
 			sourceTree = "<group>";
@@ -134,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				9779D5F628A533CC0083DBD3 /* LoadingTimeModifier.swift */,
+				9748E2BF28AB837D00BA3C31 /* ScaleModifier.swift */,
 			);
 			path = Others;
 			sourceTree = "<group>";
@@ -292,8 +298,9 @@
 			files = (
 				97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */,
 				9735EE49289C5F3A00309267 /* TestView.swift in Sources */,
+				9748E2C028AB837D00BA3C31 /* ScaleModifier.swift in Sources */,
 				9735EEFC289D5A8100309267 /* Generated.swift in Sources */,
-				9735EE3A289C5CF300309267 /* ContentView.swift in Sources */,
+				9735EE3A289C5CF300309267 /* PlaybookView.swift in Sources */,
 				9779D5F728A533CC0083DBD3 /* LoadingTimeModifier.swift in Sources */,
 				9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */,
 			);
@@ -304,6 +311,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9779D5E928A3ECBB0083DBD3 /* SwiftUISystemTests.swift in Sources */,
+				97A3317028AAAC8F00272486 /* File.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

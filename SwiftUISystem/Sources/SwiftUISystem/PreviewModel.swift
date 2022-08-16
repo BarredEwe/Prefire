@@ -8,7 +8,7 @@
 import SwiftUI
 
 // Model
-public struct SystemViewModel: Identifiable {
+public struct PreviewModel: Identifiable {
     public typealias UserStory = String
 
     public let content: () -> WrapperView
@@ -32,21 +32,7 @@ public struct SystemViewModel: Identifiable {
     }
 
     public enum ViewType: Equatable {
-//        public enum LayoutType: Int {
-//            case fill
-//            case fit
-//        }
-
-        case screen//(LayoutType = .fill)
-        case component//(LayoutType = .fit)
-
-//        public var layout: LayoutType {
-//            switch self {
-//            case let .component(type):
-//                return type
-//            case let .screen(type):
-//                return type
-//            }
-//        }
+        case screen
+        case component
     }
 }

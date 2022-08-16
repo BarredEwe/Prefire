@@ -8,29 +8,29 @@
 import SwiftUI
 
 public struct UserStoryPreferenceKey: PreferenceKey {
-    public static var defaultValue: SystemViewModel.UserStory?
+    public static var defaultValue: PreviewModel.UserStory?
 
-    public static func reduce(value: inout SystemViewModel.UserStory?, nextValue: () -> SystemViewModel.UserStory?) {
+    public static func reduce(value: inout PreviewModel.UserStory?, nextValue: () -> PreviewModel.UserStory?) {
         value = nextValue()
     }
 }
 
 public extension View {
-    func userStory(_ userStory: SystemViewModel.UserStory) -> some View {
+    func userStory(_ userStory: PreviewModel.UserStory) -> some View {
         preference(key: UserStoryPreferenceKey.self, value: userStory)
     }
 }
 
 public struct ViewTypePreferenceKey: PreferenceKey {
-    public static var defaultValue: SystemViewModel.ViewType = .component
+    public static var defaultValue: PreviewModel.ViewType = .component
 
-    public static func reduce(value: inout SystemViewModel.ViewType, nextValue: () -> SystemViewModel.ViewType) {
+    public static func reduce(value: inout PreviewModel.ViewType, nextValue: () -> PreviewModel.ViewType) {
         value = nextValue()
     }
 }
 
 public extension View {
-    func viewType(_ viewType: SystemViewModel.ViewType) -> some View {
+    func viewType(_ viewType: PreviewModel.ViewType) -> some View {
         preference(key: ViewTypePreferenceKey.self, value: viewType)
     }
 }

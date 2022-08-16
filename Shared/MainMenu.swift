@@ -9,21 +9,18 @@ import SwiftUI
 import SwiftUISystem
 
 struct MainMenu: View {
-    @State var navigationViewsTriggerer: Bool = false
-    @State var navigationUserStoriesTriggerer: Bool = false
-
     var body: some View {
         NavigationView {
             Form {
                 NavigationLink {
-                    ContentView()
+                    PlaybookView(isComponent: true)
                 } label: {
                     Label("Views", systemImage: "shippingbox")
                         .foregroundColor(.black)
                 }
 
                 NavigationLink {
-                    ContentView()
+                    PlaybookView(isComponent: false)
                 } label: {
                     Label("User stories", systemImage: "character.book.closed")
                         .foregroundColor(.black)
