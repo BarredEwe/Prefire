@@ -24,7 +24,8 @@ class SwiftUISystemTests: XCTestCase {
 
     func test_greenButton() {
         for state in GreenButton_Previews.State.allCases {
-            var curViewType: PreviewModel.ViewType = .screen
+            let type: PreviewModel.ViewType = GreenButton_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
+            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             let view = WrapperView(
@@ -37,23 +38,19 @@ class SwiftUISystemTests: XCTestCase {
                     GreenButton_Previews.state = state
                 }
             )
-            .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
-                curViewType = viewType
-            }
-
-            view.loadPreferences()
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
+                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testViewWithoutState() {
         for state in TestViewWithoutState_Previews.State.allCases {
-            var curViewType: PreviewModel.ViewType = .screen
+            let type: PreviewModel.ViewType = TestViewWithoutState_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
+            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             let view = WrapperView(
@@ -66,23 +63,19 @@ class SwiftUISystemTests: XCTestCase {
                     TestViewWithoutState_Previews.state = state
                 }
             )
-            .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
-                curViewType = viewType
-            }
-
-            view.loadPreferences()
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
+                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testView() {
         for state in TestView_Previews.State.allCases {
-            var curViewType: PreviewModel.ViewType = .screen
+            let type: PreviewModel.ViewType = TestView_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
+            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             let view = WrapperView(
@@ -95,16 +88,11 @@ class SwiftUISystemTests: XCTestCase {
                     TestView_Previews.state = state
                 }
             )
-            .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
-                curViewType = viewType
-            }
-
-            view.loadPreferences()
 
             // Then
             assertSnapshot(
-                matching: curViewType == .screen ? AnyView(view) : AnyView(view.frame(width: deviceConfig.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: curViewType == .screen ? .image(layout: .device(config: deviceConfig)) : .image(layout: .sizeThatFits)
+                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
@@ -134,3 +122,20 @@ private extension View {
         viewController.view.layoutIfNeeded()
     }
 }
+
+private extension PreviewDevice {
+    func snapshotDevice() -> ViewImageConfig? {
+        switch rawValue {
+        case "iPhone 12", "iPhone 11", "iPhone 10":
+            return .iPhoneX
+        case "iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8":
+            return .iPhone8
+        case "iPhone 6 Plus", "iPhone 6s Plus", "iPhone 8 Plus":
+            return .iPhone8Plus
+        case "iPhone SE (1st generation)", "iPhone SE (2nd generation)":
+            return .iPhoneSe
+        default: return nil
+        }
+    }
+}
+

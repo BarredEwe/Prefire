@@ -87,9 +87,6 @@ public struct PlaybookView: View {
                                         .modifier(LoadingTimeModifier { loadingTime in
                                             viewModel.renderTime = loadingTime
                                         })
-                                        .onPreferenceChange(ViewTypePreferenceKey.self) { viewType in
-                                            viewModel.type = viewType
-                                        }
                                         .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
                                             viewModel.story = userStory
 

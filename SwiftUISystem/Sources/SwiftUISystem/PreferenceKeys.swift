@@ -20,17 +20,3 @@ public extension View {
         preference(key: UserStoryPreferenceKey.self, value: userStory)
     }
 }
-
-public struct ViewTypePreferenceKey: PreferenceKey {
-    public static var defaultValue: PreviewModel.ViewType = .component
-
-    public static func reduce(value: inout PreviewModel.ViewType, nextValue: () -> PreviewModel.ViewType) {
-        value = nextValue()
-    }
-}
-
-public extension View {
-    func viewType(_ viewType: PreviewModel.ViewType) -> some View {
-        preference(key: ViewTypePreferenceKey.self, value: viewType)
-    }
-}

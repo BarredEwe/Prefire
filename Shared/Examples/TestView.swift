@@ -60,15 +60,13 @@ struct TestView_Previews: PreviewProvider, UISystemProvider {
             Spacer()
         }
         .userStory(.testStory)
-        .viewType(.screen)
-        .previewLayout(.sizeThatFits)
+        .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
     }
 }
 
 struct TestViewWithoutState_Previews: PreviewProvider, UISystemProvider {
     static var previews: some View {
         TestView(isLoading: true)
-        // Возможно можно использовать как установку для снапшотов (fill, fit)
             .previewLayout(.sizeThatFits)
     }
 }

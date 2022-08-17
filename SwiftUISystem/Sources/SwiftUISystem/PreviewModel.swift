@@ -16,7 +16,8 @@ public struct PreviewModel: Identifiable {
     public let name: String
     public let state: String
 
-    public var type: ViewType = .component
+    public var type: ViewType
+    public var device: PreviewDevice?
     public var story: UserStory?
     public var renderTime: String?
 
@@ -25,9 +26,17 @@ public struct PreviewModel: Identifiable {
         name + state
     }
 
-    public init(content: @escaping () -> WrapperView, name: String, state: String) {
+    public init(
+        content: @escaping () -> WrapperView,
+                name: String,
+                type: ViewType = .component,
+                device: PreviewDevice?,
+                state: String
+    ) {
         self.content = content
         self.name = name
+        self.type = type
+        self.device = device
         self.state = state
     }
 
