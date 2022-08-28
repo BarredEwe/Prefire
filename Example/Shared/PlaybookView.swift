@@ -7,7 +7,7 @@
 
 import SwiftUI
 import Foundation
-import SwiftUISystem
+import PreFire
 
 extension CGFloat {
     static let scale: CGFloat = 0.55

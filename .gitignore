@@ -1,8 +1,9 @@
-.build/
-project.xcworkspace
-xcuserdata
 .DS_Store
-Gemfile
-Gemfile.lock
-*.sketch
-.swiftpm
+/.build
+/Packages
+/*.xcodeproj
+xcuserdata/
+DerivedData/
+.swiftpm/config/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc

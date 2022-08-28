@@ -4,12 +4,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "SwiftUISystem",
+    name: "PreFire",
     platforms: [.iOS(.v14)],
     products: [
         .library(
-            name: "SwiftUISystem",
-            targets: ["SwiftUISystem"]
+            name: "PreFire",
+            targets: ["PreFire"]
         ),
     ],
     dependencies: [
@@ -20,14 +20,14 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SwiftUISystem",
+            name: "PreFire",
             dependencies: [],
             exclude: ["Templates/"]
         ),
         .testTarget(
-            name: "SwiftUISystemTests",
+            name: "PreFireTests",
             dependencies: [
-                "SwiftUISystem",
+                "PreFire",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),

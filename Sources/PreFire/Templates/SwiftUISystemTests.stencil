@@ -2,15 +2,15 @@
 
 import XCTest
 import SwiftUI
-import SwiftUISystem
+import PreFire
 
 import SnapshotTesting
 @testable import {{ argument.mainTarget }}
 
 class SwiftUISystemTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
-    private let requiredDevice = "iPhone13,2"
-    private let requiredOSVersion = 15
+    private let simulatorDevice = {{ argument.simulatorDevice }} "iPhone13,2"
+    private let requiredOSVersion = {{ argument.simulatorOSVersion }}
 
     override func setUp() {
         super.setUp()
@@ -51,7 +51,7 @@ class SwiftUISystemTests: XCTestCase {
     private func checkEnvironments() {
         let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]
         let osVersion = ProcessInfo().operatingSystemVersion
-        guard deviceModel?.contains(requiredDevice) ?? false else {
+        guard deviceModel?.contains(simulatorDevice) ?? false else {
             fatalError("Switch to using iPhone 12 for these tests.")
         }
 
