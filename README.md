@@ -1,4 +1,4 @@
-[![Prefire](https://i.ibb.co/dfXqwpn/Group-14.png)](https://github.com/barredewe/prefire)
+<p align="center"><img src="https://i.ibb.co/dfXqwpn/Group-14.png" /></p>
 
 ## About
 
