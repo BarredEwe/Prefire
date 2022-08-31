@@ -9,7 +9,6 @@
 --
 
 ## TODO: 
-- Выбрать название (Preview Play, Prefire, )
 - Ограничения для Snapshots (Только нужное устройство и версия ОС)
 - Описание, наименование и Example
 - Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)
@@ -25,6 +24,7 @@
 - Темная тема (возможно переключение в рантайм)
 
 ## DONE:
+- ✅ Выбрать название (PreFire)
 - ✅ Поиск компонентов
 - ✅ Конфигурация Templates (устройство по умолчанию, imports)
 - ✅ Группировать элементы UserStory: (auth, postings), Type: (component)
