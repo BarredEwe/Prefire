@@ -9,16 +9,8 @@ import SnapshotTesting
 
 class SwiftUISystemTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
-    {% if argument.simulatorDevice != nil %}
-    private let simulatorDevice = {{ argument.simulatorDevice }}
-    {% else %}
-    private let simulatorDevice = "iPhone13,2"
-    {% endif %}
-    {% if argument.simulatorDevice != nil %}
-    private let requiredOSVersion = {{ argument.simulatorOSVersion }}
-    {% else %}
-    private let requiredOSVersion = 15
-    {% endif %}
+    private let simulatorDevice = "{{ argument.simulatorDevice|default:"iPhone13,2" }}"
+    private let requiredOSVersion = {{ argument.simulatorOSVersion|default:"15" }}
 
     override func setUp() {
         super.setUp()
