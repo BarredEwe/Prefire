@@ -2,6 +2,7 @@
 // DO NOT EDIT
 
 // swiftlint:disable all
+// swiftformat:disable all
 
 import SwiftUI
 import PreFire
@@ -17,14 +18,8 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: {
-                                AnyView(
-                                    GreenButton_Previews.previews
-                                )
-                            },
-                            closure: {
-                                GreenButton_Previews.state = state
-                            }
+                            content: { AnyView(GreenButton_Previews.previews) },
+                            closure: { GreenButton_Previews.state = state }
                         )
                     },
                     name: String(String(describing: GreenButton_Previews.self).split(separator: "_").first!),
@@ -39,14 +34,8 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: {
-                                AnyView(
-                                    TestViewWithoutState_Previews.previews
-                                )
-                            },
-                            closure: {
-                                TestViewWithoutState_Previews.state = state
-                            }
+                            content: { AnyView(TestViewWithoutState_Previews.previews) },
+                            closure: { TestViewWithoutState_Previews.state = state }
                         )
                     },
                     name: String(String(describing: TestViewWithoutState_Previews.self).split(separator: "_").first!),
@@ -61,14 +50,8 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: {
-                                AnyView(
-                                    TestView_Previews.previews
-                                )
-                            },
-                            closure: {
-                                TestView_Previews.state = state
-                            }
+                            content: { AnyView(TestView_Previews.previews) },
+                            closure: { TestView_Previews.state = state }
                         )
                     },
                     name: String(String(describing: TestView_Previews.self).split(separator: "_").first!),

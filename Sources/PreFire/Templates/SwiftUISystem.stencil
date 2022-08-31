@@ -1,4 +1,5 @@
 // swiftlint:disable all
+// swiftformat:disable all
 
 import SwiftUI
 import PreFire
@@ -15,14 +16,8 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: {
-                                AnyView(
-                                    {{ type.name }}.previews
-                                )
-                            },
-                            closure: {
-                                {{ type.name }}.state = state
-                            }
+                            content: { AnyView({{ type.name }}.previews) },
+                            closure: { {{ type.name }}.state = state }
                         )
                     },
                     name: String(String(describing: {{ type.name }}.self).split(separator: "_").first!),
