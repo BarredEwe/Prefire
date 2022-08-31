@@ -29,14 +29,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // When
             let view = WrapperView(
-                content: {
-                    AnyView(
-                        GreenButton_Previews.previews
-                    )
-                },
-                closure: {
-                    GreenButton_Previews.state = state
-                }
+                content: { AnyView(GreenButton_Previews.previews) },
+                closure: { GreenButton_Previews.state = state }
             )
 
             // Then
@@ -54,14 +48,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // When
             let view = WrapperView(
-                content: {
-                    AnyView(
-                        TestViewWithoutState_Previews.previews
-                    )
-                },
-                closure: {
-                    TestViewWithoutState_Previews.state = state
-                }
+                content: { AnyView(TestViewWithoutState_Previews.previews) },
+                closure: { TestViewWithoutState_Previews.state = state }
             )
 
             // Then
@@ -79,14 +67,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // When
             let view = WrapperView(
-                content: {
-                    AnyView(
-                        TestView_Previews.previews
-                    )
-                },
-                closure: {
-                    TestView_Previews.state = state
-                }
+                content: { AnyView(TestView_Previews.previews) },
+                closure: { TestView_Previews.state = state }
             )
 
             // Then
@@ -112,17 +94,6 @@ class SwiftUISystemTests: XCTestCase {
     }
 }
 
-private extension View {
-    func loadPreferences() {
-        let window = UIWindow(frame: CGRect(origin: .zero, size: CGSize(width: 100, height: 100)))
-        window.isHidden = false
-        let viewController = UIHostingController(rootView: self)
-        window.rootViewController = viewController
-        viewController.view.setNeedsLayout()
-        viewController.view.layoutIfNeeded()
-    }
-}
-
 private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
@@ -138,4 +109,3 @@ private extension PreviewDevice {
         }
     }
 }
-

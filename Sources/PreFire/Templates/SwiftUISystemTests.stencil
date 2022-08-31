@@ -11,14 +11,12 @@ class SwiftUISystemTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     {% if argument.simulatorDevice != nil %}
     private let simulatorDevice = {{ argument.simulatorDevice }}
-    {% endif %}
-    {% if argument.simulatorDevice == nil %}
+    {% else %}
     private let simulatorDevice = "iPhone13,2"
     {% endif %}
     {% if argument.simulatorDevice != nil %}
     private let requiredOSVersion = {{ argument.simulatorOSVersion }}
-    {% endif %}
-    {% if argument.simulatorDevice == nil %}
+    {% else %}
     private let requiredOSVersion = 15
     {% endif %}
 
@@ -37,14 +35,8 @@ class SwiftUISystemTests: XCTestCase {
 
             // When
             let view = WrapperView(
-                content: {
-                    AnyView(
-                        {{ type.name }}.previews
-                    )
-                },
-                closure: {
-                    {{ type.name }}.state = state
-                }
+                content: { AnyView({{ type.name }}.previews) },
+                closure: { {{ type.name }}.state = state }
             )
 
             // Then
@@ -71,17 +63,6 @@ class SwiftUISystemTests: XCTestCase {
     }
 }
 
-private extension View {
-    func loadPreferences() {
-        let window = UIWindow(frame: CGRect(origin: .zero, size: CGSize(width: 100, height: 100)))
-        window.isHidden = false
-        let viewController = UIHostingController(rootView: self)
-        window.rootViewController = viewController
-        viewController.view.setNeedsLayout()
-        viewController.view.layoutIfNeeded()
-    }
-}
-
 private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
@@ -97,4 +78,3 @@ private extension PreviewDevice {
         }
     }
 }
-
