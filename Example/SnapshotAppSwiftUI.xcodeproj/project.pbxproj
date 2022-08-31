@@ -265,7 +265,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SOURCERYROOT=/opt/homebrew/bin/sourcery\nTEMPLATESROOT=../Sources/PreFire/Templates\n\n$SOURCERYROOT \\\n--sources . \\\n--templates $TEMPLATESROOT/SwiftUISystem.stencil \\\n--output $SRCROOT/Shared/Generated.swift \\\n--args mainTarget=\"SnapshotAppSwiftUI\"\n";
+			shellScript = "SOURCERYROOT=/opt/homebrew/bin/sourcery\nTEMPLATESROOT=../Sources/PreFire/Templates\n\n$SOURCERYROOT \\\n--sources ../ \\\n--templates $TEMPLATESROOT/SwiftUISystem.stencil \\\n--output $SRCROOT/Shared/Generated.swift \\\n--args mainTarget=\"SnapshotAppSwiftUI\"\n";
 		};
 		9779D5EF28A3ECF00083DBD3 /* SwiftUI System Test Generation */ = {
 			isa = PBXShellScriptBuildPhase;
