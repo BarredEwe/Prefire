@@ -16,7 +16,7 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: { AnyView({{ type.name }}.previews) },
+                            content: { {{ type.name }}.previews },
                             closure: { {{ type.name }}.state = state }
                         )
                     },

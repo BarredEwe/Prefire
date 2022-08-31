@@ -18,7 +18,7 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: { AnyView(GreenButton_Previews.previews) },
+                            content: { GreenButton_Previews.previews },
                             closure: { GreenButton_Previews.state = state }
                         )
                     },
@@ -34,7 +34,7 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: { AnyView(TestViewWithoutState_Previews.previews) },
+                            content: { TestViewWithoutState_Previews.previews },
                             closure: { TestViewWithoutState_Previews.state = state }
                         )
                     },
@@ -50,7 +50,7 @@ public enum PreviewModels {
                 PreviewModel(
                     content: {
                         WrapperView(
-                            content: { AnyView(TestView_Previews.previews) },
+                            content: { TestView_Previews.previews },
                             closure: { TestView_Previews.state = state }
                         )
                     },

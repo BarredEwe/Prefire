@@ -28,7 +28,7 @@ class SwiftUISystemTests: XCTestCase {
 
             // When
             let view = WrapperView(
-                content: { AnyView({{ type.name }}.previews) },
+                content: { {{ type.name }}.previews },
                 closure: { {{ type.name }}.state = state }
             )
 

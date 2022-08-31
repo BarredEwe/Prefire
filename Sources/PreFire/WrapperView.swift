@@ -11,12 +11,10 @@ import SwiftUI
 public struct WrapperView: View { // TODO: Rename to .. mb convert to ViewMod
     var content: AnyView?
 
-    public init(content: @escaping () -> AnyView, closure: @escaping () -> Void) {
+    public init<Content: View>(content: @escaping () -> Content, closure: @escaping () -> Void) {
         closure()
 
-        self.content = AnyView(
-            content()
-        )
+        self.content = AnyView(content())
     }
 
     public var body: some View {
