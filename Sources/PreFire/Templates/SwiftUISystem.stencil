@@ -4,21 +4,21 @@
 import SwiftUI
 import PreFire
 
+{% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}
+{% endif %}
 
 public enum PreviewModels {
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
 
-        {% for type in types.types where type.implements.UISystemProvider or type|annotated:"UISystemProvider" %}
+        {% for type in types.types where type.implements.PrefireProvider or type|annotated:"PrefireProvider" %}
         for state in {{ type.name }}.State.allCases {
             views.append(
                 PreviewModel(
                     content: {
-                        WrapperView(
-                            content: { {{ type.name }}.previews },
-                            closure: { {{ type.name }}.state = state }
-                        )
+                        {{ type.name }}.state = state
+                        return AnyView({{ type.name }}.previews)
                     },
                     name: String(String(describing: {{ type.name }}.self).split(separator: "_").first!),
                     type: {{ type.name }}._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
@@ -31,17 +31,4 @@ public enum PreviewModels {
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
-}
-
-extension PreviewLayout: Equatable {
-    public static func == (lhs: PreviewLayout, rhs: PreviewLayout) -> Bool {
-        switch lhs {
-        case .sizeThatFits:
-            if case .sizeThatFits = rhs { return true }
-        case .device:
-            if case .device = rhs { return true }
-        default: return false
-        }
-        return false
-    }
 }

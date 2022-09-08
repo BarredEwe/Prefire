@@ -17,10 +17,8 @@ public enum PreviewModels {
             views.append(
                 PreviewModel(
                     content: {
-                        WrapperView(
-                            content: { GreenButton_Previews.previews },
-                            closure: { GreenButton_Previews.state = state }
-                        )
+                        GreenButton_Previews.state = state
+                        return AnyView(GreenButton_Previews.previews)
                     },
                     name: String(String(describing: GreenButton_Previews.self).split(separator: "_").first!),
                     type: GreenButton_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
@@ -33,10 +31,8 @@ public enum PreviewModels {
             views.append(
                 PreviewModel(
                     content: {
-                        WrapperView(
-                            content: { TestViewWithoutState_Previews.previews },
-                            closure: { TestViewWithoutState_Previews.state = state }
-                        )
+                        TestViewWithoutState_Previews.state = state
+                        return AnyView(TestViewWithoutState_Previews.previews)
                     },
                     name: String(String(describing: TestViewWithoutState_Previews.self).split(separator: "_").first!),
                     type: TestViewWithoutState_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
@@ -49,10 +45,8 @@ public enum PreviewModels {
             views.append(
                 PreviewModel(
                     content: {
-                        WrapperView(
-                            content: { TestView_Previews.previews },
-                            closure: { TestView_Previews.state = state }
-                        )
+                        TestView_Previews.state = state
+                        return AnyView(TestView_Previews.previews)
                     },
                     name: String(String(describing: TestView_Previews.self).split(separator: "_").first!),
                     type: TestView_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
@@ -64,17 +58,4 @@ public enum PreviewModels {
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
-}
-
-extension PreviewLayout: Equatable {
-    public static func == (lhs: PreviewLayout, rhs: PreviewLayout) -> Bool {
-        switch lhs {
-        case .sizeThatFits:
-            if case .sizeThatFits = rhs { return true }
-        case .device:
-            if case .device = rhs { return true }
-        default: return false
-        }
-        return false
-    }
 }

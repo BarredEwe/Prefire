@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Foundation
-import PreFire
 
 extension CGFloat {
     static let scale: CGFloat = 0.55
@@ -21,13 +20,15 @@ public struct PlaybookView: View {
     @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
     @State private var searchText = ""
-    @State private var viewModels: [PreviewModel] = PreviewModels.models
-    @State private var sections: [String] = PreviewModels.models.compactMap { $0.name }.uniqued()
+    @State private var viewModels: [PreviewModel]
+    @State private var sectionNames: [String]
 
     private let isComponent: Bool
 
-    public init(isComponent: Bool) {
+    public init(isComponent: Bool, previewModels: [PreviewModel]) {
         self.isComponent = isComponent
+        _viewModels = State(initialValue: previewModels)
+        _sectionNames = State(initialValue: previewModels.compactMap { $0.name }.uniqued())
     }
 
     public var body: some View {
@@ -39,7 +40,7 @@ public struct PlaybookView: View {
             )
 
             ScrollView {
-                ForEach(sections, id: \.self) { name in
+                ForEach(sectionNames, id: \.self) { name in
                     if searchText.isEmpty || name.contains(searchText) {
                         VStack(alignment: .leading) {
                             Text(isComponent ? name : "📙 " + name)
@@ -49,18 +50,18 @@ public struct PlaybookView: View {
 
                             componentList(for: name)
 
-                            if sections.last != name {
+                            if sectionNames.last != name {
                                 Divider()
                             }
                         }
                     }
                 }
             }
-            .searchable(
-                text: $searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: isComponent ? "View name" : "User story"
-            )
+//            .searchable(
+//                text: $searchText,
+//                placement: .navigationBarDrawer(displayMode: .always),
+//                prompt: isComponent ? "View name" : "User story"
+//            )
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("SwiftUI System")
@@ -75,7 +76,7 @@ public struct PlaybookView: View {
                         VStack {
                             if !isComponent {
                                 Text(viewModel.name)
-                                    .font(.callout.bold().monospaced())
+                                    .font(.callout.bold())//.monospaced())
                             }
 
                             Button(action: {
@@ -91,7 +92,7 @@ public struct PlaybookView: View {
                                             viewModel.story = userStory
 
                                             if !isComponent {
-                                                sections = viewModels.compactMap { $0.story }.uniqued()
+                                                sectionNames = viewModels.compactMap { $0.story }.uniqued()
                                             }
                                         }
 
@@ -168,7 +169,7 @@ public struct PlaybookView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            PlaybookView(isComponent: true)
+            PlaybookView(isComponent: true, previewModels: [])
         }
     }
 }
@@ -179,25 +180,5 @@ struct ContentView_Previews: PreviewProvider {
 private extension Array {
     func uniqued() -> Self {
         NSOrderedSet(array: self).array as! Self
-    }
-}
-
-struct ScaleEffectButtonStyle: ButtonStyle {
-    func makeBody(configuration: Self.Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.linear(duration: 0.15), value: configuration.isPressed)
-    }
-}
-
-extension View {
-    @ViewBuilder
-    func transformIf<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
     }
 }

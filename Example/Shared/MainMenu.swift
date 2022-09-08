@@ -13,14 +13,14 @@ struct MainMenu: View {
         NavigationView {
             Form {
                 NavigationLink {
-                    PlaybookView(isComponent: true)
+                    PlaybookView(isComponent: true, previewModels: PreviewModels.models)
                 } label: {
                     Label("Views", systemImage: "shippingbox")
                         .foregroundColor(.black)
                 }
 
                 NavigationLink {
-                    PlaybookView(isComponent: false)
+                    PlaybookView(isComponent: false, previewModels: PreviewModels.models)
                 } label: {
                     Label("User stories", systemImage: "character.book.closed")
                         .foregroundColor(.black)
@@ -28,5 +28,11 @@ struct MainMenu: View {
             }
             .navigationTitle("SwiftUI System")
         }
+    }
+}
+
+struct MainMenu_Previews: PreviewProvider {
+    static var previews: some View {
+        MainMenu()
     }
 }

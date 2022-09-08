@@ -46,8 +46,8 @@ extension PreviewModel.UserStory {
     static let testStory = "Test"
 }
 
-struct TestView_Previews: PreviewProvider, UISystemProvider {
-    enum TestViewState: UIState {
+struct TestView_Previews: PreviewProvider, PrefireProvider {
+    enum TestViewState: PreviewState {
         case `default`
         case loading
     }
@@ -64,14 +64,14 @@ struct TestView_Previews: PreviewProvider, UISystemProvider {
     }
 }
 
-struct TestViewWithoutState_Previews: PreviewProvider, UISystemProvider {
+struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         TestView(isLoading: true)
             .previewLayout(.sizeThatFits)
     }
 }
 
-struct GreenButton_Previews: PreviewProvider, UISystemProvider {
+struct GreenButton_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         Button("Apply", action: { })
             .foregroundColor(.black)

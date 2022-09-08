@@ -11,7 +11,17 @@ import SwiftUI
 public struct PreviewModel: Identifiable {
     public typealias UserStory = String
 
-    public let content: () -> WrapperView
+    public enum ViewType: Equatable {
+        case screen
+        case component
+    }
+
+    @inlinable
+    public var id: String {
+        name + state
+    }
+
+    public let content: () -> AnyView
 
     public let name: String
     public let state: String
@@ -21,27 +31,17 @@ public struct PreviewModel: Identifiable {
     public var story: UserStory?
     public var renderTime: String?
 
-    @inlinable
-    public var id: String {
-        name + state
-    }
-
     public init(
-        content: @escaping () -> WrapperView,
-                name: String,
-                type: ViewType = .component,
-                device: PreviewDevice?,
-                state: String
+        content: @escaping () -> AnyView,
+        name: String,
+        type: ViewType = .component,
+        device: PreviewDevice?,
+        state: String
     ) {
         self.content = content
         self.name = name
         self.type = type
         self.device = device
         self.state = state
-    }
-
-    public enum ViewType: Equatable {
-        case screen
-        case component
     }
 }

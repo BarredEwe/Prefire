@@ -29,10 +29,8 @@ class SwiftUISystemTests: XCTestCase {
             let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = WrapperView(
-                content: { GreenButton_Previews.previews },
-                closure: { GreenButton_Previews.state = state }
-            )
+            GreenButton_Previews.state = state
+            let view = GreenButton_Previews.previews
 
             // Then
             assertSnapshot(
@@ -48,10 +46,8 @@ class SwiftUISystemTests: XCTestCase {
             let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = WrapperView(
-                content: { TestViewWithoutState_Previews.previews },
-                closure: { TestViewWithoutState_Previews.state = state }
-            )
+            TestViewWithoutState_Previews.state = state
+            let view = TestViewWithoutState_Previews.previews
 
             // Then
             assertSnapshot(
@@ -67,10 +63,8 @@ class SwiftUISystemTests: XCTestCase {
             let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = WrapperView(
-                content: { TestView_Previews.previews },
-                closure: { TestView_Previews.state = state }
-            )
+            TestView_Previews.state = state
+            let view = TestView_Previews.previews
 
             // Then
             assertSnapshot(
