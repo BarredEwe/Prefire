@@ -11,7 +11,7 @@ import PreFire
 import SnapshotTesting
 @testable import PreFireExample
 
-class SwiftUISystemTests: XCTestCase {
+class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     private let simulatorDevice = "iPhone13,2"
     private let requiredOSVersion = 15

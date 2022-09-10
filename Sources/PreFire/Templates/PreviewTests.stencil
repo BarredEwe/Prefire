@@ -10,7 +10,7 @@ import SnapshotTesting
 @testable import {{ argument.mainTarget }}
 {% endif %}
 
-class SwiftUISystemTests: XCTestCase {
+class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     private let simulatorDevice = "{{ argument.simulatorDevice|default:"iPhone13,2" }}"
     private let requiredOSVersion = {{ argument.simulatorOSVersion|default:"15" }}

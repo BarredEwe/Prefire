@@ -32,6 +32,7 @@
 ## Config
 
 ## TODO: 
+- Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
 - Сделать скрипт для запуска в Build Phase
 - Описание, наименование и Example
 - Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)

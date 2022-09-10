@@ -7,7 +7,6 @@
 import SwiftUI
 import PreFire
 
-@testable import PreFireExample
 
 public enum PreviewModels {
     public static var models: [PreviewModel] = {
