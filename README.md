@@ -40,14 +40,15 @@ For using test:
 
 --
 ## TODO: 
-- Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
-- Сделать скрипт для запуска в Build Phase
+- Accesability
+- Cделать скрипт для запуска в Build Phase Tests
 - Описание, наименование и Example
 - Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)
 - Детальный просмотр компонентов/экранов (Вывод доп. информации)
 
 ## TODO Features:
-- Accesability
+- Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
+- Написать своб генерацию
 - Написать свои снапшот тесты, а не использовать библиотеку
 - Использовать снапшот для отображения дизайн системы (Не уверен что нормально получится)  
 - Fonts: экран с шрифтами, размерами, наименованиями
@@ -56,6 +57,7 @@ For using test:
 - Темная тема (возможно переключение в рантайм)
 
 ## DONE:
+- ✅ Сделать скрипт для запуска в Build Phase DemoApp
 - ✅ Ограничения для Snapshots (Только нужное устройство и версия ОС)
 - ✅ Выбрать название (PreFire)
 - ✅ Поиск компонентов
