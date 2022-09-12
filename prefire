@@ -2,11 +2,11 @@
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -r|--root) root="$2"; shift ;;
         --sourcery) sourcery="$2"; shift ;;
+        -r|--root) root="$2"; shift ;;
         -o|--output) output="$2"; shift ;;
-        --target) target="$2"; shift ;;
-        --sources) sources="$2"; shift ;;
+        -t|--target) target="$2"; shift ;;
+        -s|--sources) sources="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift

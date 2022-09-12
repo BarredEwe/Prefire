@@ -20,17 +20,25 @@
     ```
     https://github.com/BarredEwe/PreFire
     ```
-3. Add Build Phase for Demo App 
+### **Demo App**
+For using demo app:
+ - Add Build Phase for Demo App 
     ```
-    (${BUILD_DIR%Build/*}SourcePackages/checkouts/)
+    export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+    prefire --sources <sources path> --output <output path>
     ```
-4. Add Build Phase for Snapshot tests 
+
+### **Tests**
+For using test:
+- Add Build Phase for Snapshot tests 
     ```
-    (${BUILD_DIR%Build/*}SourcePackages/checkouts/)
+    export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+    prefire --sources <sources path> --output <output path>
     ```
 
 ## Config
 
+--
 ## TODO: 
 - Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
 - Сделать скрипт для запуска в Build Phase
