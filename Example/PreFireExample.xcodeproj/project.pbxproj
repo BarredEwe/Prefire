@@ -253,7 +253,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../prefire --root $SRCROOT/.. -o $SRCROOT/Shared/PreviewModels.generated.swift\n";
+			shellScript = "../prefire --root $SRCROOT/.. --sources ../ -o $SRCROOT/Shared/PreviewModels.generated.swift\n";
 		};
 		9779D5EF28A3ECF00083DBD3 /* Prefire */ = {
 			isa = PBXShellScriptBuildPhase;

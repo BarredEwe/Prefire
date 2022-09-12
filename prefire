@@ -6,6 +6,7 @@ while [[ "$#" -gt 0 ]]; do
         --sourcery) sourcery="$2"; shift ;;
         -o|--output) output="$2"; shift ;;
         --target) target="$2"; shift ;;
+        --sources) sources="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -21,13 +22,13 @@ TEMPLATES_ROOT=$PREFIRE_ROOT/Sources/PreFire/Templates
 
 if [[ -n "{$target}" ]]; then
     $SOURCERY_ROOT \
-    --sources ../ \
+    --sources $sources \
     --templates $TEMPLATES_ROOT/PreviewModels.stencil \
     --output $output
 
 else
     $SOURCERY_ROOT \
-    --sources ../ \
+    --sources $sources \
     --templates $TEMPLATES_ROOT/PreviewModels.stencil \
     --output $output \
     --args mainTarget=$target
