@@ -23,7 +23,7 @@
 ### **Demo App**
 For using demo app:
  - Add Build Phase for Demo App 
-    ```
+    ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire --sources <sources path> --output <output path>
     ```
@@ -31,7 +31,7 @@ For using demo app:
 ### **Tests**
 For using test:
 - Add Build Phase for Snapshot tests 
-    ```
+    ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire --sources <sources path> --output <output path>
     ```
