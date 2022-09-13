@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [[ "$1" == "playbook" ]]; then
+    is_playbook=true
+elif [[ "$1" == "tests" ]]; then
+    is_tests=true
+fi
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --sourcery) sourcery="$2"; shift ;;
@@ -7,7 +13,6 @@ while [[ "$#" -gt 0 ]]; do
         -o|--output) output="$2"; shift ;;
         -t|--target) target="$2"; shift ;;
         -s|--sources) sources="$2"; shift ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
@@ -19,17 +24,24 @@ PREFIRE_ROOT="${root:-$PREFIRE_DEFAULT}"
 SOURCERY_ROOT="${sourcery:-$SOURCERY_DEFAULT}"
 TEMPLATES_ROOT=$PREFIRE_ROOT/Sources/PreFire/Templates
 
+if [[ $is_playbook ]]; then
+    TEMPLATE=$TEMPLATES_ROOT/PreviewModels.stencil
+elif [[ $is_tests ]]; then
+    TEMPLATE=$TEMPLATES_ROOT/PreviewTests.stencil
+fi
 
-if [[ -n "{$target}" ]]; then
+
+if [[ -z "$target" ]]; then
+    echo nontarget
     $SOURCERY_ROOT \
     --sources $sources \
-    --templates $TEMPLATES_ROOT/PreviewModels.stencil \
+    --templates $TEMPLATE \
     --output $output
-
 else
+    echo target
     $SOURCERY_ROOT \
     --sources $sources \
-    --templates $TEMPLATES_ROOT/PreviewModels.stencil \
+    --templates $TEMPLATE \
     --output $output \
     --args mainTarget=$target
 fi

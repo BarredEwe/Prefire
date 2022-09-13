@@ -22,18 +22,19 @@
     ```
 ### **Demo App**
 For using demo app:
- - Add Build Phase for Demo App 
+ - Add **Build Phase** for generating Demo App 
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
-    prefire --sources <sources path> --output <output path>
+    prefire playbook --sources <sources path> --output <output path>
     ```
 
 ### **Tests**
 For using test:
-- Add Build Phase for Snapshot tests 
+- Add **Build Phase** for generating Snapshot tests
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire --sources <sources path> --output <output path>
+    prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
 
 ## Config
@@ -41,7 +42,7 @@ For using test:
 --
 ## TODO: 
 - Accesability
-- Cделать скрипт для запуска в Build Phase Tests
+- Переименовать PreFire -> Prefire
 - Описание, наименование и Example
 - Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)
 - Детальный просмотр компонентов/экранов (Вывод доп. информации)
@@ -57,6 +58,7 @@ For using test:
 - Темная тема (возможно переключение в рантайм)
 
 ## DONE:
+- ✅ Cделать скрипт для запуска в Build Phase Tests
 - ✅ Сделать скрипт для запуска в Build Phase DemoApp
 - ✅ Ограничения для Snapshots (Только нужное устройство и версия ОС)
 - ✅ Выбрать название (PreFire)

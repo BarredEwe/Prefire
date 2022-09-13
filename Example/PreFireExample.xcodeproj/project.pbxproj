@@ -253,7 +253,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../prefire --root ../ -s ../ -o Shared/PreviewModels.generated.swift\n";
+			shellScript = "../prefire playbook --root ../ --sources ../ --output Shared/PreviewModels.generated.swift\n";
 		};
 		9779D5EF28A3ECF00083DBD3 /* Prefire */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -272,7 +272,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PREFIREROOT=$SRCROOT/..\nSOURCERYROOT=/opt/homebrew/bin/sourcery\nTEMPLATESROOT=$PREFIREROOT/Sources/PreFire/Templates\n\n$SOURCERYROOT \\\n--sources ../ \\\n--templates $TEMPLATESROOT/PreviewTests.stencil \\\n--output $SRCROOT/PreFireExampleTests/PreFireExampleTests.swift \\\n--args mainTarget=\"PreFireExample\"\n";
+			shellScript = "../prefire tests --root ../ --sources ../ --output $SRCROOT/PreFireExampleTests/PreFireExampleTests.swift --target PreFireExample\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
