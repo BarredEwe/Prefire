@@ -1,14 +1,14 @@
-<p align="center"><img src="https://i.ibb.co/dfXqwpn/Group-14.png" /></p>
+<p align="center"><img src="https://i.ibb.co/dfXqwpn/Group-14" /></p>
 
 ## About
 
---
+A library for easy automatic **Playbook (Demo) app** generation and **Test** generation. Supports both work with UI-components and work with screens and their flow.
 
 ## Screenshots
 
 --
 
-## 🚀 Installation
+## Installation
 
 1. Install [Sourcery](https://github.com/krzysztofzablocki/Sourcery) using _[Homebrew](https://brew.sh)_
     ```bash
@@ -20,7 +20,7 @@
     ```
     https://github.com/BarredEwe/PreFire
     ```
-### **Demo App**
+### **Playbook (Demo) App**
 For using demo app:
  - Add **Build Phase** for generating Demo App 
     ```bash
@@ -28,7 +28,7 @@ For using demo app:
     prefire playbook --sources <sources path> --output <output path>
     ```
 
-### **Tests**
+### **Snapshot tests**
 For using test:
 - Add **Build Phase** for generating Snapshot tests
     ```bash
