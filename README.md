@@ -33,7 +33,6 @@ For using test:
 - Add **Build Phase** for generating Snapshot tests
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
-    prefire --sources <sources path> --output <output path>
     prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
 
