@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import PreFire
+import Prefire
 
 struct MainMenu: View {
     var body: some View {

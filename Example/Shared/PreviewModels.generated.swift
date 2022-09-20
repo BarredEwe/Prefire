@@ -5,7 +5,7 @@
 // swiftformat:disable all
 
 import SwiftUI
-import PreFire
+import Prefire
 
 
 public enum PreviewModels {

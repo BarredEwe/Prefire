@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9735EE2E289C5CF300309267"
-               BuildableName = "PreFireExample.app"
-               BlueprintName = "PreFireExample"
-               ReferencedContainer = "container:PreFireExample.xcodeproj">
+               BuildableName = "PrefireExample.app"
+               BlueprintName = "PrefireExample"
+               ReferencedContainer = "container:PrefireExample.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9779D5E528A3ECBA0083DBD3"
-               BuildableName = "PreFireExampleTests.xctest"
-               BlueprintName = "PreFireExampleTests"
-               ReferencedContainer = "container:PreFireExample.xcodeproj">
+               BuildableName = "PrefireExampleTests.xctest"
+               BlueprintName = "PrefireExampleTests"
+               ReferencedContainer = "container:PrefireExample.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9735EE2E289C5CF300309267"
-            BuildableName = "PreFireExample.app"
-            BlueprintName = "PreFireExample"
-            ReferencedContainer = "container:PreFireExample.xcodeproj">
+            BuildableName = "PrefireExample.app"
+            BlueprintName = "PrefireExample"
+            ReferencedContainer = "container:PrefireExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9735EE2E289C5CF300309267"
-            BuildableName = "PreFireExample.app"
-            BlueprintName = "PreFireExample"
-            ReferencedContainer = "container:PreFireExample.xcodeproj">
+            BuildableName = "PrefireExample.app"
+            BlueprintName = "PrefireExample"
+            ReferencedContainer = "container:PrefireExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

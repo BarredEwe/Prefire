@@ -2,7 +2,7 @@
 // swiftformat:disable all
 
 import SwiftUI
-import PreFire
+import Prefire
 
 {% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}

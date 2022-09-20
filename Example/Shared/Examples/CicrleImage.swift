@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import PreFire
+import Prefire
 
 struct CircleImage: View {
     var body: some View {

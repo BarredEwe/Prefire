@@ -6,10 +6,10 @@
 
 import XCTest
 import SwiftUI
-import PreFire
+import Prefire
 
 import SnapshotTesting
-@testable import PreFireExample
+@testable import PrefireExample
 
 class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX

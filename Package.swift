@@ -4,12 +4,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "PreFire",
+    name: "Prefire",
     platforms: [.iOS(.v14)],
     products: [
         .library(
-            name: "PreFire",
-            targets: ["PreFire"]
+            name: "Prefire",
+            targets: ["Prefire"]
         ),
     ],
     dependencies: [
@@ -20,14 +20,14 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "PreFire",
+            name: "Prefire",
             dependencies: [],
             exclude: ["Templates/"]
         ),
         .testTarget(
-            name: "PreFireTests",
+            name: "PrefireTests",
             dependencies: [
-                "PreFire",
+                "Prefire",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),

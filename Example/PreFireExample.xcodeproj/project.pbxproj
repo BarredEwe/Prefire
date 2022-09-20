@@ -11,10 +11,10 @@
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
 		9777F17528D0F4200072827B /* CicrleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9777F17428D0F4200072827B /* CicrleImage.swift */; };
-		9779D5E928A3ECBB0083DBD3 /* PreFireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5E828A3ECBB0083DBD3 /* PreFireExampleTests.swift */; };
+		9779D5E928A3ECBB0083DBD3 /* PrefireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5E828A3ECBB0083DBD3 /* PrefireExampleTests.swift */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
-		978AE50D28CCCBDF00EB01E1 /* PreFire in Frameworks */ = {isa = PBXBuildFile; productRef = 978AE50C28CCCBDF00EB01E1 /* PreFire */; };
 		978AE50F28CCD78400EB01E1 /* PreviewModels.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 978AE50E28CCD78400EB01E1 /* PreviewModels.generated.swift */; };
+		97AB804328D9F0E800414704 /* Prefire in Frameworks */ = {isa = PBXBuildFile; productRef = 97AB804228D9F0E800414704 /* Prefire */; };
 		97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BA130028A1AAE800CA8F36 /* MainMenu.swift */; };
 /* End PBXBuildFile section */
 
@@ -31,13 +31,13 @@
 /* Begin PBXFileReference section */
 		9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAppSwiftUIApp.swift; sourceTree = "<group>"; };
 		9735EE2A289C5CF300309267 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		9735EE2F289C5CF300309267 /* PreFireExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PreFireExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9735EE2F289C5CF300309267 /* PrefireExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrefireExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9735EE48289C5F3A00309267 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
 		9777F17428D0F4200072827B /* CicrleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CicrleImage.swift; sourceTree = "<group>"; };
-		9779D5E628A3ECBA0083DBD3 /* PreFireExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PreFireExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		9779D5E828A3ECBB0083DBD3 /* PreFireExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreFireExampleTests.swift; sourceTree = "<group>"; };
+		9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PrefireExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9779D5E828A3ECBB0083DBD3 /* PrefireExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrefireExampleTests.swift; sourceTree = "<group>"; };
 		978AE50E28CCD78400EB01E1 /* PreviewModels.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreviewModels.generated.swift; sourceTree = "<group>"; };
-		978BA25828BC176A00832017 /* PreFire */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PreFire; path = ..; sourceTree = "<group>"; };
+		97AB804128D9F0DB00414704 /* Prefire */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Prefire; path = ..; sourceTree = "<group>"; };
 		97BA130028A1AAE800CA8F36 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -46,7 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				978AE50D28CCCBDF00EB01E1 /* PreFire in Frameworks */,
+				97AB804328D9F0E800414704 /* Prefire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,8 +65,8 @@
 			isa = PBXGroup;
 			children = (
 				9735EE27289C5CF200309267 /* Shared */,
-				9779D5E728A3ECBB0083DBD3 /* PreFireExampleTests */,
-				9735EE4D289C669D00309267 /* Packages */,
+				9779D5E728A3ECBB0083DBD3 /* PrefireExampleTests */,
+				97AB804028D9F0DB00414704 /* Packages */,
 				9735EE30289C5CF300309267 /* Products */,
 				9735EE4A289C666600309267 /* Frameworks */,
 			);
@@ -75,7 +75,6 @@
 		9735EE27289C5CF200309267 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				9779D5F528A533B90083DBD3 /* Others */,
 				9735EE47289C5E2100309267 /* Examples */,
 				9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */,
 				97BA130028A1AAE800CA8F36 /* MainMenu.swift */,
@@ -88,8 +87,8 @@
 		9735EE30289C5CF300309267 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9735EE2F289C5CF300309267 /* PreFireExample.app */,
-				9779D5E628A3ECBA0083DBD3 /* PreFireExampleTests.xctest */,
+				9735EE2F289C5CF300309267 /* PrefireExample.app */,
+				9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -110,35 +109,28 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		9735EE4D289C669D00309267 /* Packages */ = {
+		9779D5E728A3ECBB0083DBD3 /* PrefireExampleTests */ = {
 			isa = PBXGroup;
 			children = (
-				978BA25828BC176A00832017 /* PreFire */,
+				9779D5E828A3ECBB0083DBD3 /* PrefireExampleTests.swift */,
+			);
+			path = PrefireExampleTests;
+			sourceTree = "<group>";
+		};
+		97AB804028D9F0DB00414704 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				97AB804128D9F0DB00414704 /* Prefire */,
 			);
 			name = Packages;
-			sourceTree = "<group>";
-		};
-		9779D5E728A3ECBB0083DBD3 /* PreFireExampleTests */ = {
-			isa = PBXGroup;
-			children = (
-				9779D5E828A3ECBB0083DBD3 /* PreFireExampleTests.swift */,
-			);
-			path = PreFireExampleTests;
-			sourceTree = "<group>";
-		};
-		9779D5F528A533B90083DBD3 /* Others */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Others;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9735EE2E289C5CF300309267 /* PreFireExample */ = {
+		9735EE2E289C5CF300309267 /* PrefireExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9735EE40289C5CF300309267 /* Build configuration list for PBXNativeTarget "PreFireExample" */;
+			buildConfigurationList = 9735EE40289C5CF300309267 /* Build configuration list for PBXNativeTarget "PrefireExample" */;
 			buildPhases = (
 				9735EEFA289D5A1600309267 /* Prefire */,
 				9735EE2B289C5CF300309267 /* Sources */,
@@ -149,17 +141,17 @@
 			);
 			dependencies = (
 			);
-			name = PreFireExample;
+			name = PrefireExample;
 			packageProductDependencies = (
-				978AE50C28CCCBDF00EB01E1 /* PreFire */,
+				97AB804228D9F0E800414704 /* Prefire */,
 			);
 			productName = "SnapshotAppSwiftUI (iOS)";
-			productReference = 9735EE2F289C5CF300309267 /* PreFireExample.app */;
+			productReference = 9735EE2F289C5CF300309267 /* PrefireExample.app */;
 			productType = "com.apple.product-type.application";
 		};
-		9779D5E528A3ECBA0083DBD3 /* PreFireExampleTests */ = {
+		9779D5E528A3ECBA0083DBD3 /* PrefireExampleTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9779D5EC28A3ECBB0083DBD3 /* Build configuration list for PBXNativeTarget "PreFireExampleTests" */;
+			buildConfigurationList = 9779D5EC28A3ECBB0083DBD3 /* Build configuration list for PBXNativeTarget "PrefireExampleTests" */;
 			buildPhases = (
 				9779D5EF28A3ECF00083DBD3 /* Prefire */,
 				9779D5E228A3ECBA0083DBD3 /* Sources */,
@@ -171,12 +163,12 @@
 			dependencies = (
 				97DF729228BFAD3000C3FD46 /* PBXTargetDependency */,
 			);
-			name = PreFireExampleTests;
+			name = PrefireExampleTests;
 			packageProductDependencies = (
 				9779D5F328A3F13F0083DBD3 /* SnapshotTesting */,
 			);
 			productName = SnapshotAppSwiftUITests;
-			productReference = 9779D5E628A3ECBA0083DBD3 /* PreFireExampleTests.xctest */;
+			productReference = 9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -198,7 +190,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */;
+			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -214,8 +206,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				9735EE2E289C5CF300309267 /* PreFireExample */,
-				9779D5E528A3ECBA0083DBD3 /* PreFireExampleTests */,
+				9735EE2E289C5CF300309267 /* PrefireExample */,
+				9779D5E528A3ECBA0083DBD3 /* PrefireExampleTests */,
 			);
 		};
 /* End PBXProject section */
@@ -275,7 +267,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../prefire tests --root ../ --sources ../ --output $SRCROOT/PreFireExampleTests/PreFireExampleTests.swift --target PreFireExample\n";
+			shellScript = "../prefire tests --root ../ --sources ../ --output $SRCROOT/PrefireExampleTests/PrefireExampleTests.swift --target PrefireExample\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -296,7 +288,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9779D5E928A3ECBB0083DBD3 /* PreFireExampleTests.swift in Sources */,
+				9779D5E928A3ECBB0083DBD3 /* PrefireExampleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,7 +297,7 @@
 /* Begin PBXTargetDependency section */
 		97DF729228BFAD3000C3FD46 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 9735EE2E289C5CF300309267 /* PreFireExample */;
+			target = 9735EE2E289C5CF300309267 /* PrefireExample */;
 			targetProxy = 97DF729128BFAD3000C3FD46 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -441,8 +433,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExample;
-				PRODUCT_NAME = PreFireExample;
+				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
+				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -471,8 +463,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExample;
-				PRODUCT_NAME = PreFireExample;
+				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
+				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -497,7 +489,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PreFireExample.app/PreFireExample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 			};
 			name = Debug;
 		};
@@ -517,7 +509,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PreFireExample.app/PreFireExample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -525,7 +517,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */ = {
+		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9735EE3E289C5CF300309267 /* Debug */,
@@ -534,7 +526,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9735EE40289C5CF300309267 /* Build configuration list for PBXNativeTarget "PreFireExample" */ = {
+		9735EE40289C5CF300309267 /* Build configuration list for PBXNativeTarget "PrefireExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9735EE41289C5CF300309267 /* Debug */,
@@ -543,7 +535,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9779D5EC28A3ECBB0083DBD3 /* Build configuration list for PBXNativeTarget "PreFireExampleTests" */ = {
+		9779D5EC28A3ECBB0083DBD3 /* Build configuration list for PBXNativeTarget "PrefireExampleTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9779D5ED28A3ECBB0083DBD3 /* Debug */,
@@ -571,9 +563,9 @@
 			package = 9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
 			productName = SnapshotTesting;
 		};
-		978AE50C28CCCBDF00EB01E1 /* PreFire */ = {
+		97AB804228D9F0E800414704 /* Prefire */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = PreFire;
+			productName = Prefire;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
