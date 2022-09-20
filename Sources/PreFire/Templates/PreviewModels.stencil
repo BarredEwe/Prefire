@@ -20,7 +20,7 @@ public enum PreviewModels {
                         {{ type.name }}.state = state
                         return AnyView({{ type.name }}.previews)
                     },
-                    name: String(String(describing: {{ type.name }}.self).split(separator: "_").first!),
+                    name: "{{ type.name|replace:"_Previews","" }}",
                     type: {{ type.name }}._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
                     device: {{ type.name }}._allPreviews.first?.device,
                     state: String(String(reflecting: state).split(separator: ".").last!)

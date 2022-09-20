@@ -15,7 +15,7 @@ struct LoadingTimeModifier: ViewModifier {
         content
             .onAppear {
                 guard let createDate = createDate else { return }
-                // Нужно сохранять в массив средних значений по id
+
                 let diffTime = Date().timeIntervalSince(createDate) * 1000
                 completion(String(diffTime.truncatingRemainder(dividingBy: 1000).rounded()) + " ms")
 

@@ -57,11 +57,19 @@ public struct PlaybookView: View {
                     }
                 }
             }
-//            .searchable(
-//                text: $searchText,
-//                placement: .navigationBarDrawer(displayMode: .always),
-//                prompt: isComponent ? "View name" : "User story"
-//            )
+            .transformIf(true) { view -> AnyView in
+                if #available(iOS 15.0, *) {
+                    return AnyView(
+                        view.searchable(
+                            text: $searchText,
+                            placement: .navigationBarDrawer(displayMode: .always),
+                            prompt: isComponent ? "View name" : "User story"
+                        )
+                    )
+                } else {
+                    return AnyView(view)
+                }
+            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("SwiftUI System")
@@ -76,7 +84,7 @@ public struct PlaybookView: View {
                         VStack {
                             if !isComponent {
                                 Text(viewModel.name)
-                                    .font(.callout.bold())//.monospaced())
+                                    .font(.callout.bold())
                             }
 
                             Button(action: {

@@ -12,6 +12,20 @@ public enum PreviewModels {
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
 
+        for state in CircleImage_Previews.State.allCases {
+            views.append(
+                PreviewModel(
+                    content: {
+                        CircleImage_Previews.state = state
+                        return AnyView(CircleImage_Previews.previews)
+                    },
+                    name: "CircleImage",
+                    type: CircleImage_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
+                    device: CircleImage_Previews._allPreviews.first?.device,
+                    state: String(String(reflecting: state).split(separator: ".").last!)
+                )
+            )
+        }
         for state in GreenButton_Previews.State.allCases {
             views.append(
                 PreviewModel(
@@ -19,7 +33,7 @@ public enum PreviewModels {
                         GreenButton_Previews.state = state
                         return AnyView(GreenButton_Previews.previews)
                     },
-                    name: String(String(describing: GreenButton_Previews.self).split(separator: "_").first!),
+                    name: "GreenButton",
                     type: GreenButton_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
                     device: GreenButton_Previews._allPreviews.first?.device,
                     state: String(String(reflecting: state).split(separator: ".").last!)
@@ -33,7 +47,7 @@ public enum PreviewModels {
                         TestViewWithoutState_Previews.state = state
                         return AnyView(TestViewWithoutState_Previews.previews)
                     },
-                    name: String(String(describing: TestViewWithoutState_Previews.self).split(separator: "_").first!),
+                    name: "TestViewWithoutState",
                     type: TestViewWithoutState_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
                     device: TestViewWithoutState_Previews._allPreviews.first?.device,
                     state: String(String(reflecting: state).split(separator: ".").last!)
@@ -47,7 +61,7 @@ public enum PreviewModels {
                         TestView_Previews.state = state
                         return AnyView(TestView_Previews.previews)
                     },
-                    name: String(String(describing: TestView_Previews.self).split(separator: "_").first!),
+                    name: "TestView",
                     type: TestView_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
                     device: TestView_Previews._allPreviews.first?.device,
                     state: String(String(reflecting: state).split(separator: ".").last!)

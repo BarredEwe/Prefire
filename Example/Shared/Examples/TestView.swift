@@ -18,9 +18,7 @@ struct TestView: View {
             LinearGradient(gradient: Gradient(colors: [.green, .indigo]), startPoint: .top, endPoint: .bottom)
                 .frame(height: 200)
 
-            Image("nature")
-                .clipShape(Circle())
-                .shadow(radius: 7)
+            CircleImage()
                 .offset(y: -130)
                 .padding(.bottom, -130)
 

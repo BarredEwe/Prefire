@@ -10,6 +10,7 @@
 		9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
+		9777F17528D0F4200072827B /* CicrleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9777F17428D0F4200072827B /* CicrleImage.swift */; };
 		9779D5E928A3ECBB0083DBD3 /* PreFireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779D5E828A3ECBB0083DBD3 /* PreFireExampleTests.swift */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
 		978AE50D28CCCBDF00EB01E1 /* PreFire in Frameworks */ = {isa = PBXBuildFile; productRef = 978AE50C28CCCBDF00EB01E1 /* PreFire */; };
@@ -32,6 +33,7 @@
 		9735EE2A289C5CF300309267 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9735EE2F289C5CF300309267 /* PreFireExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PreFireExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9735EE48289C5F3A00309267 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
+		9777F17428D0F4200072827B /* CicrleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CicrleImage.swift; sourceTree = "<group>"; };
 		9779D5E628A3ECBA0083DBD3 /* PreFireExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PreFireExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9779D5E828A3ECBB0083DBD3 /* PreFireExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreFireExampleTests.swift; sourceTree = "<group>"; };
 		978AE50E28CCD78400EB01E1 /* PreviewModels.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreviewModels.generated.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				9735EE48289C5F3A00309267 /* TestView.swift */,
+				9777F17428D0F4200072827B /* CicrleImage.swift */,
 			);
 			path = Examples;
 			sourceTree = "<group>";
@@ -283,6 +286,7 @@
 			files = (
 				97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */,
 				9735EE49289C5F3A00309267 /* TestView.swift in Sources */,
+				9777F17528D0F4200072827B /* CicrleImage.swift in Sources */,
 				9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */,
 				978AE50F28CCD78400EB01E1 /* PreviewModels.generated.swift in Sources */,
 			);
