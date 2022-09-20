@@ -4,6 +4,9 @@ if [[ "$1" == "playbook" ]]; then
     is_playbook=true
 elif [[ "$1" == "tests" ]]; then
     is_tests=true
+else
+    echo "error: Prefire: Command-line pasing error"
+    exit 1
 fi
 
 while [[ "$#" -gt 0 ]]; do
@@ -32,13 +35,11 @@ fi
 
 
 if [[ -z "$target" ]]; then
-    echo nontarget
     $SOURCERY_ROOT \
     --sources $sources \
     --templates $TEMPLATE \
     --output $output
 else
-    echo target
     $SOURCERY_ROOT \
     --sources $sources \
     --templates $TEMPLATE \

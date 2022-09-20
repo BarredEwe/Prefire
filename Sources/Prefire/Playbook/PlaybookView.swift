@@ -14,7 +14,6 @@ extension CGFloat {
 }
 
 public struct PlaybookView: View {
-    @Environment(\.safeAreaInsets) private var safeAreaInsets
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var navigationLinkTriggered: Bool = false
@@ -22,6 +21,7 @@ public struct PlaybookView: View {
     @State private var searchText = ""
     @State private var viewModels: [PreviewModel]
     @State private var sectionNames: [String]
+    @State private var safeAreaInsets = EdgeInsets()
 
     private let isComponent: Bool
 
@@ -39,35 +39,40 @@ public struct PlaybookView: View {
                 label: { EmptyView() }
             )
 
-            ScrollView {
-                ForEach(sectionNames, id: \.self) { name in
-                    if searchText.isEmpty || name.contains(searchText) {
-                        VStack(alignment: .leading) {
-                            Text(isComponent ? name : "📙 " + name)
-                                .font(.title.bold())
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, -8)
+            GeometryReader { geo in
+                ScrollView {
+                    ForEach(sectionNames, id: \.self) { name in
+                        if searchText.isEmpty || name.contains(searchText) {
+                            VStack(alignment: .leading) {
+                                Text(isComponent ? name : "📙 " + name)
+                                    .font(.title.bold())
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, -8)
 
-                            componentList(for: name)
+                                componentList(for: name)
 
-                            if sectionNames.last != name {
-                                Divider()
+                                if sectionNames.last != name {
+                                    Divider()
+                                }
                             }
                         }
                     }
                 }
-            }
-            .transformIf(true) { view -> AnyView in
-                if #available(iOS 15.0, *) {
-                    return AnyView(
-                        view.searchable(
-                            text: $searchText,
-                            placement: .navigationBarDrawer(displayMode: .always),
-                            prompt: isComponent ? "View name" : "User story"
+                .transformIf(true) { view -> AnyView in
+                    if #available(iOS 15.0, *) {
+                        return AnyView(
+                            view.searchable(
+                                text: $searchText,
+                                placement: .navigationBarDrawer(displayMode: .always),
+                                prompt: isComponent ? "View name" : "User story"
+                            )
                         )
-                    )
-                } else {
-                    return AnyView(view)
+                    } else {
+                        return AnyView(view)
+                    }
+                }
+                .onAppear {
+                    safeAreaInsets = geo.safeAreaInsets
                 }
             }
         }
