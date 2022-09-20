@@ -35,10 +35,31 @@ For using test:
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
-
 ## Config
 
---
+Something about configuration 🤡
+
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
+----
 ## TODO: 
 - Accesability
 - Переименовать PreFire -> Prefire
