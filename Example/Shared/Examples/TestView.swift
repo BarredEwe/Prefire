@@ -65,6 +65,7 @@ struct TestView_Previews: PreviewProvider, PrefireProvider {
 struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         TestView(isLoading: true)
+            .userStory(.testStory)
             .previewLayout(.sizeThatFits)
     }
 }
@@ -79,5 +80,6 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
             .frame(height: 68)
             .background(Capsule().foregroundColor(.green.opacity(0.2)))
             .previewLayout(.sizeThatFits)
+            .userStory("Buttons")
     }
 }

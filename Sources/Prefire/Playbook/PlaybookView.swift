@@ -41,18 +41,20 @@ public struct PlaybookView: View {
 
             GeometryReader { geo in
                 ScrollView {
-                    ForEach(sectionNames, id: \.self) { name in
-                        if searchText.isEmpty || name.contains(searchText) {
-                            VStack(alignment: .leading) {
-                                Text(isComponent ? name : "📙 " + name)
-                                    .font(.title.bold())
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, -8)
+                    LazyVStack {
+                        ForEach(sectionNames, id: \.self) { name in
+                            if searchText.isEmpty || name.contains(searchText) {
+                                VStack(alignment: .leading) {
+                                    Text(isComponent ? name : "📙 " + name)
+                                        .font(.title.bold())
+                                        .padding(.horizontal, 16)
+                                        .padding(.bottom, -8)
 
-                                componentList(for: name)
+                                    componentList(for: name)
 
-                                if sectionNames.last != name {
-                                    Divider()
+                                    if sectionNames.last != name {
+                                        Divider()
+                                    }
                                 }
                             }
                         }
@@ -83,7 +85,7 @@ public struct PlaybookView: View {
     @ViewBuilder
     private func componentList(for name: String) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
                 ForEach($viewModels) { $viewModel in
                     if viewModel.name == name || viewModel.story == name {
                         VStack {
