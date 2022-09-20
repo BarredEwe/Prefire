@@ -20,9 +20,12 @@ A library for easy automatic **Playbook (Demo) app** generation and **Test** gen
     ```
     https://github.com/BarredEwe/Prefire
     ```
+
+## Usage
+
 ### **Playbook (Demo) App**
 For using demo app:
- - Add **Build Phase** for generating Demo App 
+ - Add **Build Phase** for generating Demo App
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire playbook --sources <sources path> --output <output path>
@@ -35,32 +38,19 @@ For using test:
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
+
 ## Config
 
-Something about configuration 🤡
+- `--sources` - Path to a source swift files or directories where was placed Views. 
+- `--output` - Path to output file.
+- `--target` - Your project Target for Snapshot tests.
+- `--sourcery` - Custom path to Sourcery.
 
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-----
-# Something
+<br><br/>
+<br><br/>
+<br><br/>
+
+# Draft
 ## TODO: 
 - Accesability
 - Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
@@ -69,6 +59,7 @@ Something about configuration 🤡
 - Детальный просмотр компонентов/экранов (Вывод доп. информации)
 
 ## TODO Features:
+- Использовать Sourcery через SPM
 - Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
 - Написать своб генерацию
 - Написать свои снапшот тесты, а не использовать библиотеку (https://github.com/yyokii/UIPreviewCatalog)
