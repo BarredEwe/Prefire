@@ -14,11 +14,11 @@ A library for easy automatic **Playbook (Demo) app** generation and **Test** gen
     ```bash
     brew install sourcery
     ```
-2. Install **PreFire** using _[Swift Package Manager](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app)_
+2. Install **Prefire** using _[Swift Package Manager](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app)_
 
     Select Xcode menu `File > Swift Packages > Add Package Dependency...` and enter repository URL with GUI.
     ```
-    https://github.com/BarredEwe/PreFire
+    https://github.com/BarredEwe/Prefire
     ```
 ### **Playbook (Demo) App**
 For using demo app:
