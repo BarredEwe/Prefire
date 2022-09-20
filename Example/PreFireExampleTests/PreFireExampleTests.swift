@@ -23,6 +23,23 @@ class PreviewTests: XCTestCase {
         UIView.setAnimationsEnabled(false)
     }
 
+    func test_circleImage() {
+        for state in CircleImage_Previews.State.allCases {
+            let type: PreviewModel.ViewType = CircleImage_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
+            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
+
+            // When
+            CircleImage_Previews.state = state
+            let view = CircleImage_Previews.previews
+
+            // Then
+            assertSnapshot(
+                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+            )
+        }
+    }
+
     func test_greenButton() {
         for state in GreenButton_Previews.State.allCases {
             let type: PreviewModel.ViewType = GreenButton_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen

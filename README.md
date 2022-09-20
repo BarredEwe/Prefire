@@ -42,6 +42,7 @@ For using test:
 ## TODO: 
 - Accesability
 - Переименовать PreFire -> Prefire
+- Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
 - Описание, наименование и Example
 - Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)
 - Детальный просмотр компонентов/экранов (Вывод доп. информации)
