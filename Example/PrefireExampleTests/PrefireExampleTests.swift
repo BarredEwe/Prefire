@@ -25,8 +25,10 @@ class PreviewTests: XCTestCase {
 
     func test_circleImage() {
         for state in CircleImage_Previews.State.allCases {
-            let type: PreviewModel.ViewType = CircleImage_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
-            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
+            // Given
+            let preview = CircleImage_Previews._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             CircleImage_Previews.state = state
@@ -34,16 +36,18 @@ class PreviewTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_greenButton() {
         for state in GreenButton_Previews.State.allCases {
-            let type: PreviewModel.ViewType = GreenButton_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
-            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
+            // Given
+            let preview = GreenButton_Previews._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             GreenButton_Previews.state = state
@@ -51,16 +55,18 @@ class PreviewTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testViewWithoutState() {
         for state in TestViewWithoutState_Previews.State.allCases {
-            let type: PreviewModel.ViewType = TestViewWithoutState_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
-            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
+            // Given
+            let preview = TestViewWithoutState_Previews._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             TestViewWithoutState_Previews.state = state
@@ -68,16 +74,18 @@ class PreviewTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testView() {
         for state in TestView_Previews.State.allCases {
-            let type: PreviewModel.ViewType = TestView_Previews._allPreviews.first?.layout == .sizeThatFits ? .component : .screen
-            let device = TestView_Previews._allPreviews.first?.device?.snapshotDevice() ?? deviceConfig
+            // Given
+            let preview = TestView_Previews._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
             TestView_Previews.state = state
@@ -85,8 +93,8 @@ class PreviewTests: XCTestCase {
 
             // Then
             assertSnapshot(
-                matching: type == .screen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
-                as: type == .screen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
