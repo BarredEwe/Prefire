@@ -54,7 +54,7 @@ For generating tests you should first:
 - ⚠️ Есть еще настройки для тестов (не успел описать) 
 
 ## Usage
-For generating tests an playbook, just mark your preview using `protocol PrefireProvider`:
+For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
