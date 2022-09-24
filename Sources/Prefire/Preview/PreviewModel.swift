@@ -10,6 +10,7 @@ import SwiftUI
 // Model
 public struct PreviewModel: Identifiable {
     public typealias UserStory = String
+    public typealias State = String
 
     public enum ViewType: Equatable {
         case screen
@@ -18,7 +19,7 @@ public struct PreviewModel: Identifiable {
 
     @inlinable
     public var id: String {
-        name + state
+        name + (state ?? "")
     }
 
     /// Наша statc view от Preview
@@ -26,7 +27,7 @@ public struct PreviewModel: Identifiable {
     /// Имя preview
     public let name: String
     /// Состояние preview (.default, loading и тд)
-    public let state: String
+    public var state: State?
     /// Тип preview
     public var type: ViewType
     /// Устройство для отображения preview
@@ -40,13 +41,11 @@ public struct PreviewModel: Identifiable {
         content: @escaping () -> AnyView,
         name: String,
         type: ViewType = .component,
-        device: PreviewDevice?,
-        state: String
+        device: PreviewDevice?
     ) {
         self.content = content
         self.name = name
         self.type = type
         self.device = device
-        self.state = state
     }
 }

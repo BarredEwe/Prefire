@@ -44,28 +44,27 @@ extension PreviewModel.UserStory {
     static let testStory = "Test"
 }
 
+extension PreviewModel.State {
+    static let loading = "loading"
+}
+
 struct TestView_Previews: PreviewProvider, PrefireProvider {
-    enum TestViewState: PreviewState {
-        case `default`
-        case loading
-    }
-
-    static var state: TestViewState = .default
-
     static var previews: some View {
-        VStack {
-            TestView(isLoading: state == .loading)
-            Spacer()
-        }
-        .userStory(.testStory)
-        .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
+        TestView(isLoading: false)
+            .previewUserStory(.testStory)
+            .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
+
+        TestView(isLoading: true)
+            .previewUserStory(.testStory)
+            .previewState(.loading)
+            .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
     }
 }
 
 struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         TestView(isLoading: true)
-            .userStory(.testStory)
+            .previewUserStory(.testStory)
             .previewLayout(.sizeThatFits)
     }
 }
@@ -80,6 +79,6 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
             .frame(height: 68)
             .background(Capsule().foregroundColor(.green.opacity(0.2)))
             .previewLayout(.sizeThatFits)
-            .userStory("Buttons")
+            .previewUserStory("Buttons")
     }
 }

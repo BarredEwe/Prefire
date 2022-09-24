@@ -110,6 +110,9 @@ public struct PlaybookView: View {
                                                 sectionNames = viewModels.compactMap { $0.story }.uniqued()
                                             }
                                         }
+                                        .onPreferenceChange(StatePreferenceKey.self) { state in
+                                            viewModel.state = state
+                                        }
 
                                     Divider()
 
@@ -146,7 +149,7 @@ public struct PlaybookView: View {
                 Text("State")
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.smallCaps())
-                Text(viewModel.state.capitalized)
+                Text((viewModel.state  ?? "default").capitalized)
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.weight(.heavy))
             }

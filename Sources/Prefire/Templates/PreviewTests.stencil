@@ -24,19 +24,18 @@ class PreviewTests: XCTestCase {
 
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
-        for state in {{ type.name }}.State.allCases {
+        for view in {{ type.name }}._allPreviews {
             // Given
             let preview = {{ type.name }}._allPreviews.first
             let isScreen = preview?.layout == .device
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            {{ type.name }}.state = state
-            let view = {{ type.name }}.previews
+            let view = view.content
 
             // Then
             assertSnapshot(
-                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }

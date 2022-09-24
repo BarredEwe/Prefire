@@ -13,22 +13,27 @@ public enum PreviewModels {
         var views: [PreviewModel] = []
 
         {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
-        for state in {{ type.name }}.State.allCases {
-            views.append(
-                PreviewModel(
-                    content: {
-                        {{ type.name }}.state = state
-                        return AnyView({{ type.name }}.previews)
-                    },
-                    name: "{{ type.name|replace:"_Previews","" }}",
-                    type: {{ type.name }}._allPreviews.first?.layout == .sizeThatFits ? .component : .screen,
-                    device: {{ type.name }}._allPreviews.first?.device,
-                    state: String(String(reflecting: state).split(separator: ".").last!)
-                )
-            )
-        }
+        views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name|replace:"_Previews","" }}"))
         {% endfor %}
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
+
+    @inlinable
+    static func createModel<Preview: PreviewProvider>(for preview: Preview.Type, name: String) -> [PreviewModel] {
+        var views: [PreviewModel] = []
+
+        for view in Preview._allPreviews {
+            views.append(
+                PreviewModel(
+                    content: { return view.content },
+                    name: name,
+                    type: Preview._allPreviews.first?.layout == .device ? .screen : .component,
+                    device: Preview._allPreviews.first?.device
+                )
+            )
+        }
+
+        return views
+    }
 }

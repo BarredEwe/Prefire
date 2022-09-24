@@ -24,76 +24,72 @@ class PreviewTests: XCTestCase {
     }
 
     func test_circleImage() {
-        for state in CircleImage_Previews.State.allCases {
+        for view in CircleImage_Previews._allPreviews {
             // Given
             let preview = CircleImage_Previews._allPreviews.first
             let isScreen = preview?.layout == .device
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            CircleImage_Previews.state = state
-            let view = CircleImage_Previews.previews
+            let view = view.content
 
             // Then
             assertSnapshot(
-                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_greenButton() {
-        for state in GreenButton_Previews.State.allCases {
+        for view in GreenButton_Previews._allPreviews {
             // Given
             let preview = GreenButton_Previews._allPreviews.first
             let isScreen = preview?.layout == .device
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            GreenButton_Previews.state = state
-            let view = GreenButton_Previews.previews
+            let view = view.content
 
             // Then
             assertSnapshot(
-                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testViewWithoutState() {
-        for state in TestViewWithoutState_Previews.State.allCases {
+        for view in TestViewWithoutState_Previews._allPreviews {
             // Given
             let preview = TestViewWithoutState_Previews._allPreviews.first
             let isScreen = preview?.layout == .device
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            TestViewWithoutState_Previews.state = state
-            let view = TestViewWithoutState_Previews.previews
+            let view = view.content
 
             // Then
             assertSnapshot(
-                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }
     }
 
     func test_testView() {
-        for state in TestView_Previews.State.allCases {
+        for view in TestView_Previews._allPreviews {
             // Given
             let preview = TestView_Previews._allPreviews.first
             let isScreen = preview?.layout == .device
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            TestView_Previews.state = state
-            let view = TestView_Previews.previews
+            let view = view.content
 
             // Then
             assertSnapshot(
-                matching: isScreen ? AnyView(view) : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
         }

@@ -89,6 +89,8 @@ For detailed instruction you should see [swift-snapshot-testing](https://github.
 
 # Draft ⚠️
 ## TODO: 
+- Исправить баг - в UserStories показывается только первая вью
+- UserStory - переименовать в flow
 - Accesability
 - Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
 - Описание, наименование и Example
