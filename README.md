@@ -45,14 +45,6 @@ For generating tests you should first:
 - Build your project
 - For runnug test you should add genereted file to your project in testTarget.
 
-## Config
-
-- `--sources` - Path to a source swift files or directories where was placed Views. 
-- `--output` - Path to output file.
-- `--target` - Your project Target for Snapshot tests.
-- `--sourcery` - Custom path to Sourcery.
-- ⚠️ Есть еще настройки для тестов (не успел описать) 
-
 ## Usage
 For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
 ```swift
@@ -79,7 +71,13 @@ Just run generated test 🚀
 
 For detailed instruction you should see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
 
-
+## Config
+**prefire** script configs:
+- `--sources` - Path to a source swift files or directories where was placed Views. 
+- `--output` - Path to output file.
+- `--target` - Your project Target for Snapshot tests.
+- `--sourcery` - Custom path to Sourcery.
+- ⚠️ Есть еще настройки для тестов (не успел описать) 
 
 
 <br><br/>
