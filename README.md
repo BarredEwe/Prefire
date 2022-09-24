@@ -27,7 +27,7 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 
 ### **Playbook (Demo) App**
 For generating Playbook you should first:
- - Add **Build Phase** for generating Demo App:
+ - Add **Build Phase** to main target for generating Demo App:
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire playbook --sources <sources path> --output <output path>
@@ -37,7 +37,7 @@ For generating Playbook you should first:
 
 ### **Snapshot tests**
 For generating tests you should first:
-- Add **Build Phase** for generating Snapshot tests:
+- Add **Build Phase** to test target for generating Snapshot tests:
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire tests --sources <sources path> --output <output path> --target <test target>
