@@ -69,7 +69,29 @@ struct ContentView: View {
 ### **Snapshot tests**
 Just run generated test 🚀
 
-For detailed instruction you should see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+
+## API
+New commands for previews:
+
+- Function for connecting preview together in one Flow:
+    ```swift
+    .previewUserStory(.auth)
+    ```
+    For example Authorization flow (LoginView, OTPView, PincodeView)
+
+- If one preview contains more than one View, you can mark State for theese views.
+    ```swift
+    .previewState(.loading)
+    ```
+    ```swift
+    static var previews: some View {
+        Text("Default")
+
+        Text("Default")
+            .previewState(.loading)
+    }
+    ```
 
 ## Config
 **prefire** script configs:
@@ -77,7 +99,8 @@ For detailed instruction you should see [swift-snapshot-testing](https://github.
 - `--output` - Path to output file.
 - `--target` - Your project Target for Snapshot tests.
 - `--sourcery` - Custom path to Sourcery.
-- ⚠️ Есть еще настройки для тестов (не успел описать) 
+- `--device` - ⚠️
+- `--os_version` - ⚠️
 
 
 <br><br/>
