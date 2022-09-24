@@ -4,6 +4,8 @@
 
 A library for easy automatic **Playbook (Demo) app** generation and **Test** generation. Supports both work with UI-components and work with screens and their flow.
 
+For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing).
+
 ## Screenshots
 
 --
@@ -21,23 +23,27 @@ A library for easy automatic **Playbook (Demo) app** generation and **Test** gen
     https://github.com/BarredEwe/Prefire
     ```
 
-## Usage
+## Setup
 
 ### **Playbook (Demo) App**
-For using demo app:
- - Add **Build Phase** for generating Demo App
+For generating Playbook you should first:
+ - Add **Build Phase** for generating Demo App:
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire playbook --sources <sources path> --output <output path>
     ```
+- Build your project
+- Add genereted file to your project
 
 ### **Snapshot tests**
-For using test:
-- Add **Build Phase** for generating Snapshot tests
+For generating tests you should first:
+- Add **Build Phase** for generating Snapshot tests:
     ```bash
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
+- Build your project
+- For runnug test you should add genereted file to your project in testTarget.
 
 ## Config
 
@@ -45,12 +51,45 @@ For using test:
 - `--output` - Path to output file.
 - `--target` - Your project Target for Snapshot tests.
 - `--sourcery` - Custom path to Sourcery.
+- ⚠️ Есть еще настройки для тестов (не успел описать) 
+
+## Usage
+For generating tests an playbook, just mark your preview using `protocol PrefireProvider`:
+```swift
+struct Text_Previews: PreviewProvider, PrefireProvider {
+    static var previews: some View { ... }
+}
+```
+
+### **Playbook (Demo) View**
+For using Playbook just use `PlaybookView`
+
+```swift
+import Prefire 
+
+struct ContentView: View {
+    var body: some View {
+        PlaybookView(isComponent: true, previewModels: PreviewModels.models)
+    }
+}
+```
+
+### **Snapshot tests**
+Just run generated test 🚀
+
+For detailed instruction you should see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+
+
+
 
 <br><br/>
 <br><br/>
 <br><br/>
 
-# Draft
+## Draft Detail description
+()-- you need preview models. Theese models located in generated file.
+
+# Draft ⚠️
 ## TODO: 
 - Accesability
 - Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
