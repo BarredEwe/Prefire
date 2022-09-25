@@ -32,6 +32,7 @@ For generating Playbook you should first:
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire playbook --sources <sources path> --output <output path>
     ```
+- Uncheck mark ```✅ Based on dependecy analysis```.
 - Build your project
 - Add genereted file to your project
 
@@ -42,8 +43,18 @@ For generating tests you should first:
     export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
     prefire tests --sources <sources path> --output <output path> --target <test target>
     ```
+- Uncheck mark ```✅ Based on dependecy analysis```.
 - Build your project
 - For runnug test you should add genereted file to your project in testTarget.
+
+## Config
+**prefire** script configs:
+- `--sources` - Path to a source swift files or directories where was placed Views. 
+- `--output` - Path to output file.
+- `--target` - Your project Target for Snapshot tests.
+- `--sourcery` - Custom path to Sourcery.
+- `--device` - Device for Snapshot testing.
+- `--os_version` - iOS version for Snapshot testing.
 
 ## Usage
 For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
@@ -92,15 +103,6 @@ New commands for previews:
             .previewState(.loading)
     }
     ```
-
-## Config
-**prefire** script configs:
-- `--sources` - Path to a source swift files or directories where was placed Views. 
-- `--output` - Path to output file.
-- `--target` - Your project Target for Snapshot tests.
-- `--sourcery` - Custom path to Sourcery.
-- `--device` - Device for Snapshot testing.
-- `--os_version` - iOS version for Snapshot testing.
 
 ## Previews Troubleshooting
 - Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
