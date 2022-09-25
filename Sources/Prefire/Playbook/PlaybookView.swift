@@ -97,7 +97,6 @@ public struct PlaybookView: View {
                                     .font(.callout.bold())
                             }
                             PreviewView(
-                                id: viewModel.id,
                                 isComponent: isComponent,
                                 geo: geo,
                                 selectedId: $selectedId,
@@ -115,7 +114,9 @@ public struct PlaybookView: View {
     }
 
     struct PreviewView: View, Identifiable {
-        let id: String
+        var id: String {
+            viewModel.id + "PreviewView"
+        }
         let isComponent: Bool
         let geo: GeometryProxy
 
