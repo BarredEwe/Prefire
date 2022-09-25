@@ -29,7 +29,7 @@ https://github.com/BarredEwe/Prefire
 For generating Playbook you should first:
  - Add **Build Phase** to main target for generating Demo App:
 ```bash
-export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
 prefire playbook --sources <sources path> --output <output path>
 ```
 - Fill `<sources path>` and `<output path>`
@@ -45,7 +45,7 @@ prefire playbook --sources ./ -- output Tests/PrefireTests.generated.swift
 For generating tests you should first:
 - Add **Build Phase** to test target for generating Snapshot tests:
 ```bash
-export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
 prefire tests --sources <sources path> --output <output path> --target <test target>
 ```
 - Fill `<sources path>`, `<output path>` and `<output path>`
