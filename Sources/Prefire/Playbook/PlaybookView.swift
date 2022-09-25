@@ -114,8 +114,9 @@ public struct PlaybookView: View {
     }
 
     struct PreviewView: View, Identifiable {
+        @inlinable
         var id: String {
-            viewModel
+            viewModel.id
         }
         let isComponent: Bool
         let geo: GeometryProxy
