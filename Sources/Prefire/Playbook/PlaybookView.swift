@@ -182,7 +182,7 @@ public struct PlaybookView: View {
                 .disabled(true)
                 .frame(width: UIScreen.main.bounds.width)
                 .transformIf(isScreen) { view in
-                    view.frame(height: screenHeight - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
+                    view.frame(height: screenHeight - .infoViewHeight)
                 }
                 .modifier(ScaleModifier(scale: .scale))
         }

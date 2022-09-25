@@ -103,7 +103,8 @@ New commands for previews:
 - `--os_version` - iOS version for Snapshot testing.
 
 ## Previews Troubleshooting
-Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
+- Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
+- NavigationView in Preview is not supported
 
 <br><br/>
 <br><br/>
