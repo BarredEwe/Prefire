@@ -2,7 +2,7 @@
 
 ## About
 
-A library for easy automatic **Playbook (Demo) app** generation and **Test** generation. Supports both work with UI-components and work with screens and their flow.
+A library for easy automatic **Playbook (Demo) view** generation and **Test** generation. Works with UI-components 🔘, screens 📺 and flows 🌊
 
 For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing).
 
@@ -25,14 +25,19 @@ https://github.com/BarredEwe/Prefire
 
 ## Setup
 
-### **Playbook (Demo) App**
+### **Playbook (Demo) View**
 For generating Playbook you should first:
  - Add **Build Phase** to main target for generating Demo App:
 ```bash
 export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
 prefire playbook --sources <sources path> --output <output path>
 ```
-- Uncheck mark ```✅ Based on dependecy analysis```.
+- Fill `<sources path>` and `<output path>`
+```bash
+# Example:
+prefire playbook --sources ./ -- output Tests/PrefireTests.generated.swift
+```
+- _Uncheck_ mark ```✅ Based on dependecy analysis```.
 - Build your project
 - Add genereted file to your project
 
@@ -43,13 +48,18 @@ For generating tests you should first:
 export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
 prefire tests --sources <sources path> --output <output path> --target <test target>
 ```
-- Uncheck mark ```✅ Based on dependecy analysis```.
-- Build your project
+- Fill `<sources path>`, `<output path>` and `<output path>`
+```bash
+# Example:
+prefire tests --sources ./ -- output Tests/PrefireTests.generated.swift --target MyProject
+```
+- _Uncheck_ mark ```✅ Based on dependecy analysis```.
+- Build (__CMD + B__) your project
 - For runnug test you should add genereted file to your project in testTarget.
 
 ## Config
 **prefire** script configs:
-- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories where was placed Views. 
+- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories with Views. 
 - `--output`<span style="color:red">*</span> - Path to output file.
 - `--target` - Your project Target for Snapshot tests. __Default__: _empty_
 - `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
