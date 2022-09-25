@@ -2,9 +2,11 @@
 
 ## About
 
+Do you like **SwiftUI Preview** and use it? Then you must trying 🔥**Prefire**!
+
 A library for easy automatic **Playbook (Demo) view** generation and **Test** generation. Works with UI-components 🔘, screens 📺 and flows 🌊
 
-For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing).
+You can try 🔥**Prefire** starting from example project.
 
 ## Screenshots
 
@@ -101,7 +103,7 @@ New commands for previews:
     ```
     For example Authorization flow (LoginView, OTPView, PincodeView)
 
-- If one preview contains more than one View, you can mark State for theese views.
+- If a preview contains more than one View, you can mark State for these views.
     ```swift
     .previewState(.loading)
     ```
@@ -109,7 +111,7 @@ New commands for previews:
     static var previews: some View {
         Text("Default")
 
-        Text("Default")
+        Text("Loading")
             .previewState(.loading)
     }
     ```
@@ -118,12 +120,14 @@ New commands for previews:
 - Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
 - NavigationView in Preview is not supported
 
-<br><br/>
-<br><br/>
-<br><br/>
-
 ## Draft Detail description
 ()-- you need preview models. Theese models located in generated file.
+
+For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing).
+
+<br><br/>
+<br><br/>
+<br><br/>
 
 # Draft ⚠️
 ## TODO: 

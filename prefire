@@ -27,9 +27,16 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-PREFIRE_DEFAULT=${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire
-SOURCERY_DEFAULT="/opt/homebrew/bin/sourcery"
+if [[ -f "/opt/homebrew/bin/sourcery" ]]; then
+    SOURCERY_DEFAULT="/opt/homebrew/bin/sourcery"
+elif [[ -f "/opt/homebrew/bin/sourcery" ]]; then
+    SOURCERY_DEFAULT="/usr/local/bin/sourcery"
+else
+    echo "error: Prefire: Sourcery was not installed. Please install, or set custom path: '--sourcery'"
+    exit 1
+fi
 
+PREFIRE_DEFAULT=${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire
 PREFIRE_ROOT="${root:-$PREFIRE_DEFAULT}"
 SOURCERY_ROOT="${sourcery:-$SOURCERY_DEFAULT}"
 TEMPLATES_ROOT=$PREFIRE_ROOT/Sources/PreFire/Templates
