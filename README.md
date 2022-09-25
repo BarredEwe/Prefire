@@ -112,7 +112,6 @@ New commands for previews:
 
 # Draft ⚠️
 ## TODO: 
-- Исправить баг - в UserStories показывается только первая вью
 - UserStory - переименовать в flow
 - Accesability
 - Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
@@ -132,6 +131,7 @@ New commands for previews:
 - Темная тема (возможно переключение в рантайм)
 
 ## DONE:
+- ✅ Исправить баг - в UserStories показывается только первая вью
 - ✅ Переименовать PreFire -> Prefire
 - ✅ Cделать скрипт для запуска в Build Phase Tests
 - ✅ Сделать скрипт для запуска в Build Phase DemoApp

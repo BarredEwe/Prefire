@@ -16,12 +16,8 @@ public struct PreviewModel: Identifiable {
         case screen
         case component
     }
-
-    @inlinable
-    public var id: String {
-        name + (state ?? "")
-    }
-
+    
+    public let id: String
     /// Наша statc view от Preview
     public let content: () -> AnyView
     /// Имя preview
@@ -38,11 +34,13 @@ public struct PreviewModel: Identifiable {
     public var renderTime: String?
 
     public init(
+        id: String,
         content: @escaping () -> AnyView,
         name: String,
         type: ViewType = .component,
         device: PreviewDevice?
     ) {
+        self.id = id
         self.content = content
         self.name = name
         self.type = type

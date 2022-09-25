@@ -149,7 +149,7 @@ public struct PlaybookView: View {
                 Text("State")
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.smallCaps())
-                Text((viewModel.state  ?? "default").capitalized)
+                Text((viewModel.state ?? "default").capitalized)
                     .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                     .font(.caption.weight(.heavy))
             }

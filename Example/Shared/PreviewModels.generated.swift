@@ -24,9 +24,10 @@ public enum PreviewModels {
     static func createModel<Preview: PreviewProvider>(for preview: Preview.Type, name: String) -> [PreviewModel] {
         var views: [PreviewModel] = []
 
-        for view in Preview._allPreviews {
+        for (index, view) in Preview._allPreviews.enumerated() {
             views.append(
                 PreviewModel(
+                    id: name + "\(index)" + String(describing: self),
                     content: { return view.content },
                     name: name,
                     type: Preview._allPreviews.first?.layout == .device ? .screen : .component,
