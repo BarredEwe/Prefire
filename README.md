@@ -99,9 +99,11 @@ New commands for previews:
 - `--output` - Path to output file.
 - `--target` - Your project Target for Snapshot tests.
 - `--sourcery` - Custom path to Sourcery.
-- `--device` - ⚠️
-- `--os_version` - ⚠️
+- `--device` - Device for Snapshot testing.
+- `--os_version` - iOS version for Snapshot testing.
 
+## Previews Troubleshooting
+Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
 
 <br><br/>
 <br><br/>

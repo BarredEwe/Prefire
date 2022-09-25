@@ -43,7 +43,7 @@ public struct PlaybookView: View {
 
             GeometryReader { geo in
                 ScrollView {
-                    LazyVStack {
+                    VStack {
                         ForEach(sectionNames, id: \.self) { name in
                             if searchText.isEmpty || name.contains(searchText) {
                                 VStack(alignment: .leading) {
@@ -115,7 +115,7 @@ public struct PlaybookView: View {
 
     struct PreviewView: View, Identifiable {
         var id: String {
-            viewModel.id + "PreviewView"
+            viewModel
         }
         let isComponent: Bool
         let geo: GeometryProxy
