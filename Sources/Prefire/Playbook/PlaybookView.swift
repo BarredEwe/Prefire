@@ -11,6 +11,8 @@ import Foundation
 extension CGFloat {
     static let scale: CGFloat = 0.55
     static let infoViewHeight: CGFloat = 42
+    static let screenHeight = UIScreen.main.bounds.height
+    static let screeenWidth = UIScreen.main.bounds.width
 }
 
 public struct PlaybookView: View {
@@ -19,7 +21,6 @@ public struct PlaybookView: View {
     @State private var searchText = ""
     @State private var viewModels: [PreviewModel]
     @State private var sectionNames: [String]
-    @State private var safeAreaInsets = EdgeInsets()
 
     private let isComponent: Bool
 
@@ -41,43 +42,37 @@ public struct PlaybookView: View {
                 label: { EmptyView() }
             )
 
-            GeometryReader { geo in
-                ScrollView {
-                    VStack {
-                        ForEach(sectionNames, id: \.self) { name in
-                            if searchText.isEmpty || name.contains(searchText) {
-                                VStack(alignment: .leading) {
-                                    Text(isComponent ? name : "📙 " + name)
-                                        .font(.title.bold())
-                                        .padding(.horizontal, 16)
-                                        .padding(.bottom, -8)
+            ScrollView {
+                VStack {
+                    ForEach(sectionNames, id: \.self) { name in
+                        if searchText.isEmpty || name.contains(searchText) {
+                            VStack(alignment: .leading) {
+                                Text(isComponent ? name : "📙 " + name)
+                                    .font(.title.bold())
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, -8)
 
-                                    componentList(for: name, geo: geo)
+                                componentList(for: name)
 
-                                    if sectionNames.last != name {
-                                        Divider()
-                                    }
+                                if sectionNames.last != name {
+                                    Divider()
                                 }
                             }
                         }
                     }
                 }
-                .transformIf(true) { view -> AnyView in
-                    if #available(iOS 15.0, *) {
-                        return AnyView(
-                            view.searchable(
-                                text: $searchText,
-                                placement: .navigationBarDrawer(displayMode: .always),
-                                prompt: isComponent ? "View name" : "User story"
-                            )
+            }
+            .transformIf(true) { view -> AnyView in
+                if #available(iOS 15.0, *) {
+                    return AnyView(
+                        view.searchable(
+                            text: $searchText,
+                            placement: .navigationBarDrawer(displayMode: .always),
+                            prompt: isComponent ? "View name" : "User story"
                         )
-                    } else {
-                        return AnyView(view)
-                    }
-                }
-                .onAppear {
-                    // Always zero - must be fixed
-                    safeAreaInsets = geo.safeAreaInsets
+                    )
+                } else {
+                    return AnyView(view)
                 }
             }
         }
@@ -86,7 +81,7 @@ public struct PlaybookView: View {
     }
 
     @ViewBuilder
-    private func componentList(for name: String, geo: GeometryProxy) -> some View {
+    private func componentList(for name: String) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach($viewModels) { $viewModel in
@@ -98,7 +93,6 @@ public struct PlaybookView: View {
                             }
                             PreviewView(
                                 isComponent: isComponent,
-                                geo: geo,
                                 selectedId: $selectedId,
                                 navigationLinkTriggered: $navigationLinkTriggered,
                                 viewModel: $viewModel,
@@ -119,7 +113,6 @@ public struct PlaybookView: View {
             viewModel.id
         }
         let isComponent: Bool
-        let geo: GeometryProxy
 
         @Binding var selectedId: String
         @Binding var navigationLinkTriggered: Bool
@@ -137,9 +130,7 @@ public struct PlaybookView: View {
                     MiniView(
                         id: viewModel.id,
                         isScreen: viewModel.type == .screen,
-                        view: viewModel.content(),
-                        screenHeight: geo.size.height,
-                        safeAreaInsets: geo.safeAreaInsets
+                        view: viewModel.content()
                     )
                     .modifier(LoadingTimeModifier { loadingTime in
                         guard viewModel.renderTime == nil else { return }
@@ -174,15 +165,14 @@ public struct PlaybookView: View {
         let id: String
         let isScreen: Bool
         var view: Content
-        var screenHeight: CGFloat
-        var safeAreaInsets: EdgeInsets
+        @Environment(\.safeAreaInsets) private var safeAreaInsets
 
         var body: some View {
             view
                 .disabled(true)
-                .frame(width: UIScreen.main.bounds.width)
+                .frame(width: .screeenWidth)
                 .transformIf(isScreen) { view in
-                    view.frame(height: screenHeight - .infoViewHeight)
+                    view.frame(height: .screenHeight - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
                 }
                 .modifier(ScaleModifier(scale: .scale))
         }
