@@ -35,6 +35,8 @@ struct TestView: View {
                 }
             }
             .padding()
+
+            Spacer()
         }
         .redacted(reason: isLoading ? .placeholder : [])
     }

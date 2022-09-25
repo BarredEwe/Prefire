@@ -14,8 +14,6 @@ extension CGFloat {
 }
 
 public struct PlaybookView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
     @State private var searchText = ""
@@ -32,6 +30,10 @@ public struct PlaybookView: View {
     }
 
     public var body: some View {
+        if #available(iOS 15.0, *) {
+            let _ = Self._printChanges()
+        }
+
         VStack {
             NavigationLink(
                 isActive: $navigationLinkTriggered,
@@ -41,7 +43,7 @@ public struct PlaybookView: View {
 
             GeometryReader { geo in
                 ScrollView {
-                    VStack {
+                    LazyVStack {
                         ForEach(sectionNames, id: \.self) { name in
                             if searchText.isEmpty || name.contains(searchText) {
                                 VStack(alignment: .leading) {
@@ -50,7 +52,7 @@ public struct PlaybookView: View {
                                         .padding(.horizontal, 16)
                                         .padding(.bottom, -8)
 
-                                    componentList(for: name)
+                                    componentList(for: name, geo: geo)
 
                                     if sectionNames.last != name {
                                         Divider()
@@ -74,6 +76,7 @@ public struct PlaybookView: View {
                     }
                 }
                 .onAppear {
+                    // Always zero - must be fixed
                     safeAreaInsets = geo.safeAreaInsets
                 }
             }
@@ -83,7 +86,7 @@ public struct PlaybookView: View {
     }
 
     @ViewBuilder
-    private func componentList(for name: String) -> some View {
+    private func componentList(for name: String, geo: GeometryProxy) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach($viewModels) { $viewModel in
@@ -93,36 +96,16 @@ public struct PlaybookView: View {
                                 Text(viewModel.name)
                                     .font(.callout.bold())
                             }
-
-                            Button(action: {
-                                selectedId = viewModel.id
-                                navigationLinkTriggered.toggle()
-                            }) {
-                                VStack(alignment: .center, spacing: 0) {
-                                    miniView(for: viewModel)
-                                        .modifier(LoadingTimeModifier { loadingTime in
-                                            viewModel.renderTime = loadingTime
-                                        })
-                                        .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
-                                            viewModel.story = userStory
-
-                                            if !isComponent {
-                                                sectionNames = viewModels.compactMap { $0.story }.uniqued()
-                                            }
-                                        }
-                                        .onPreferenceChange(StatePreferenceKey.self) { state in
-                                            viewModel.state = state
-                                        }
-
-                                    Divider()
-
-                                    infoView(for: viewModel)
-                                }
-                                .background(colorScheme == .dark ? Color(UIColor.darkGray) : Color.white)
-                                .cornerRadius(16)
-                                .shadow(color: Color.gray.opacity(0.7), radius: 8)
-                            }
-                            .buttonStyle(ScaleEffectButtonStyle())
+                            PreviewView(
+                                id: viewModel.id,
+                                isComponent: isComponent,
+                                geo: geo,
+                                selectedId: $selectedId,
+                                navigationLinkTriggered: $navigationLinkTriggered,
+                                viewModel: $viewModel,
+                                viewModels: $viewModels,
+                                sectionNames: $sectionNames
+                            )
                         }
                     }
                 }
@@ -131,45 +114,112 @@ public struct PlaybookView: View {
         }
     }
 
-    @ViewBuilder
-    private func miniView(for viewModel: PreviewModel) -> some View {
-        viewModel.content()
-            .disabled(true)
-            .frame(width: UIScreen.main.bounds.width)
-            .transformIf(viewModel.type == .screen) { view in
-                view.frame(height: UIScreen.main.bounds.height - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
+    struct PreviewView: View, Identifiable {
+        let id: String
+        let isComponent: Bool
+        let geo: GeometryProxy
+
+        @Binding var selectedId: String
+        @Binding var navigationLinkTriggered: Bool
+        @Binding var viewModel: PreviewModel
+        @Binding var viewModels: [PreviewModel]
+        @Binding var sectionNames: [String]
+        @Environment(\.colorScheme) private var colorScheme
+
+        var body: some View {
+            Button(action: {
+                selectedId = viewModel.id
+                navigationLinkTriggered.toggle()
+            }) {
+                VStack(alignment: .center, spacing: 0) {
+                    MiniView(
+                        id: viewModel.id,
+                        isScreen: viewModel.type == .screen,
+                        view: viewModel.content(),
+                        screenHeight: geo.size.height,
+                        safeAreaInsets: geo.safeAreaInsets
+                    )
+                    .modifier(LoadingTimeModifier { loadingTime in
+                        guard viewModel.renderTime == nil else { return }
+                        viewModel.renderTime = loadingTime
+                    })
+                    .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
+                        guard viewModel.story != userStory else { return }
+                        viewModel.story = userStory
+
+                        if !isComponent {
+                            sectionNames = viewModels.compactMap { $0.story }.uniqued()
+                        }
+                    }
+                    .onPreferenceChange(StatePreferenceKey.self) { state in
+                        guard viewModel.state != state else { return }
+                        viewModel.state = state
+                    }
+
+                    Divider()
+
+                    InfoView(renderTime: $viewModel.renderTime, state: $viewModel.state)
+                }
+                .background(colorScheme == .dark ? Color(UIColor.darkGray) : Color.white)
+                .cornerRadius(16)
+                .shadow(color: Color.gray.opacity(0.7), radius: 8)
             }
-            .modifier(ScaleModifier(scale: .scale))
+            .buttonStyle(ScaleEffectButtonStyle())
+        }
     }
 
-    @ViewBuilder
-    private func infoView(for viewModel: PreviewModel) -> some View {
-        HStack(alignment: .center, spacing: 8) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("State")
-                    .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                    .font(.caption.smallCaps())
-                Text((viewModel.state ?? "default").capitalized)
-                    .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                    .font(.caption.weight(.heavy))
-            }
-            .padding(8)
+    struct MiniView<Content: View>: View, Identifiable {
+        let id: String
+        let isScreen: Bool
+        var view: Content
+        var screenHeight: CGFloat
+        var safeAreaInsets: EdgeInsets
 
-            Spacer()
+        var body: some View {
+            view
+                .disabled(true)
+                .frame(width: UIScreen.main.bounds.width)
+                .transformIf(isScreen) { view in
+                    view.frame(height: screenHeight - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
+                }
+                .modifier(ScaleModifier(scale: .scale))
+        }
+    }
 
-            if let renderTime = viewModel.renderTime {
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text("Render time")
+    struct InfoView: View {
+        @Environment(\.colorScheme) private var colorScheme
+
+        @Binding var renderTime: String?
+        @Binding var state: PreviewModel.State?
+
+        var body: some View {
+            HStack(alignment: .center, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("State")
                         .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                         .font(.caption.smallCaps())
-                    Text(renderTime)
+                    Text((state ?? "default").capitalized)
                         .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                         .font(.caption.weight(.heavy))
                 }
                 .padding(8)
+
+                Spacer()
+
+                if let renderTime = renderTime {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text("Render time")
+                            .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
+                            .font(.caption.smallCaps())
+                        Text(renderTime)
+                            .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
+                            .font(.caption.weight(.heavy))
+                    }
+                    .padding(8)
+                }
             }
+            .frame(width: UIScreen.main.bounds.width * .scale, height: .infoViewHeight)
         }
-        .frame(width: UIScreen.main.bounds.width * .scale, height: .infoViewHeight)
     }
 
     @ViewBuilder

@@ -18,13 +18,13 @@ struct ScaleModifier: ViewModifier {
                 GeometryReader { proxy in
                     Color.clear
                         .onAppear {
-                            size = proxy.size
+                            size = CGSize(width: proxy.size.width * scale, height: proxy.size.height * scale)
                         }
                 },
                 alignment: .center
             )
             .scaleEffect(scale)
-            .frame(width: size.width * scale, height: size.height * scale)
+            .frame(width: size.width, height: size.height)
     }
 }
 
