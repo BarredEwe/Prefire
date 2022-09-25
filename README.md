@@ -8,7 +8,7 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 
 ## Screenshots
 
---
+<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="200" /> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="200" />
 
 ## Installation
 
