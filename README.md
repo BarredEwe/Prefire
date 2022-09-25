@@ -13,25 +13,25 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 ## Installation
 
 1. Install [Sourcery](https://github.com/krzysztofzablocki/Sourcery) using _[Homebrew](https://brew.sh)_
-    ```bash
-    brew install sourcery
-    ```
+```bash
+brew install sourcery
+```
 2. Install **Prefire** using _[Swift Package Manager](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app)_
 
     Select Xcode menu `File > Swift Packages > Add Package Dependency...` and enter repository URL with GUI.
-    ```
-    https://github.com/BarredEwe/Prefire
-    ```
+```
+https://github.com/BarredEwe/Prefire
+```
 
 ## Setup
 
 ### **Playbook (Demo) App**
 For generating Playbook you should first:
  - Add **Build Phase** to main target for generating Demo App:
-    ```bash
-    export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
-    prefire playbook --sources <sources path> --output <output path>
-    ```
+```bash
+export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+prefire playbook --sources <sources path> --output <output path>
+```
 - Uncheck mark ```✅ Based on dependecy analysis```.
 - Build your project
 - Add genereted file to your project
@@ -39,22 +39,22 @@ For generating Playbook you should first:
 ### **Snapshot tests**
 For generating tests you should first:
 - Add **Build Phase** to test target for generating Snapshot tests:
-    ```bash
-    export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
-    prefire tests --sources <sources path> --output <output path> --target <test target>
-    ```
+```bash
+export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/PreFire"
+prefire tests --sources <sources path> --output <output path> --target <test target>
+```
 - Uncheck mark ```✅ Based on dependecy analysis```.
 - Build your project
 - For runnug test you should add genereted file to your project in testTarget.
 
 ## Config
 **prefire** script configs:
-- `--sources` - Path to a source swift files or directories where was placed Views. 
-- `--output` - Path to output file.
-- `--target` - Your project Target for Snapshot tests.
-- `--sourcery` - Custom path to Sourcery.
-- `--device` - Device for Snapshot testing.
-- `--os_version` - iOS version for Snapshot testing.
+- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories where was placed Views. 
+- `--output`<span style="color:red">*</span> - Path to output file.
+- `--target` - Your project Target for Snapshot tests. __Default__: _empty_
+- `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
+- `--device` - Device for Snapshot testing. __Default__: _iPhone 12_
+- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 15_
 
 ## Usage
 For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
