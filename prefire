@@ -4,8 +4,15 @@ if [[ "$1" == "playbook" ]]; then
     is_playbook=true
 elif [[ "$1" == "tests" ]]; then
     is_tests=true
+elif [[ "$1" == "--help" ]]; then
+    echo "OVERVIEW: Prefire - playbook and test generator.\n"
+    echo "USAGE: prefire <subcommand> <options>\n"
+    echo "SUBCOMMANDS:"
+    echo "   playbook                Generating ViewModels for PlaybookView."
+    echo "   tests                   Generating file contained Snapshot tests."
+    exit 1
 else
-    echo "error: Prefire: Command-line pasing error"
+    echo "error: Prefire: Use --help"
     exit 1
 fi
 
