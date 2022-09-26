@@ -127,38 +127,20 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 
 <br><br/>
 <br><br/>
-<br><br/>
-
-# Draft ⚠️
-## TODO: 
-- UserStory - переименовать в flow
+## Road map: 
+- UserStory - rename to flow
 - Accesability
-- Скрипт в Build Phase для тестов сделать настройку тестов (device, os и тд)
-- Описание, наименование и Example
-- Сделать хороший Example (UserStories - Auth, Components - Button, и еще что-то)
-- Детальный просмотр компонентов/экранов (Вывод доп. информации)
+- Script for Build Phase for tests - make test settings (device, os and etc)
+- Description and Example
+- Make a good Example: (UserStories - Auth, Components - Button, and maybe something else)
+- Detail info
 
 ## TODO Features:
-- Использовать Sourcery через SPM
-- Сделать Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
-- Написать своб генерацию
-- Написать свои снапшот тесты, а не использовать библиотеку (https://github.com/yyokii/UIPreviewCatalog)
-- Использовать снапшот для отображения дизайн системы (Не уверен что нормально получится)  
-- Fonts: экран с шрифтами, размерами, наименованиями
-- Colors: экран с цветами и наименованиями
-- Локализация (возможно переключение в рантайм)
-- Темная тема (возможно переключение в рантайм)
-
-## DONE:
-- ✅ Исправить баг - в UserStories показывается только первая вью
-- ✅ Переименовать PreFire -> Prefire
-- ✅ Cделать скрипт для запуска в Build Phase Tests
-- ✅ Сделать скрипт для запуска в Build Phase DemoApp
-- ✅ Ограничения для Snapshots (Только нужное устройство и версия ОС)
-- ✅ Выбрать название (PreFire)
-- ✅ Поиск компонентов
-- ✅ Конфигурация Templates (устройство по умолчанию, imports)
-- ✅ Группировать элементы UserStory: (auth, postings), Type: (component)
-- ✅ Темная тема в Playbook приложении
-- ✅ Переименовать PreviewProdiver в PreFireProvider
-- ✅ Объеденить WrapperView и PreviewModel
+- Using Sourcery with SPM
+- Make a Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
+- Write own generation
+- Write own snapshot tests. Example: (https://github.com/yyokii/UIPreviewCatalog) 
+- Fonts: screen with fonts, sizes and name
+- Colors: screen with colors and names
+- Localization (maybe runtime chosing)
+- Dark theme (maybe runtime chosing)
