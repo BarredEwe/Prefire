@@ -10,7 +10,7 @@ You can try 🔥**Prefire** starting from example project.
 
 ## Screenshots
 
-<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="200" /> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="200" />
+<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="270" /> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="270" />
 
 ## Installation
 
@@ -37,7 +37,7 @@ prefire playbook --sources <sources path> --output <output path>
 - Fill `<sources path>` and `<output path>`
 ```bash
 # Example:
-prefire playbook --sources ./ -- output Tests/PrefireTests.generated.swift
+prefire playbook --sources ./ -- output Sources/PreviewModel.generated.swift
 ```
 - _Uncheck_ mark ```✅ Based on dependecy analysis```.
 - Build your project
