@@ -127,7 +127,20 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 
 <br><br/>
 <br><br/>
-## Road map: 
+## Road map:
+- Make animation: 
+    - Installation
+        1) Connect SPM
+    - PlayBook
+        1) Add Build Phase 
+        3) Mark Preview 
+        4) Build
+        5) Showing PlayBook 
+    - Tests
+        1) Add Build Phase 
+        3) Mark Preview 
+        4) Build
+        5) Showing Tests 
 - UserStory - rename to flow
 - Accesability
 - Script for Build Phase for tests - make test settings (device, os and etc)
@@ -136,6 +149,7 @@ For snapshot testing we use [swift-snapshot-testing](https://github.com/pointfre
 - Detail info
 
 ## TODO Features:
+- Dragger size of view
 - Using Sourcery with SPM
 - Make a Plugin (https://github.com/krzysztofzablocki/Sourcery/pull/1093)
 - Write own generation

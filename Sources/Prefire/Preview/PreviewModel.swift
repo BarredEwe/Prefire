@@ -7,7 +7,9 @@
 
 import SwiftUI
 
-// Model
+/// Preview model
+///
+/// Contains all information about Preview
 public struct PreviewModel: Identifiable {
     public typealias UserStory = String
     public typealias State = String
