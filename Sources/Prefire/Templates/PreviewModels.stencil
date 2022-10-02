@@ -13,7 +13,7 @@ public enum PreviewModels {
         var views: [PreviewModel] = []
 
         {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
-        views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name|replace:"_Previews","" }}"))
+        views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name | replace:"_Previews","" | replace:"_Preview","" }}"))
         {% endfor %}
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })

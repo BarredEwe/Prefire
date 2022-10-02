@@ -16,6 +16,7 @@ public struct UserStoryPreferenceKey: PreferenceKey {
 }
 
 public extension View {
+    @inlinable
     func previewUserStory(_ userStory: PreviewModel.UserStory) -> some View {
         preference(key: UserStoryPreferenceKey.self, value: userStory)
     }
@@ -32,6 +33,7 @@ public struct StatePreferenceKey: PreferenceKey {
 }
 
 public extension View {
+    @inlinable
     func previewState(_ state: PreviewModel.State) -> some View {
         preference(key: StatePreferenceKey.self, value: state)
     }

@@ -47,7 +47,7 @@ public struct PlaybookView: View {
                     ForEach(sectionNames, id: \.self) { name in
                         if searchText.isEmpty || name.contains(searchText) {
                             VStack(alignment: .leading) {
-                                Text(isComponent ? name : "📙 " + name)
+                                Text(isComponent ? name : "📙 \(name.capitalized)")
                                     .font(.title.bold())
                                     .padding(.horizontal, 16)
                                     .padding(.bottom, -8)
@@ -169,7 +169,7 @@ public struct PlaybookView: View {
 
         var body: some View {
             view
-                .disabled(true)
+                .allowsHitTesting(false)
                 .frame(width: .screeenWidth)
                 .transformIf(isScreen) { view in
                     view.frame(height: .screenHeight - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)

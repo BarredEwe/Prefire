@@ -12,8 +12,10 @@ public enum PreviewModels {
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
 
+        views.append(contentsOf: createModel(for: AuthView_Preview.self, name: "AuthView"))
         views.append(contentsOf: createModel(for: CircleImage_Previews.self, name: "CircleImage"))
         views.append(contentsOf: createModel(for: GreenButton_Previews.self, name: "GreenButton"))
+        views.append(contentsOf: createModel(for: PrefireView_Preview.self, name: "PrefireView"))
         views.append(contentsOf: createModel(for: TestViewWithoutState_Previews.self, name: "TestViewWithoutState"))
         views.append(contentsOf: createModel(for: TestView_Previews.self, name: "TestView"))
 
