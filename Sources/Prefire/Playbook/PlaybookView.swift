@@ -226,19 +226,22 @@ public struct PlaybookView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            PlaybookView(isComponent: true, previewModels: [])
-        }
-    }
-}
-
-
 // MARK: - Additional
 
 private extension Array {
     func uniqued() -> Self {
         NSOrderedSet(array: self).array as! Self
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        PlaybookView(
+            isComponent: true,
+            previewModels: [
+                PreviewModel(id: "1", content: { AnyView(Text("Test 1").padding()) }, name: "Test 1", device: nil),
+                PreviewModel(id: "2", content: { AnyView(Text("Test 2").padding()) }, name: "Test 2", device: nil)
+            ]
+        )
     }
 }
