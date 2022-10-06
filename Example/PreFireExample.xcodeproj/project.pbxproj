@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		971620D128EEC49A001B8EE3 /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */; };
 		9735EE38289C5CF300309267 /* SnapshotAppSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* SnapshotAppSwiftUIApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
@@ -59,6 +60,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */,
+				971620D128EEC49A001B8EE3 /* AccessibilitySnapshot in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,6 +174,7 @@
 			name = PrefireExampleTests;
 			packageProductDependencies = (
 				9779D5F328A3F13F0083DBD3 /* SnapshotTesting */,
+				971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */,
 			);
 			productName = SnapshotAppSwiftUITests;
 			productReference = 9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */;
@@ -207,6 +210,7 @@
 			mainGroup = 9735EE22289C5CF200309267;
 			packageReferences = (
 				9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
+				971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */,
 			);
 			productRefGroup = 9735EE30289C5CF300309267 /* Products */;
 			projectDirPath = "";
@@ -555,6 +559,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.1;
+			};
+		};
 		9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
@@ -566,6 +578,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
+			productName = AccessibilitySnapshot;
+		};
 		9779D5F328A3F13F0083DBD3 /* SnapshotTesting */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;

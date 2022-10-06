@@ -6,6 +6,7 @@ import SwiftUI
 import Prefire
 
 import SnapshotTesting
+import AccessibilitySnapshot
 {% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}
 {% endif %}
@@ -31,13 +32,17 @@ class PreviewTests: XCTestCase {
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = view.content
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
-                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: view,
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
         }
     }
 

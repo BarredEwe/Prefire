@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "accessibilitysnapshot",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cashapp/AccessibilitySnapshot.git",
+      "state" : {
+        "revision" : "6410357ffeaa93601efce83f49090307f4f691d2",
+        "version" : "0.5.1"
+      }
+    },
+    {
       "identity" : "swift-snapshot-testing",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-snapshot-testing.git",

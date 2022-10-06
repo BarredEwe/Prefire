@@ -9,6 +9,7 @@ import SwiftUI
 import Prefire
 
 import SnapshotTesting
+import AccessibilitySnapshot
 @testable import PrefireExample
 
 class PreviewTests: XCTestCase {
@@ -23,6 +24,28 @@ class PreviewTests: XCTestCase {
         UIView.setAnimationsEnabled(false)
     }
 
+    func test_authView_Preview() {
+        for view in AuthView_Preview._allPreviews {
+            // Given
+            let preview = AuthView_Preview._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+
+            // When
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
+
+            // Then
+            assertSnapshot(
+                matching: view,
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+            )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
+        }
+    }
+
     func test_circleImage() {
         for view in CircleImage_Previews._allPreviews {
             // Given
@@ -31,13 +54,17 @@ class PreviewTests: XCTestCase {
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = view.content
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
-                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: view,
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
         }
     }
 
@@ -49,13 +76,39 @@ class PreviewTests: XCTestCase {
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = view.content
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
-                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: view,
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
+        }
+    }
+
+    func test_prefireView_Preview() {
+        for view in PrefireView_Preview._allPreviews {
+            // Given
+            let preview = PrefireView_Preview._allPreviews.first
+            let isScreen = preview?.layout == .device
+            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+
+            // When
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
+
+            // Then
+            assertSnapshot(
+                matching: view,
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+            )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
         }
     }
 
@@ -67,13 +120,17 @@ class PreviewTests: XCTestCase {
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = view.content
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
-                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: view,
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
         }
     }
 
@@ -85,13 +142,17 @@ class PreviewTests: XCTestCase {
             let device = preview?.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            let view = view.content
+            var view = view.content
+            view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
-                matching: isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true)),
+                matching: view,
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
         }
     }
 
