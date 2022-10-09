@@ -50,7 +50,7 @@ For generating tests you should first:
 export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
 prefire tests --sources <sources path> --output <output path> --target <test target>
 ```
-- Fill `<sources path>`, `<output path>` and `<output path>`
+- Fill `<sources path>`, `<output path>` and `<test target>`
 ```bash
 # Example:
 prefire tests --sources ./ -- output Tests/PrefireTests.generated.swift --target MyProject
