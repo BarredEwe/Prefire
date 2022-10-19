@@ -1,7 +1,7 @@
 ![Prefire](https://i.postimg.cc/BQWJZPJs/Frame-16.jpg)
 
-<p align="center">A library for easy automatic **Playbook (Demo) view** generation and **Test** generation. </p>
-<p align="center">Works with UI-components 🔘, screens 📺 and flows 🌊</p>
+<p align="center">A library for easy automatic <b>Playbook (Demo) view</b> and <b>Test</b> generation wsing <b>SwiftUI Preview</b></p>
+<p align="center">Works with: <b>UI-components, screens and flows</b></p>
 
 <img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="200"/> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="200"/>
 
