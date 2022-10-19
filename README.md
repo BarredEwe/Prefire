@@ -1,16 +1,31 @@
 ![Prefire](https://i.postimg.cc/BQWJZPJs/Frame-16.jpg)
 
-## About
+<p align="center">A library for easy automatic **Playbook (Demo) view** generation and **Test** generation. </p>
+<p align="center">Works with UI-components 🔘, screens 📺 and flows 🌊</p>
+
+<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="200"/> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="200"/>
+
+# Prefire
+
+<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" alt="Playbook" width="200" align="right">
+
+<a href="https://developer.apple.com/swift"><img alt="Swift5" src="https://img.shields.io/badge/language-Swift5-orange.svg"/></a>
+<a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
 
 Do you like **SwiftUI Preview** and use it? Then you must trying 🔥**Prefire**!
 
-A library for easy automatic **Playbook (Demo) view** generation and **Test** generation. Works with UI-components 🔘, screens 📺 and flows 🌊
-
 You can try 🔥**Prefire** starting from example project.
 
-## Screenshots
+- Easy to use
+- Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
+- Generation:
+    - Playbook (Demo) view
+    - Snapshot tests based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+    - Accesability Snapshot tests
 
-<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="270" /> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="270" />
+<br clear="all">
+
+---
 
 ## Installation
 
@@ -24,6 +39,7 @@ brew install sourcery
 ```
 https://github.com/BarredEwe/Prefire
 ```
+---
 
 ## Setup
 
@@ -34,9 +50,9 @@ For generating Playbook you should first:
 export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
 prefire playbook --sources <sources path> --output <output path>
 ```
-- Fill `<sources path>` and `<output path>`
+- Fill `<sources path>` and `<output path>`.
+Example:
 ```bash
-# Example:
 prefire playbook --sources ./ -- output Sources/PreviewModel.generated.swift
 ```
 - _Uncheck_ mark ```✅ Based on dependecy analysis```.
@@ -50,23 +66,15 @@ For generating tests you should first:
 export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
 prefire tests --sources <sources path> --output <output path> --target <test target>
 ```
-- Fill `<sources path>`, `<output path>` and `<test target>`
+- Fill `<sources path>`, `<output path>` and `<test target>`. Example:
 ```bash
-# Example:
 prefire tests --sources ./ -- output Tests/PrefireTests.generated.swift --target MyProject
 ```
 - _Uncheck_ mark ```✅ Based on dependecy analysis```.
 - Build (__CMD + B__) your project
 - For runnug test you should add genereted file to your project in testTarget.
 
-## Config
-**prefire** script configs:
-- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories with Views. 
-- `--output`<span style="color:red">*</span> - Path to output file.
-- `--target` - Your project Target for Snapshot tests. __Default__: _empty_
-- `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
-- `--device` - Device for Snapshot testing. __Default__: _iPhone 12_
-- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 15_
+---
 
 ## Usage
 For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
@@ -94,10 +102,12 @@ Just run generated test 🚀
 
 For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
 
+---
+
 ## API
 New commands for previews:
 
-- Function for connecting preview together in one Flow:
+- Function for connecting preview together in one **Flow**:
     ```swift
     .previewUserStory(.auth)
     ```
@@ -115,6 +125,23 @@ New commands for previews:
             .previewState(.loading)
     }
     ```
+---
+
+## Config
+**prefire** script configs:
+- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories with Views. 
+- `--output`<span style="color:red">*</span> - Path to output file.
+- `--target` - Your project Target for Snapshot tests. __Default__: _empty_
+- `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
+- `--device` - Device for Snapshot testing. __Default__: _iPhone 12_
+- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 15_    ```
+
+## Requirements
+
+- Swift 5.1+
+- Xcode 11.0+
+- iOS 14+
+
 
 ## Previews Troubleshooting
 - Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
