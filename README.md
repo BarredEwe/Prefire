@@ -3,8 +3,6 @@
 <p align="center">A library for easy automatic <b>Playbook (Demo) view</b> and <b>Test</b> generation using <b>SwiftUI Preview</b></p>
 <p align="center">Works with: <b>UI-components, screens and flows</b></p>
 
-<img src="https://i.ibb.co/LZnMpJ0/iphone14.png" width="200"/> <img src="https://i.ibb.co/SnHLBRN/iphone14-2.png" width="200"/>
-
 # Prefire
 
 <img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right" style="border-radius: 20px 20px; box-shadow: 0px 0px 15px gray;">
