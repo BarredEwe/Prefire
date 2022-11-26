@@ -15,6 +15,11 @@ extension CGFloat {
     static let screeenWidth = UIScreen.main.bounds.width
 }
 
+/// View to show different states of components and screens
+///
+/// Can display Previews in two types:
+/// - `isComponent: false // Sorted by Flow`
+/// - `isComponent: true  // Sorted by screen or component name`
 public struct PlaybookView: View {
     @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
@@ -31,10 +36,6 @@ public struct PlaybookView: View {
     }
 
     public var body: some View {
-        if #available(iOS 15.0, *) {
-            let _ = Self._printChanges()
-        }
-
         VStack {
             NavigationLink(
                 isActive: $navigationLinkTriggered,
