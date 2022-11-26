@@ -1,4 +1,4 @@
 import XCTest
-@testable import PreFire
+@testable import Prefire
 
-final class PreFireTests: XCTestCase {}
+final class PrefireTests: XCTestCase {}

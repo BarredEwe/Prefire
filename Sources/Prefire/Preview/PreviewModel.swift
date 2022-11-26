@@ -11,28 +11,52 @@ import SwiftUI
 ///
 /// Contains all information about Preview
 public struct PreviewModel: Identifiable {
+    /// Name of our Story/Flow.
     public typealias UserStory = String
+
+    /// Preview state (just a `String`)
     public typealias State = String
 
+    /// View type. Is nedded for understanding type of layout
+    ///
+    /// For example:
+    /// `Button`, `TextField`, `Cell`  - component
+    /// FullScreen `View` -  screen
     public enum ViewType: Equatable {
         case screen
         case component
     }
-    
+
+    /// Preview identificator
     public let id: String
-    /// Наша statc view от Preview
+
+    /// Static preview (type erased) view
     public let content: () -> AnyView
-    /// Имя preview
+
+    /// Preview name
     public let name: String
-    /// Состояние preview (.default, loading и тд)
+
+    /// Preview state (just a `String`)
+    ///
+    /// Example:
+    ///
+    ///     (.default, loading etc.)
     public var state: State?
-    /// Тип preview
+
+    /// View type
     public var type: ViewType
-    /// Устройство для отображения preview
+
+    /// Device for showing preview
     public var device: PreviewDevice?
-    /// Наименование нашего Flow
+
+    /// Name of our Story/Flow.
+    ///
+    /// Needed to combine multiple views into one Story/Flow
     public var story: UserStory?
-    /// Время рендеринга
+
+    /// Render time
+    ///
+    /// The time from when a view was created (`.init`) to when it was shown (`.onAppear`)
     public var renderTime: String?
 
     public init(
