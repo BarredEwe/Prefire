@@ -11,30 +11,44 @@ let package = Package(
             name: "Prefire",
             targets: ["Prefire"]
         ),
+        .plugin(
+            name: "PrefirePlaybookPlugin",
+            targets: ["PrefirePlaybookPlugin"]
+        ),
+        .plugin(
+            name: "PrefireTestsPlugin",
+            targets: ["PrefireTestsPlugin"]
+        )
     ],
     dependencies: [
         .package(
             url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
             from: "1.9.0"
-        ),
-        .package(
-            url: "https://github.com/cashapp/AccessibilitySnapshot.git",
-            from: "0.5.1"
         )
     ],
     targets: [
         .target(
             name: "Prefire",
-            dependencies: [],
-            exclude: ["Templates/"]
+            dependencies: []
         ),
-        .testTarget(
-            name: "PrefireTests",
+        .plugin(
+            name: "PrefirePlaybookPlugin", // Протестированть на Seller как plugin к Package.swift
+            capability: .buildTool(),
             dependencies: [
-                "Prefire",
-                "AccessibilitySnapshot",
+                "Sourcery"
+            ]
+        ),
+        .plugin(
+            name: "PrefireTestsPlugin",
+            capability: .buildTool(),
+            dependencies: [
+                "Sourcery",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
+        .binaryTarget(
+            name: "Sourcery",
+            path: "Binaries/Sourcery.artifactbundle"
+        )
     ]
 )

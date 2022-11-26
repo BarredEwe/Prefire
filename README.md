@@ -37,6 +37,12 @@ brew install sourcery
 ```
 https://github.com/BarredEwe/Prefire
 ```
+
+Подсмотреть у https://github.com/realm/SwiftLint#plug-in-support
+// - Доделать конфигурацию для тестов
+// - Проверить на Seller проекте
+// - Дописать доку
+// - Сделать релиз
 ---
 
 ## Setup
@@ -131,8 +137,8 @@ New commands for previews:
 - `--output`<span style="color:red">*</span> - Path to output file.
 - `--target` - Your project Target for Snapshot tests. __Default__: _empty_
 - `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
-- `--device` - Device for Snapshot testing. __Default__: _iPhone 12_
-- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 15_    ```
+- `--device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
+- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 16_    ```
 
 ## Requirements
 
