@@ -29,7 +29,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 "--args",
                 "mainTarget=\(mainTarget.name)",
                 "--args",
-                "file=\(mainTarget.directory)/PreviewTests.swift"
+                "file=\(target.directory)/PreviewTests.swift"
             ],
             outputFilesDirectory: generatedSourcesDirectory
         )
