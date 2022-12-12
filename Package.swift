@@ -20,19 +20,13 @@ let package = Package(
             targets: ["PrefireTestsPlugin"]
         )
     ],
-    dependencies: [
-        .package(
-            url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
-            from: "1.9.0"
-        )
-    ],
     targets: [
         .target(
             name: "Prefire",
             dependencies: []
         ),
         .plugin(
-            name: "PrefirePlaybookPlugin", // Протестированть на Seller как plugin к Package.swift
+            name: "PrefirePlaybookPlugin",
             capability: .buildTool(),
             dependencies: [
                 "Sourcery"
@@ -42,8 +36,7 @@ let package = Package(
             name: "PrefireTestsPlugin",
             capability: .buildTool(),
             dependencies: [
-                "Sourcery",
-                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+                "Sourcery"
             ]
         ),
         .binaryTarget(
