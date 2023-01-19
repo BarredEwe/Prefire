@@ -60,7 +60,7 @@ class PreviewTests: XCTestCase {
         let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]
         let osVersion = ProcessInfo().operatingSystemVersion
         guard deviceModel?.contains(simulatorDevice) ?? false else {
-            fatalError("Switch to using iPhone 12 for these tests.")
+            fatalError("Switch to using \(simulatorDevice) for these tests.")
         }
 
         guard osVersion.majorVersion == requiredOSVersion else {

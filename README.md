@@ -2,24 +2,28 @@
 
 <p align="center">A library for easy automatic <b>Playbook (Demo) view</b> and <b>Test</b> generation using <b>SwiftUI Preview</b></p>
 <p align="center">Works with: <b>UI-components, screens and flows</b></p>
+<p align="center">
+<a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
+<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS-green.svg"/></a>
+<a href="https://developer.apple.com/swift"><img alt="Swift5" src="https://img.shields.io/badge/language-Swift_5-orange.svg"/></a>
+<a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
+<img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
+</p>
 
 # Prefire
 
 <img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right" style="border-radius: 20px 20px; box-shadow: 0px 0px 15px gray;">
 
-<a href="https://developer.apple.com/swift"><img alt="Swift5" src="https://img.shields.io/badge/language-Swift5-orange.svg"/></a>
-<a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
-
 Do you like **SwiftUI Preview** and use it? Then you must trying 🔥**Prefire**!
 
 You can try 🔥**Prefire** starting from example project.
 
-- Easy to use
-- Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
-- Generation:
-    - Playbook (Demo) view
-    - Snapshot tests based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
-    - Accesability Snapshot tests
+- ✅ Easy to use
+- ✅ Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
+- ✅ Generation Playbook (Demo) view
+- ✅ Generation Snapshot tests based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+- ✅ Generation Accesability Snapshot tests
+- ✅ Xcode Plugin supported
 
 <br clear="all">
 
@@ -27,61 +31,53 @@ You can try 🔥**Prefire** starting from example project.
 
 ## Installation
 
-1. Install [Sourcery](https://github.com/krzysztofzablocki/Sourcery) using _[Homebrew](https://brew.sh)_
-```bash
-brew install sourcery
-```
-2. Install **Prefire** using _[Swift Package Manager](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app)_
+**Prefire** can be install for all your `Xcode Project` or only for one `Package`.
 
-    Select Xcode menu `File > Swift Packages > Add Package Dependency...` and enter repository URL with GUI.
-```
-https://github.com/BarredEwe/Prefire
+### **Xcode Project Plugin**
+
+You can integrate SwiftLint as a Xcode Build Tool Plug-in if you're working
+with a project in Xcode.
+
+1. Add `Prefire` as a package dependency to your project without linking any of the products.
+
+<img src="https://i.postimg.cc/nhWK6D17/Screenshot-2023-01-19-at-16-31-55.png" height="500">
+
+2. Select the target you want to add linting to and open the `Build Phases` inspector.
+Open `Run Build Tool Plug-ins` and select the `+` button.
+Select `PrefirePlaybookPlugin` or `PrefireTestsPlugin` from the list and add it to the project.
+
+<img src="https://i.postimg.cc/VNnJNrX3/Screenshot-2023-01-19-at-16-43-44.png" height="500">
+
+### **Swift Package Plugin**
+
+You can integrate **Prefire** as a Swift Package Manager Plug-in if you're working with
+a Swift Package with a `Package.swift` manifest.
+
+1. Add **Prefire** as a package dependency to your `Package.swift` file.
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/BarredEwe/Prefire", from: "1.0.0")
+]
 ```
 
-Подсмотреть у https://github.com/realm/SwiftLint#plug-in-support
-// - Доделать конфигурацию для тестов
-// - Проверить на Seller проекте
-// - Дописать доку
-// - Сделать релиз
----
+2. Add **Prefire** to a target using the `plugins` parameter.
 
-## Setup
-
-### **Playbook (Demo) View**
-For generating Playbook you should first:
- - Add **Build Phase** to main target for generating Demo App:
-```bash
-export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
-prefire playbook --sources <sources path> --output <output path>
+```swift
+.target(
+    plugins: [
+        // For Playbook (Demo) view
+        .plugin(name: "PrefirePlaybookPlugin", package: "Prefire")
+        // For Snapshot Tests
+        .plugin(name: "PrefireTestsPlugin", package: "Prefire")
+    ]
+),
 ```
-- Fill `<sources path>` and `<output path>`.
-Example:
-```bash
-prefire playbook --sources ./ -- output Sources/PreviewModel.generated.swift
-```
-- _Uncheck_ mark ```✅ Based on dependecy analysis```.
-- Build your project
-- Add genereted file to your project
-
-### **Snapshot tests**
-For generating tests you should first:
-- Add **Build Phase** to test target for generating Snapshot tests:
-```bash
-export PATH="$PATH:${BUILD_DIR%Build/*}SourcePackages/checkouts/Prefire"
-prefire tests --sources <sources path> --output <output path> --target <test target>
-```
-- Fill `<sources path>`, `<output path>` and `<test target>`. Example:
-```bash
-prefire tests --sources ./ -- output Tests/PrefireTests.generated.swift --target MyProject
-```
-- _Uncheck_ mark ```✅ Based on dependecy analysis```.
-- Build (__CMD + B__) your project
-- For runnug test you should add genereted file to your project in testTarget.
 
 ---
 
 ## Usage
-For generating **tests** and **playbook**, just mark your preview using `protocol PrefireProvider`:
+For generating **tests** and **playbook**, just mark your preview using protocol - `PrefireProvider`:
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
@@ -90,6 +86,9 @@ struct Text_Previews: PreviewProvider, PrefireProvider {
 
 ### **Playbook (Demo) View**
 For using Playbook just use `PlaybookView`
+
+- If you want to see a list of all the Views, then use `isComponent: true`
+- If you want to sort by UserStory, then use `isComponent: false`
 
 ```swift
 import Prefire 
@@ -102,7 +101,7 @@ struct ContentView: View {
 ```
 
 ### **Snapshot tests**
-Just run generated test 🚀
+Just run generated tests 🚀
 
 For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
 
@@ -112,40 +111,71 @@ For detailed instruction you can see [swift-snapshot-testing](https://github.com
 New commands for previews:
 
 - Function for connecting preview together in one **Flow**:
+
+    <img src="https://i.postimg.cc/13psFbHt/Group-48095410-2.jpg" height="400" align="right">
+
     ```swift
     .previewUserStory(.auth)
     ```
-    For example Authorization flow (LoginView, OTPView, PincodeView)
 
-- If a preview contains more than one View, you can mark State for these views.
+    ```swift
+    static var previews: some View {
+        PrefireView()
+            .previewUserStory(.auth)
+    }
+
+    static var previews: some View {
+        AuthView()
+            .previewUserStory(.auth)
+    }
+    ```
+
+    For example Authorization flow: `LoginView`, `OTPView` and `PincodeView`
+
+    <br clear="all">
+
+- If a preview contains more than one `View`, you can mark `State` for these views.
+
+    <img src="https://i.postimg.cc/wB8ndkSs/Group-48095410.jpg" height="405" align="right">
+
     ```swift
     .previewState(.loading)
     ```
+
     ```swift
     static var previews: some View {
-        Text("Default")
+        TestView("Default")
 
         Text("Loading")
             .previewState(.loading)
     }
     ```
+
+    <br clear="all">
+
 ---
 
 ## Config
-**prefire** script configs:
-- `--sources`<span style="color:red">*</span> - Path to a source swift files or directories with Views. 
-- `--output`<span style="color:red">*</span> - Path to output file.
-- `--target` - Your project Target for Snapshot tests. __Default__: _empty_
-- `--sourcery` - Custom path to Sourcery. __Default__: path from `brew`.
-- `--device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
-- `--os_version` - iOS version for Snapshot testing. __Default__: _iOS 16_    ```
+
+You can additionaly configure **Prefire**. Just add `.prefire.yml` file to root folder. Example:
+
+```yaml
+test_configuration:
+  - target: PrefireExample 
+  - test_file_path: PrefireExampleTests/PreviewTests.generated.swift
+  - simulator_device: "iPhone15,2"
+  - required_os: 16
+```
+- `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
+- `test_file_path` - Filepath to generated file. __Default__: _DeriveData_
+- `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
+- `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
 
 ## Requirements
 
-- Swift 5.1+
-- Xcode 11.0+
+- Swift 5.6+
+- Xcode 14.0+
 - iOS 14+
-
 
 ## Previews Troubleshooting
 - Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.

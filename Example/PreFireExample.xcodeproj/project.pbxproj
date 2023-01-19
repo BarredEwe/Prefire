@@ -11,6 +11,7 @@
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
+		976559002977E56000352D54 /* PreviewTests.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976558FF2977E56000352D54 /* PreviewTests.generated.swift */; };
 		9777F17528D0F4200072827B /* CicrleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9777F17428D0F4200072827B /* CicrleImage.swift */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
 		97B1477828EA335A0014DEC5 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B1477728EA335A0014DEC5 /* AuthView.swift */; };
@@ -34,6 +35,7 @@
 		9735EE2A289C5CF300309267 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9735EE2F289C5CF300309267 /* PrefireExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrefireExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9735EE48289C5F3A00309267 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
+		976558FF2977E56000352D54 /* PreviewTests.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreviewTests.generated.swift; sourceTree = "<group>"; };
 		9777F17428D0F4200072827B /* CicrleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CicrleImage.swift; sourceTree = "<group>"; };
 		9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PrefireExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		97AB804128D9F0DB00414704 /* Prefire */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Prefire; path = ..; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 		9779D5E728A3ECBB0083DBD3 /* PrefireExampleTests */ = {
 			isa = PBXGroup;
 			children = (
+				976558FF2977E56000352D54 /* PreviewTests.generated.swift */,
 			);
 			path = PrefireExampleTests;
 			sourceTree = "<group>";
@@ -141,7 +144,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				97BEF991292DB12700512EDE /* PBXTargetDependency */,
+				97941204298C2202005A044C /* PBXTargetDependency */,
 			);
 			name = PrefireExample;
 			packageProductDependencies = (
@@ -189,7 +192,7 @@
 					};
 					9779D5E528A3ECBA0083DBD3 = {
 						CreatedOnToolsVersion = 13.4.1;
-						LastSwiftMigration = 1410;
+						LastSwiftMigration = 1420;
 						TestTargetID = 9735EE2E289C5CF300309267;
 					};
 				};
@@ -253,15 +256,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				976559002977E56000352D54 /* PreviewTests.generated.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		97BEF991292DB12700512EDE /* PBXTargetDependency */ = {
+		97941204298C2202005A044C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 97BEF990292DB12700512EDE /* PrefirePlaybookPlugin */;
+			productRef = 97941203298C2202005A044C /* PrefirePlaybookPlugin */;
 		};
 		97BEF993292DB16600512EDE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -563,13 +567,13 @@
 			package = 9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
 			productName = SnapshotTesting;
 		};
+		97941203298C2202005A044C /* PrefirePlaybookPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "plugin:PrefirePlaybookPlugin";
+		};
 		97BEF98C292DA9D500512EDE /* Prefire */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Prefire;
-		};
-		97BEF990292DB12700512EDE /* PrefirePlaybookPlugin */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:PrefirePlaybookPlugin";
 		};
 		97BEF992292DB16600512EDE /* PrefireTestsPlugin */ = {
 			isa = XCSwiftPackageProductDependency;

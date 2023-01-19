@@ -29,19 +29,19 @@ let package = Package(
             name: "PrefirePlaybookPlugin",
             capability: .buildTool(),
             dependencies: [
-                "Sourcery"
+                "PrefireSourcery"
             ]
         ),
         .plugin(
             name: "PrefireTestsPlugin",
             capability: .buildTool(),
             dependencies: [
-                "Sourcery"
+                "PrefireSourcery"
             ]
         ),
         .binaryTarget(
-            name: "Sourcery",
-            path: "Binaries/Sourcery.artifactbundle"
+            name: "PrefireSourcery",
+            path: "Binaries/PrefireSourcery.artifactbundle"
         )
     ]
 )

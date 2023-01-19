@@ -4,26 +4,18 @@ import PackagePlugin
 @main
 struct PrefirePlaybookPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
-        let generatedSourcesDirectory = context.pluginWorkDirectory
-        let executable = try context.tool(named: "Sourcery").path
+        let executable = try context.tool(named: "PrefireSourcery").path
         let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
-        try FileManager.default.createDirectory(atPath: generatedSourcesDirectory.string, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
-        let sourceryCommand = Command.prebuildCommand(
-            displayName: "Running Sourcery",
-            executable: executable,
-            arguments: [
-                "--templates",
-                "\(templatesDirectory)/PreviewModels.stencil",
-                "--sources",
-                "\(target.directory)",
-                "--output",
-                "\(generatedSourcesDirectory)/PreviewModels.generated.swift"
-            ],
-            outputFilesDirectory: generatedSourcesDirectory
-        )
-        return [sourceryCommand]
+        return [
+            Command.prefireCommand(
+                executablePath: executable,
+                templatesDirectory: templatesDirectory,
+                sources: target.directory,
+                generatedSourcesDirectory: context.pluginWorkDirectory)
+        ]
     }
 }
 
@@ -32,28 +24,45 @@ import XcodeProjectPlugin
 
 extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
-        let generatedSourcesDirectory = context.pluginWorkDirectory
-        let executable = try context.tool(named: "Sourcery").path
+        let executable = try context.tool(named: "PrefireSourcery").path
         let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
-        debugPrint(templatesDirectory)
+        try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
-        try FileManager.default.createDirectory(atPath: generatedSourcesDirectory.string, withIntermediateDirectories: true)
+        return [
+            Command.prefireCommand(
+                executablePath: executable,
+                templatesDirectory: templatesDirectory,
+                sources: context.xcodeProject.directory,
+                generatedSourcesDirectory: context.pluginWorkDirectory)
+        ]
+    }
+}
+#endif
 
-        let sourceryCommand = Command.prebuildCommand(
-            displayName: "Running Sourcery",
+// MARK: - Extensions
+
+extension Command {
+    static func prefireCommand(
+        executablePath executable: Path,
+        templatesDirectory: String,
+        sources: Path,
+        generatedSourcesDirectory: Path
+    ) -> Command {
+        Command.prebuildCommand(
+            displayName: "Running Prefire",
             executable: executable,
             arguments: [
                 "--templates",
                 "\(templatesDirectory)/PreviewModels.stencil",
                 "--sources",
-                "\(context.xcodeProject.directory)",
+                sources.string,
                 "--output",
-                "\(generatedSourcesDirectory)/PreviewModels.generated.swift"
+                "\(generatedSourcesDirectory)/PreviewModels.generated.swift",
+                "--cacheBasePath",
+                generatedSourcesDirectory.string,
             ],
             outputFilesDirectory: generatedSourcesDirectory
         )
-        return [sourceryCommand]
     }
 }
-#endif

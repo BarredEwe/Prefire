@@ -1,2 +1,5 @@
-configurations:
-  - target: SUIKitComponents
+test_configuration:
+  - target: PrefireExample
+  - test_file_path: PrefireExampleTests/PreviewTests.generated.swift
+  - simulator_device: "iPhone15,2"
+  - required_os: 16
