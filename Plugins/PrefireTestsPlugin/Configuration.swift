@@ -12,7 +12,7 @@ struct Configuration {
 
 extension Configuration {
     enum Keys: String {
-        case targetName
+        case target
         case test_file_path
         case simulator_device
         case required_os
@@ -28,7 +28,7 @@ extension Configuration {
         else { return nil }
 
         return Configuration(
-            targetName: getFrom(configDataString: configDataString, key: .targetName),
+            targetName: getFrom(configDataString: configDataString, key: .target),
             testFilePath: getFrom(configDataString: configDataString, key: .test_file_path),
             simulatorDevice: getFrom(configDataString: configDataString, key: .simulator_device),
             requiredOSVersion: getFrom(configDataString: configDataString, key: .required_os)
