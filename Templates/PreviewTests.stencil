@@ -17,8 +17,10 @@ class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     private let simulatorDevice = "{{ argument.simulatorDevice|default:"iPhone15,2" }}"
     private let requiredOSVersion = {{ argument.simulatorOSVersion|default:"16" }}
+    {% if argument.file %}
 
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
+    {% endif %}
 
     override func setUp() {
         super.setUp()
@@ -42,9 +44,10 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits){% if argument.file %},
+                file: file{% endif %}
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds

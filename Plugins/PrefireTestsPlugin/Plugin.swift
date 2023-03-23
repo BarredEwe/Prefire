@@ -15,7 +15,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         }
 
         let testFilePath = configuration?.testFilePath.flatMap({ target.directory.removingLastComponent().appending(subpath: $0).string }) ??
-            "\(target.directory)/PreviewTests.generated.swift"
+            "\(context.pluginWorkDirectory)/PreviewTests.generated.swift"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
@@ -26,6 +26,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 sources: mainTarget.directory.string,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
+                testTargetPath: target.directory.string,
                 targetName: mainTarget.name,
                 configuration: configuration
             )
@@ -47,7 +48,7 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
         guard let targetName = configuration?.targetName ?? context.xcodeProject.targets.first?.displayName else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
-        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ?? "\(context.xcodeProject.directory)/\(target.displayName)/PreviewTests.generated.swift"
+        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ?? "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
@@ -58,6 +59,7 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
                 sources: context.xcodeProject.directory.string,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
+                testTargetPath: context.xcodeProject.directory.appending(subpath: target.displayName).string,
                 targetName: targetName,
                 configuration: configuration
             )
@@ -78,30 +80,37 @@ extension Command {
         sources: String,
         generatedSourcesDirectory: Path,
         testFilePath: String,
+        testTargetPath: String,
         targetName: String,
         configuration: Configuration?
     ) -> Command {
-        Command.prebuildCommand(
+        var arguments: [CustomStringConvertible] = [
+            "--templates",
+            "\(templatesDirectory)/PreviewTests.stencil",
+            "--sources",
+            sources,
+            "--output",
+            testFilePath,
+            "--cacheBasePath",
+            generatedSourcesDirectory.string,
+            "--args",
+            "mainTarget=\(targetName)",
+            "--args",
+            "simulatorDevice=\(configuration?.simulatorDevice ?? defaultSimulatorDevice)",
+            "--args",
+            "simulatorOSVersion=\(configuration?.requiredOSVersion ?? defaultOSVersion)",
+        ]
+
+        if configuration?.testFilePath == nil {
+            arguments.append(contentsOf: [
+                "--args", "file=\(testTargetPath)"
+            ])
+        }
+
+        return Command.prebuildCommand(
             displayName: "Running Prefire",
             executable: executable,
-            arguments: [
-                "--templates",
-                "\(templatesDirectory)/PreviewTests.stencil",
-                "--sources",
-                sources,
-                "--output",
-                testFilePath,
-                "--cacheBasePath",
-                generatedSourcesDirectory.string,
-                "--args",
-                "mainTarget=\(targetName)",
-                "--args",
-                "file=\(testFilePath)",
-                "--args",
-                "simulatorDevice=\(configuration?.simulatorDevice ?? defaultSimulatorDevice)",
-                "--args",
-                "simulatorOSVersion=\(configuration?.requiredOSVersion ?? defaultOSVersion)"
-            ],
+            arguments: arguments,
             outputFilesDirectory: generatedSourcesDirectory
         )
     }
