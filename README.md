@@ -146,7 +146,7 @@ New commands for previews:
     static var previews: some View {
         TestView("Default")
 
-        Text("Loading")
+        TestView("Loading")
             .previewState(.loading)
     }
     ```
