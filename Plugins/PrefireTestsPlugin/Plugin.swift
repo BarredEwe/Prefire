@@ -103,7 +103,7 @@ extension Command {
 
         if configuration?.testFilePath == nil {
             arguments.append(contentsOf: [
-                "--args", "file=\(testTargetPath)"
+                "--args", "file=\(testTargetPath)/PreviewTests.swift"
             ])
         }
 
