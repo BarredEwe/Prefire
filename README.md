@@ -1,6 +1,6 @@
 ![Prefire](https://i.postimg.cc/BQWJZPJs/Frame-16.jpg)
 
-<p align="center">A library for easy automatic <b>Playbook (Demo) view</b> and <b>Test</b> generation using <b>SwiftUI Preview</b></p>
+<p align="center">A library for easily generating automatic <b>Playbook (Demo) view</b> and <b>Tests</b> using <b>SwiftUI Preview</b></p>
 <p align="center">Works with: <b>UI-components, screens and flows</b></p>
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
@@ -14,7 +14,7 @@
 
 <img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right" style="border-radius: 20px 20px; box-shadow: 0px 0px 15px gray;">
 
-Do you like **SwiftUI Preview** and use it? Then you must trying 🔥**Prefire**!
+Do you like **SwiftUI Preview** and use it? Then you must try 🔥**Prefire**!
 
 You can try 🔥**Prefire** starting from example project.
 
@@ -31,20 +31,20 @@ You can try 🔥**Prefire** starting from example project.
 
 ## Installation
 
-**Prefire** can be install for all your `Xcode Project` or only for one `Package`.
+**Prefire** can be install for an `Xcode Project` or only for one `Package`.
 
 ### **Xcode Project Plugin**
 
-You can integrate SwiftLint as a Xcode Build Tool Plug-in if you're working
-with a project in Xcode.
+You can integrate Prefire as an Xcode Build Tool Plug-in if you're working
+on a project in Xcode.
 
 1. Add `Prefire` as a package dependency to your project without linking any of the products.
 
 <img src="https://i.postimg.cc/nhWK6D17/Screenshot-2023-01-19-at-16-31-55.png" height="500">
 
-2. Select the target you want to add linting to and open the `Build Phases` inspector.
+2. Select the target to which you want to add linting and open the `Build Phases` inspector.
 Open `Run Build Tool Plug-ins` and select the `+` button.
-Select `PrefirePlaybookPlugin` or `PrefireTestsPlugin` from the list and add it to the project.
+From the list, select `PrefirePlaybookPlugin` or `PrefireTestsPlugin`, and add it to the project.
 
 <img src="https://i.postimg.cc/VNnJNrX3/Screenshot-2023-01-19-at-16-43-44.png" height="500">
 
@@ -77,7 +77,7 @@ dependencies: [
 ---
 
 ## Usage
-For generating **tests** and **playbook**, just mark your preview using protocol - `PrefireProvider`:
+For generate **tests** and **playbook**, simply mark your preview using protocol - `PrefireProvider`:
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
@@ -85,10 +85,10 @@ struct Text_Previews: PreviewProvider, PrefireProvider {
 ```
 
 ### **Playbook (Demo) View**
-For using Playbook just use `PlaybookView`
+To use Playbook, simply use `PlaybookView`
 
-- If you want to see a list of all the Views, then use `isComponent: true`
-- If you want to sort by UserStory, then use `isComponent: false`
+- If you want to see a list of all the Views, use `isComponent: true`
+- If you want to sort by UserStory, use `isComponent: false`
 
 ```swift
 import Prefire 
@@ -157,7 +157,7 @@ New commands for previews:
 
 ## Config
 
-You can additionaly configure **Prefire**. Just add `.prefire.yml` file to root folder. Example:
+You can additionaly configure **Prefire** by adding a `.prefire.yml` file to root folder. For example:
 
 ```yaml
 test_configuration:
