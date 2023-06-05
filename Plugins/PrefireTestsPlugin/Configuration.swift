@@ -20,12 +20,24 @@ extension Configuration {
 
     private static let fileName = ".prefire.yml"
 
-    static func from(rootPath: Path) -> Configuration? {
+    static func from(rootPaths: [Path]) -> Configuration? {
+        for path in rootPaths {
+            if let configuration = Configuration.from(rootPath: path) {
+                return configuration
+            }
+        }
+        return nil
+    }
+
+    private static func from(rootPath: Path) -> Configuration? {
         let configPath = rootPath.appending(subpath: Configuration.fileName)
+        Diagnostics.remark("Trying to find a '.prefire.yml' from the path: \(configPath.string)")
 
         guard FileManager.default.fileExists(atPath: configPath.string),
               let configDataString = URL(string: "file://\(configPath)").flatMap({ try? String(contentsOf: $0, encoding: .utf8) })
         else { return nil }
+
+        Diagnostics.remark("🟢 Successfully found and will use the file '.prefire.yml' on the path: \(configPath.string)")
 
         return Configuration(
             targetName: getFrom(configDataString: configDataString, key: .target),
