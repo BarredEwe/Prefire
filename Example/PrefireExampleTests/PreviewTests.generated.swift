@@ -1,4 +1,4 @@
-// Generated using Sourcery 1.9.2 — https://github.com/krzysztofzablocki/Sourcery
+// Generated using Sourcery 2.0.1 — https://github.com/krzysztofzablocki/Sourcery
 // DO NOT EDIT
 
 // swiftlint:disable all
@@ -16,10 +16,8 @@ import SnapshotTesting
 
 class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
-    private let simulatorDevice = "iPhone15"
+    private let simulatorDevice = "iPhone15,2"
     private let requiredOSVersion = 16
-
-    private var file: StaticString { .init(stringLiteral: "/Users/mgrishutin/Documents/iOS/Other/Prefire/Example/PrefireExampleTests/PreviewTests.generated.swift") }
 
     override func setUp() {
         super.setUp()
@@ -42,13 +40,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -67,13 +65,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -92,13 +90,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -117,13 +115,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -142,13 +140,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -167,13 +165,13 @@ class PreviewTests: XCTestCase {
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
-                file: file
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
             )
+
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
             #endif
         }
     }
@@ -196,7 +194,7 @@ class PreviewTests: XCTestCase {
 private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
-        case "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10":
+        case "iPhone 12", "iPhone 11", "iPhone 10":
             return .iPhoneX
         case "iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8":
             return .iPhone8

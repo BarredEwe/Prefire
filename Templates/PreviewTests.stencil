@@ -51,7 +51,7 @@ class PreviewTests: XCTestCase {
             #if canImport(AccessibilitySnapshot)
                 let vc = UIHostingController(rootView: view)
                 vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always), file: file)
+                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always){% if argument.file %}, file: file{% endif %})
             #endif
         }
     }
