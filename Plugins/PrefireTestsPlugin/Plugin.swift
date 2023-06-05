@@ -5,10 +5,8 @@ import PackagePlugin
 struct PrefireTestsPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
-        let configuration = [target.directory, target.directory.removingLastComponent()]
-            .compactMap(Configuration.from(rootPath:)).first
+        let configuration = Configuration.from(rootPaths: [target.directory, target.directory.removingLastComponent()])
 
         guard let mainTarget = context.package.targets.first(where: { $0.name == configuration?.targetName }) ?? context.package.targets.first else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
@@ -22,7 +20,6 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         return [
             Command.prefireCommand(
                 executablePath: executable,
-                templatesDirectory: templatesDirectory,
                 sources: mainTarget.directory.string,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
@@ -40,22 +37,20 @@ import XcodeProjectPlugin
 extension PrefireTestsPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
-        let configuration = [context.xcodeProject.directory.appending(subpath: target.displayName), context.xcodeProject.directory]
-            .compactMap(Configuration.from(rootPath:)).first
+        let configuration = Configuration.from(rootPaths: [context.xcodeProject.directory.appending(subpath: target.displayName), context.xcodeProject.directory])
 
         guard let targetName = configuration?.targetName ?? context.xcodeProject.targets.first?.displayName else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
-        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ?? "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
+        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ??
+            "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
         return [
             Command.prefireCommand(
                 executablePath: executable,
-                templatesDirectory: templatesDirectory,
                 sources: context.xcodeProject.directory.string,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
@@ -76,7 +71,6 @@ private let defaultOSVersion = "16"
 extension Command {
     static func prefireCommand(
         executablePath executable: Path,
-        templatesDirectory: String,
         sources: String,
         generatedSourcesDirectory: Path,
         testFilePath: String,
@@ -84,6 +78,8 @@ extension Command {
         targetName: String,
         configuration: Configuration?
     ) -> Command {
+        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
+
         var arguments: [CustomStringConvertible] = [
             "--templates",
             "\(templatesDirectory)/PreviewTests.stencil",
@@ -106,6 +102,20 @@ extension Command {
                 "--args", "file=\(testTargetPath)/PreviewTests.swift"
             ])
         }
+
+        Diagnostics.remark(
+        """
+        Prefire configuration
+        Target used for tests: \(targetName)
+        Preview sources path: \(sources)
+        Generated test path: \(testFilePath)
+        The Snapshot resources will be placed in the path: \(testTargetPath)
+        Device for tests: \(configuration?.simulatorDevice ?? defaultSimulatorDevice)
+        OS version for tests: \(configuration?.requiredOSVersion ?? defaultOSVersion)
+        """
+        )
+
+        Diagnostics.remark("🟢 Prefire configured successfully!")
 
         return Command.prebuildCommand(
             displayName: "Running Prefire",

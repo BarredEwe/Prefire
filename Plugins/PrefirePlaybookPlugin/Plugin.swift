@@ -5,14 +5,12 @@ import PackagePlugin
 struct PrefirePlaybookPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
         return [
             Command.prefireCommand(
                 executablePath: executable,
-                templatesDirectory: templatesDirectory,
                 sources: target.directory,
                 generatedSourcesDirectory: context.pluginWorkDirectory)
         ]
@@ -25,14 +23,12 @@ import XcodeProjectPlugin
 extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
         return [
             Command.prefireCommand(
                 executablePath: executable,
-                templatesDirectory: templatesDirectory,
                 sources: context.xcodeProject.directory,
                 generatedSourcesDirectory: context.pluginWorkDirectory)
         ]
@@ -45,11 +41,20 @@ extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
 extension Command {
     static func prefireCommand(
         executablePath executable: Path,
-        templatesDirectory: String,
         sources: Path,
         generatedSourcesDirectory: Path
     ) -> Command {
-        Command.prebuildCommand(
+        Diagnostics.remark(
+        """
+        Prefire configuration
+        Preview sources path: \(sources.string)
+        Generated preview models path: \(generatedSourcesDirectory)/PreviewModels.generated.swift
+        """
+        )
+
+        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
+
+        return Command.prebuildCommand(
             displayName: "Running Prefire",
             executable: executable,
             arguments: [
