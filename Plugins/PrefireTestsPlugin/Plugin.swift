@@ -8,7 +8,8 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
         let configuration = Configuration.from(rootPaths: [target.directory, target.directory.removingLastComponent()])
 
-        guard let mainTarget = context.package.targets.first(where: { $0.name == configuration?.targetName }) ?? context.package.targets.first else {
+        guard let mainTarget = context.package.targets.first(where: { $0.name == configuration?.targetName }) ??
+                context.package.targets.first(where: { $0.name != target.name }) else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
 
@@ -40,9 +41,10 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
 
         let configuration = Configuration.from(rootPaths: [context.xcodeProject.directory.appending(subpath: target.displayName), context.xcodeProject.directory])
 
-        guard let targetName = configuration?.targetName ?? context.xcodeProject.targets.first?.displayName else {
+        guard let targetName = configuration?.targetName ?? context.xcodeProject.targets.first(where: { $0.displayName != target.displayName })?.displayName else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
+
         let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ??
             "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
 
