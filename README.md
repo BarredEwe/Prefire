@@ -68,10 +68,14 @@ dependencies: [
     plugins: [
         // For Playbook (Demo) view
         .plugin(name: "PrefirePlaybookPlugin", package: "Prefire")
+    ]
+),
+.testTarget(
+    plugins: [
         // For Snapshot Tests
         .plugin(name: "PrefireTestsPlugin", package: "Prefire")
     ]
-),
+)
 ```
 
 ---
