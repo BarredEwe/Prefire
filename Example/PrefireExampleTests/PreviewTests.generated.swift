@@ -42,12 +42,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
@@ -67,12 +70,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
@@ -92,12 +98,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
@@ -117,12 +126,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
@@ -142,12 +154,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
@@ -167,12 +182,15 @@ class PreviewTests: XCTestCase {
                 as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
                 named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName
+            )
+#endif
         }
     }
 
