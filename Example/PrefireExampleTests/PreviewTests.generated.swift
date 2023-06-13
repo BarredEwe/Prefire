@@ -48,7 +48,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }
@@ -76,7 +76,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }
@@ -104,7 +104,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }
@@ -132,7 +132,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }
@@ -160,7 +160,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }
@@ -188,7 +188,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName
+                named: preview.displayName.map { $0 + ".accessibility" }
             )
 #endif
         }

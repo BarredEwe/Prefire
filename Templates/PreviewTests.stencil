@@ -53,7 +53,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .accessibilityImage(showActivationPoints: .always),
-                named: preview.displayName{% if argument.file %},
+                named: preview.displayName.map { $0 + ".accessibility" }{% if argument.file %},
                 file: file{% endif %}
             )
 #endif
