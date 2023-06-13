@@ -47,12 +47,16 @@ class PreviewTests: XCTestCase {
                 named: preview.displayName{% if argument.file %},
                 file: file{% endif %}
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always){% if argument.file %}, file: file{% endif %})
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName{% if argument.file %},
+                file: file{% endif %}
+            )
+#endif
         }
     }
 
