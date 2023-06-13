@@ -31,28 +31,32 @@ class PreviewTests: XCTestCase {
 
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
-        for view in {{ type.name }}._allPreviews {
+        for preview in {{ type.name }}._allPreviews {
             // Given
-            let preview = {{ type.name }}._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits){% if argument.file %},
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName{% if argument.file %},
                 file: file{% endif %}
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always){% if argument.file %}, file: file{% endif %})
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }{% if argument.file %},
+                file: file{% endif %}
+            )
+#endif
         }
     }
 

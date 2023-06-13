@@ -3,19 +3,10 @@
     {
       "identity" : "accessibilitysnapshot",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/cashapp/AccessibilitySnapshot",
+      "location" : "https://github.com/cashapp/AccessibilitySnapshot.git",
       "state" : {
-        "revision" : "482db2fd4251cce237d8106073a53ad5289ce739",
-        "version" : "0.6.0"
-      }
-    },
-    {
-      "identity" : "ios-snapshot-test-case",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/uber/ios-snapshot-test-case.git",
-      "state" : {
-        "revision" : "7b10770333a961be6e5a41c9ce04b8c6d3990126",
-        "version" : "8.0.0"
+        "revision" : "6410357ffeaa93601efce83f49090307f4f691d2",
+        "version" : "0.5.1"
       }
     },
     {

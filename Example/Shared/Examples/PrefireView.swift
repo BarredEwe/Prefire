@@ -37,5 +37,6 @@ struct PrefireView_Preview: PreviewProvider, PrefireProvider {
         PrefireView()
             .previewLayout(.sizeThatFits)
             .previewUserStory(.auth)
+            .previewDisplayName("PrefireView")
     }
 }

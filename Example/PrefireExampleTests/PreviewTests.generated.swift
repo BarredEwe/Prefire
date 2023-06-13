@@ -27,152 +27,170 @@ class PreviewTests: XCTestCase {
     }
 
     func test_authView_Preview() {
-        for view in AuthView_Preview._allPreviews {
+        for preview in AuthView_Preview._allPreviews {
             // Given
-            let preview = AuthView_Preview._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
     func test_circleImage() {
-        for view in CircleImage_Previews._allPreviews {
+        for preview in CircleImage_Previews._allPreviews {
             // Given
-            let preview = CircleImage_Previews._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
     func test_greenButton() {
-        for view in GreenButton_Previews._allPreviews {
+        for preview in GreenButton_Previews._allPreviews {
             // Given
-            let preview = GreenButton_Previews._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
     func test_prefireView_Preview() {
-        for view in PrefireView_Preview._allPreviews {
+        for preview in PrefireView_Preview._allPreviews {
             // Given
-            let preview = PrefireView_Preview._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
     func test_testViewWithoutState() {
-        for view in TestViewWithoutState_Previews._allPreviews {
+        for preview in TestViewWithoutState_Previews._allPreviews {
             // Given
-            let preview = TestViewWithoutState_Previews._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
     func test_testView() {
-        for view in TestView_Previews._allPreviews {
+        for preview in TestView_Previews._allPreviews {
             // Given
-            let preview = TestView_Previews._allPreviews.first
-            let isScreen = preview?.layout == .device
-            let device = preview?.device?.snapshotDevice() ?? deviceConfig
+            let isScreen = preview.layout == .device
+            let device = preview.device?.snapshotDevice() ?? deviceConfig
 
             // When
-            var view = view.content
+            var view = preview.content
             view = isScreen ? view : AnyView(view.frame(width: device.size?.width).fixedSize(horizontal: false, vertical: true))
 
             // Then
             assertSnapshot(
                 matching: view,
-                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits)
+                as: isScreen ? .image(layout: .device(config: device)) : .image(layout: .sizeThatFits),
+                named: preview.displayName
             )
-
-            #if canImport(AccessibilitySnapshot)
-                let vc = UIHostingController(rootView: view)
-                vc.view.frame = UIScreen.main.bounds
-                assertSnapshot(matching: vc, as: .accessibilityImage(showActivationPoints: .always))
-            #endif
+#if canImport(AccessibilitySnapshot)
+            let vc = UIHostingController(rootView: view)
+            vc.view.frame = UIScreen.main.bounds
+            assertSnapshot(
+                matching: vc,
+                as: .accessibilityImage(showActivationPoints: .always),
+                named: preview.displayName.map { $0 + ".accessibility" }
+            )
+#endif
         }
     }
 
