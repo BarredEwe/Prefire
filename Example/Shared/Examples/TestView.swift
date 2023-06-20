@@ -54,11 +54,18 @@ struct TestView_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         TestView(isLoading: false)
             .previewUserStory(.testStory)
+            .snapshot(delay: 0.5, precision: 0.7)
             .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
 
         TestView(isLoading: true)
             .previewUserStory(.testStory)
             .previewState(.loading)
+            .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
+
+        TestView(isLoading: true)
+            .previewUserStory(.testStory)
+            .previewState(.loading)
+            .snapshot(delay: 0.3, precision: 0.9)
             .previewDevice(PreviewDevice(rawValue: "iPhone 8"))
     }
 }
@@ -67,6 +74,7 @@ struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
         TestView(isLoading: true)
             .previewUserStory(.testStory)
+            .snapshot(delay: 0.1, precision: 0.9)
             .previewLayout(.sizeThatFits)
     }
 }

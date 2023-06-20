@@ -114,6 +114,19 @@ For detailed instruction you can see [swift-snapshot-testing](https://github.com
 ## API
 New commands for previews:
 
+- You can set the [delay and precision](https://github.com/pointfreeco/swift-snapshot-testing/blob/main/Documentation/Available-Snapshot-Strategies.md#image-10) parameters for the snapshot:
+
+    ```swift
+    .snapshot(delay: 0.3, precision: 0.95)
+    ```
+    
+    ```swift
+    static var previews: some View {
+        TestView()
+            .snapshot(delay: 0.3, precision: 0.95)
+    }
+    ```
+
 - Function for connecting preview together in one **Flow**:
 
     <img src="https://i.postimg.cc/13psFbHt/Group-48095410-2.jpg" height="400" align="right">
