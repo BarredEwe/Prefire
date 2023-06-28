@@ -29,8 +29,8 @@ public enum PreviewModels {
                     id: name + "\(index)" + String(describing: self),
                     content: { return view.content },
                     name: name,
-                    type: Preview._allPreviews.first?.layout == .device ? .screen : .component,
-                    device: Preview._allPreviews.first?.device
+                    type: view.layout == .device ? .screen : .component,
+                    device: view.device
                 )
             )
         }
