@@ -186,7 +186,7 @@ test_configuration:
 ```
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
 - `test_file_path` - Filepath to generated file. __Default__: _DeriveData_
-- `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: `Templates/PreviewTests.stencil" from the package`
+- `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
 - `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
 

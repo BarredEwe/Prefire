@@ -93,7 +93,7 @@ class PreviewTests: XCTestCase {
             vc.view.frame = UIScreen.main.bounds
             assertSnapshot(
                 matching: vc,
-                as: .accessibilityImage(showActivationPoints: .always),
+                as: .wait(for: delay, on: .accessibilityImage(showActivationPoints: .always)),
                 named: preview.displayName.map { $0 + ".accessibility" },
                 testName: testName
             )
