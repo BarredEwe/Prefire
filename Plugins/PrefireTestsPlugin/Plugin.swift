@@ -13,8 +13,11 @@ struct PrefireTestsPlugin: BuildToolPlugin {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
 
-        let testFilePath = configuration?.testFilePath.flatMap({ target.directory.removingLastComponent().appending(subpath: $0).string }) ??
-            "\(context.pluginWorkDirectory)/PreviewTests.generated.swift"
+        let testFilePath = configuration?.testFilePath.flatMap({ target.directory.removingLastComponent().appending(subpath: $0).string })
+        ?? "\(context.pluginWorkDirectory)/PreviewTests.generated.swift"
+
+        let templateFilePath = configuration?.templateFilePath.flatMap({ target.directory.removingLastComponent().appending(subpath: $0).string })
+        ?? executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
@@ -22,6 +25,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
             Command.prefireCommand(
                 executablePath: executable,
                 sources: mainTarget.directory.string,
+                templateFilePath: templateFilePath,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
                 testTargetPath: target.directory.string,
@@ -45,8 +49,11 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
 
-        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string }) ??
-            "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
+        let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string })
+        ?? "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
+
+        let templateFilePath = configuration?.templateFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string })
+        ?? executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
@@ -54,6 +61,7 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
             Command.prefireCommand(
                 executablePath: executable,
                 sources: context.xcodeProject.directory.string,
+                templateFilePath: templateFilePath,
                 generatedSourcesDirectory: context.pluginWorkDirectory,
                 testFilePath: testFilePath,
                 testTargetPath: context.xcodeProject.directory.appending(subpath: target.displayName).string,
@@ -74,17 +82,16 @@ extension Command {
     static func prefireCommand(
         executablePath executable: Path,
         sources: String,
+        templateFilePath: String,
         generatedSourcesDirectory: Path,
         testFilePath: String,
         testTargetPath: String,
         targetName: String,
         configuration: Configuration?
     ) -> Command {
-        let templatesDirectory = executable.string.components(separatedBy: "Binaries").first! + "Templates"
-
         var arguments: [CustomStringConvertible] = [
             "--templates",
-            "\(templatesDirectory)/PreviewTests.stencil",
+            "\(templateFilePath)",
             "--sources",
             sources,
             "--output",

@@ -180,11 +180,13 @@ You can additionaly configure **Prefire** by adding a `.prefire.yml` file to roo
 test_configuration:
   - target: PrefireExample 
   - test_file_path: PrefireExampleTests/PreviewTests.generated.swift
+  - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
 ```
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
 - `test_file_path` - Filepath to generated file. __Default__: _DeriveData_
+- `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: `Templates/PreviewTests.stencil" from the package`
 - `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
 - `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
 

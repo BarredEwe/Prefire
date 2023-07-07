@@ -4,6 +4,7 @@ import PackagePlugin
 struct Configuration {
     let targetName: String?
     let testFilePath: String?
+    let templateFilePath: String?
     let simulatorDevice: String?
     let requiredOSVersion: String?
 }
@@ -14,6 +15,7 @@ extension Configuration {
     enum Keys: String {
         case target
         case test_file_path
+        case template_file_path
         case simulator_device
         case required_os
     }
@@ -41,6 +43,7 @@ extension Configuration {
         return Configuration(
             targetName: getFrom(configDataString: configDataString, key: .target),
             testFilePath: getFrom(configDataString: configDataString, key: .test_file_path),
+            templateFilePath: getFrom(configDataString: configDataString, key: .template_file_path),
             simulatorDevice: getFrom(configDataString: configDataString, key: .simulator_device),
             requiredOSVersion: getFrom(configDataString: configDataString, key: .required_os)
         )
