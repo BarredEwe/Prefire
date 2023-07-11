@@ -111,6 +111,7 @@ Just run generated tests 🚀
 <img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
 
 Plugin `PrefireTestsPlugin` will do everything for you 🛠️
+
 For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
 
 ---
