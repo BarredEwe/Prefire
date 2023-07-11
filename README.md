@@ -201,5 +201,4 @@ test_configuration:
 - iOS 14+
 
 ## Previews Troubleshooting
-- Don't forget remove ```#IF DEBUG``` for yours SwiftUI Previews. Xcode automatically removed Preview code, when you build release version.
-- NavigationView in Preview is not supported
+- `NavigationView` in Preview is not supported for Playbook
