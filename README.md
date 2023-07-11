@@ -40,13 +40,13 @@ on a project in Xcode.
 
 1. Add `Prefire` as a package dependency to your project without linking any of the products.
 
-<img src="https://i.postimg.cc/nhWK6D17/Screenshot-2023-01-19-at-16-31-55.png" height="500">
+<img src="https://i.postimg.cc/nhWK6D17/Screenshot-2023-01-19-at-16-31-55.png" width="800">
 
 2. Select the target to which you want to add linting and open the `Build Phases` inspector.
 Open `Run Build Tool Plug-ins` and select the `+` button.
 From the list, select `PrefirePlaybookPlugin` or `PrefireTestsPlugin`, and add it to the project.
 
-<img src="https://i.postimg.cc/VNnJNrX3/Screenshot-2023-01-19-at-16-43-44.png" height="500">
+<img src="https://i.postimg.cc/VNnJNrX3/Screenshot-2023-01-19-at-16-43-44.png" width="400">
 
 ### **Swift Package Plugin**
 
