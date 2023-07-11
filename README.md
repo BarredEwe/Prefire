@@ -20,10 +20,10 @@ You can try 🔥**Prefire** starting from example project.
 
 - ✅ Easy to use
 - ✅ Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
-- ✅ Generation Playbook (Demo) view
-- ✅ Generation Snapshot tests based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
-- ✅ Generation Accesability Snapshot tests
-- ✅ Xcode Plugin supported
+- ✅ Generation _Playbook (Demo) view_
+- ✅ Generation _Snapshot tests_ based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+- ✅ Generation _Accesability Snapshot_ tests
+- ✅ _Xcode Plugin_ supported
 
 <br clear="all">
 
