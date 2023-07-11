@@ -133,7 +133,7 @@ New commands for previews:
 
 - Function for connecting preview together in one **Flow**:
 
-    <img src="https://i.postimg.cc/13psFbHt/Group-48095410-2.jpg" height="400" align="right">
+    <img src="https://i.postimg.cc/13psFbHt/Group-48095410-2.jpg" width="350" align="right">
 
     ```swift
     .previewUserStory(.auth)
@@ -157,7 +157,7 @@ New commands for previews:
 
 - If a preview contains more than one `View`, you can mark `State` for these views.
 
-    <img src="https://i.postimg.cc/wB8ndkSs/Group-48095410.jpg" height="405" align="right">
+    <img src="https://i.postimg.cc/wB8ndkSs/Group-48095410.jpg" width="350" align="right">
 
     ```swift
     .previewState(.loading)
