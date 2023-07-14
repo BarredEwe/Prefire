@@ -161,7 +161,7 @@ private extension Snapshotting where Value: SwiftUI.View, Format == UIImage {
                         DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
                             expectation.fulfill()
                         }
-                        _ = XCTWaiter.wait(for: [expectation], timeout: duration + 1) // Проверить, выдает warning
+                        _ = XCTWaiter.wait(for: [expectation], timeout: duration + 1)
                     }
                     strategy.run(callback)
                 }
