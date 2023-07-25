@@ -12,6 +12,9 @@ import Prefire
 {% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}
 {% endif %}
+{% for import in argument.imports %}
+import {{ import }}
+{% endfor %}
 
 class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX

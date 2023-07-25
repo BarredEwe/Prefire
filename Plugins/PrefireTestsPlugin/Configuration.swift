@@ -3,6 +3,7 @@ import PackagePlugin
 
 struct Configuration {
     let targetName: String?
+    let imports: [String]?
     let testFilePath: String?
     let templateFilePath: String?
     let simulatorDevice: String?
@@ -14,6 +15,7 @@ struct Configuration {
 extension Configuration {
     enum Keys: String {
         case target
+        case imports
         case test_file_path
         case template_file_path
         case simulator_device
@@ -42,6 +44,7 @@ extension Configuration {
 
         return Configuration(
             targetName: getFrom(configDataString: configDataString, key: .target),
+            imports: getArrayFrom(configDataString: configDataString, key: .imports),
             testFilePath: getFrom(configDataString: configDataString, key: .test_file_path),
             templateFilePath: getFrom(configDataString: configDataString, key: .template_file_path),
             simulatorDevice: getFrom(configDataString: configDataString, key: .simulator_device),
@@ -52,6 +55,11 @@ extension Configuration {
     private static func getFrom(configDataString: String, key: Keys) -> String? {
         configDataString.matches(regex: "(test_configuration:|\\s+" + key.rawValue + ":)(.+)")
             .first?.components(separatedBy: ": ").last
+    }
+
+    private static func getArrayFrom(configDataString: String, key: Keys) -> [String]? {
+        let arrayMatches = configDataString.matches(regex: "\\s+-\\s(.+)")
+        return arrayMatches.map { $0.replacingOccurrences(of: "\\s+-\\s", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 }
 
