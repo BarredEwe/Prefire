@@ -13,6 +13,7 @@ import Prefire
     import AccessibilitySnapshot
 #endif
 @testable import PrefireExample
+@testable import PrefireExample
 import Foundation
 
 class PreviewTests: XCTestCase {
