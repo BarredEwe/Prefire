@@ -5,14 +5,14 @@ import PackagePlugin
 struct PrefirePlaybookPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let configuration = Configuration.from(rootPaths: [target.directory, target.directory.removingLastComponent()])
+
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
         return [
             Command.prefireCommand(
                 executablePath: executable,
                 sources: target.directory,
-                imports: configuration?.imports ?? [],
+                imports: target.recursiveTargetDependencies.map(\.name),
                 generatedSourcesDirectory: context.pluginWorkDirectory)
         ]
     }
@@ -24,14 +24,14 @@ import XcodeProjectPlugin
 extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
         let executable = try context.tool(named: "PrefireSourcery").path
-        let configuration = Configuration.from(rootPaths: [context.xcodeProject.directory.appending(subpath: target.displayName), context.xcodeProject.directory])
+
         try FileManager.default.createDirectory(atPath: context.pluginWorkDirectory.string, withIntermediateDirectories: true)
 
         return [
             Command.prefireCommand(
                 executablePath: executable,
                 sources: context.xcodeProject.directory,
-                imports: configuration?.imports ?? [],
+                imports: [],
                 generatedSourcesDirectory: context.pluginWorkDirectory)
         ]
     }
@@ -65,12 +65,12 @@ extension Command {
                 "\(templatesDirectory)/PreviewModels.stencil",
                 "--sources",
                 sources.string,
+                "--args",
+                "autoMockableImports=\(imports)",
                 "--output",
                 "\(generatedSourcesDirectory)/PreviewModels.generated.swift",
                 "--cacheBasePath",
                 generatedSourcesDirectory.string,
-                "--args",
-                "imports=\(imports)",
             ],
             outputFilesDirectory: generatedSourcesDirectory
         )
