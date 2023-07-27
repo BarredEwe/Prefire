@@ -30,7 +30,6 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 testFilePath: testFilePath,
                 testTargetPath: target.directory.string,
                 targetName: mainTarget.name,
-                imports: configuration?.imports ?? [],
                 configuration: configuration
             )
         ]
@@ -67,7 +66,6 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
                 testFilePath: testFilePath,
                 testTargetPath: context.xcodeProject.directory.appending(subpath: target.displayName).string,
                 targetName: targetName,
-                imports: configuration?.imports ?? [],
                 configuration: configuration
             )
         ]
@@ -89,7 +87,6 @@ extension Command {
         testFilePath: String,
         testTargetPath: String,
         targetName: String,
-        imports: [String],
         configuration: Configuration?
     ) -> Command {
         var arguments: [CustomStringConvertible] = [
@@ -104,12 +101,16 @@ extension Command {
             "--args",
             "mainTarget=\(targetName)",
             "--args",
-            "imports=\(imports)",
-            "--args",
             "simulatorDevice=\(configuration?.simulatorDevice ?? defaultSimulatorDevice)",
             "--args",
             "simulatorOSVersion=\(configuration?.requiredOSVersion ?? defaultOSVersion)",
         ]
+
+        configuration?.args?
+            .forEach { key, values in
+                // let valuesString = values.joined(separator: ",")
+                arguments.append(contentsOf: ["--args", "\(key)=\(values)"])
+            }
 
         if configuration?.testFilePath == nil {
             arguments.append(contentsOf: [

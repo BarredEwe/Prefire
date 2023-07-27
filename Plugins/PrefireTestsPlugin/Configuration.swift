@@ -3,11 +3,11 @@ import PackagePlugin
 
 struct Configuration {
     let targetName: String?
-    let imports: [String]?
     let testFilePath: String?
     let templateFilePath: String?
     let simulatorDevice: String?
     let requiredOSVersion: String?
+    let args: [String: [String]]?
 }
 
 // MARK: - Initialization
@@ -15,7 +15,6 @@ struct Configuration {
 extension Configuration {
     enum Keys: String {
         case target
-        case imports
         case test_file_path
         case template_file_path
         case simulator_device
@@ -44,11 +43,11 @@ extension Configuration {
 
         return Configuration(
             targetName: getFrom(configDataString: configDataString, key: .target),
-            imports: getArrayFrom(configDataString: configDataString, key: .imports),
             testFilePath: getFrom(configDataString: configDataString, key: .test_file_path),
             templateFilePath: getFrom(configDataString: configDataString, key: .template_file_path),
             simulatorDevice: getFrom(configDataString: configDataString, key: .simulator_device),
-            requiredOSVersion: getFrom(configDataString: configDataString, key: .required_os)
+            requiredOSVersion: getFrom(configDataString: configDataString, key: .required_os),
+            args: getArgsFrom(configDataString: configDataString)
         )
     }
 
@@ -56,11 +55,21 @@ extension Configuration {
         configDataString.matches(regex: "(test_configuration:|\\s+" + key.rawValue + ":)(.+)")
             .first?.components(separatedBy: ": ").last
     }
-
-    private static func getArrayFrom(configDataString: String, key: Keys) -> [String]? {
-        let arrayMatches = configDataString.matches(regex: "\\s+-\\s(.+)")
-        return arrayMatches.map { $0.replacingOccurrences(of: "\\s+-\\s", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines) }
+        
+    private static func getArgsFrom(configDataString: String) -> [String: [String]]? {
+        // Consider using a YAML parser?
+        let testables = configDataString.matches(regex: "(args:|\\s+" + "testable" + ":)(.+)")
+            .first?.components(separatedBy: ": ").last?
+            .components(separatedBy: ", ")
+        let imports = configDataString.matches(regex: "(args:|\\s+" + "import" + ":)(.+)")
+            .first?.components(separatedBy: ": ").last?
+            .components(separatedBy: ", ")
+        return [
+            "testable": testables ?? [],
+            "import" : imports ?? []
+        ]
     }
+
 }
 
 // MARK: - Extension regex
