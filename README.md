@@ -107,12 +107,13 @@ struct ContentView: View {
 ### **Snapshot tests**
 
 Just run generated tests 🚀
+And all tests will be generated in DerivedData.
 
 <img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
 
 Plugin `PrefireTestsPlugin` will do everything for you 🛠️
 
-For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) or examine an example project.
 
 ---
 
@@ -190,7 +191,7 @@ test_configuration:
   - required_os: 16
 ```
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
-- `test_file_path` - Filepath to generated file. __Default__: _DeriveData_
+- `test_file_path` - Filepath to generated file (⚠️ Not compatible with Xcode 15). __Default__: _DeriveData_
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
 - `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
