@@ -50,7 +50,7 @@ extension PrefireTestsPlugin: XcodeBuildToolPlugin {
         }
 
         let testFilePath = configuration?.testFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string })
-        ?? "\(context.pluginWorkDirectory)/\(target.displayName)/PreviewTests.generated.swift"
+        ?? "\(context.pluginWorkDirectory)/PreviewTests.generated.swift"
 
         let templateFilePath = configuration?.templateFilePath.flatMap({ context.xcodeProject.directory.appending(subpath: $0).string })
         ?? executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
