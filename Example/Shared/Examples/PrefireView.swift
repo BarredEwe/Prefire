@@ -1,12 +1,5 @@
-//
-//  AuthView.swift
-//  PrefireExample
-//
-//  Created by Grishutin Maksim Vladimirovich on 03.10.2022.
-//
-
-import SwiftUI
 import Prefire
+import SwiftUI
 
 struct PrefireView: View {
     var body: some View {
@@ -39,4 +32,16 @@ struct PrefireView_Preview: PreviewProvider, PrefireProvider {
             .previewUserStory(.auth)
             .previewDisplayName("PrefireView")
     }
+}
+
+#Preview("PrefireViewMacro", traits: .sizeThatFitsLayout) {
+    PrefireView()
+        .previewUserStory(.auth)
+        .snapshot(perceptualPrecision: 0.98)
+}
+
+#Preview("PrefireViewDisabled", traits: .sizeThatFitsLayout) {
+    PrefireView()
+        .previewUserStory(.auth)
+        .prefireIgnored()
 }

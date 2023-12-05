@@ -1,0 +1,15 @@
+{
+    "schemaVersion": "1.0",
+    "artifacts": {
+        "PrefireBinary": {
+            "type": "executable",
+            "version": "2.0.0",
+            "variants": [
+                {
+                    "path": "prefire-2.0.0-macos/bin/prefire",
+                    "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
+                },
+            ]
+        }
+    }
+}

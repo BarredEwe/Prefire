@@ -1,10 +1,3 @@
-//
-//  TransformIf.swift
-//  
-//
-//  Created by Grishutin Maksim Vladimirovich on 08.09.2022.
-//
-
 import SwiftUI
 
 extension View {

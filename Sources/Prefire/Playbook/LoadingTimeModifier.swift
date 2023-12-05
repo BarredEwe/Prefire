@@ -1,10 +1,3 @@
-//
-//  LoadingTimeModifier.swift
-//  SnapshotAppSwiftUI (iOS)
-//
-//  Created by Maksim Grishutin on 11.08.2022.
-//
-
 import SwiftUI
 
 struct LoadingTimeModifier: ViewModifier {

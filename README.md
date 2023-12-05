@@ -12,7 +12,7 @@
 
 # Prefire
 
-<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right" style="border-radius: 20px 20px; box-shadow: 0px 0px 15px gray;">
+<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
 
 Do you like **SwiftUI Preview** and use it? Then you must try 🔥**Prefire**!
 
@@ -87,6 +87,13 @@ struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
 }
 ```
+If you use the **`#Preview`** macro, then **🔥Prefire** will automatically find it itself. If you don't need it, just mark view - `.prefireIgnored()`:
+```swift
+#Preview {
+    Text("")
+        .prefireIgnored()
+}
+```
 
 ### **Playbook (Demo) View**
 To use Playbook, simply use `PlaybookView`
@@ -120,16 +127,16 @@ For detailed instruction you can see [swift-snapshot-testing](https://github.com
 ## API
 New commands for previews:
 
-- You can set the [delay and precision](https://github.com/pointfreeco/swift-snapshot-testing/blob/main/Documentation/Available-Snapshot-Strategies.md#image-10) parameters for the snapshot:
+- You can set the [delay, precision and perceptualPrecision](https://github.com/pointfreeco/swift-snapshot-testing/blob/main/Documentation/Available-Snapshot-Strategies.md#image-10) parameters for the snapshot:
 
     ```swift
-    .snapshot(delay: 0.3, precision: 0.95)
+    .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
     ```
     
     ```swift
     static var previews: some View {
         TestView()
-            .snapshot(delay: 0.3, precision: 0.95)
+            .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
     }
     ```
 
@@ -189,12 +196,21 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
+
+prefire_configuration:
+  - imports:
+    - UIKit
+    - Foundation
+  - testable_imports:
+    - SwiftUI
 ```
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
 - `test_file_path` - Filepath to generated file (⚠️ Not compatible with Xcode 15). __Default__: _DerivedData_
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
-- `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
-- `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
+- `simulator_device` - Device for Snapshot testing. Optional parameter.
+- `required_os` - iOS version for Snapshot testing. Optional parameter.
+- `imports` - Additional imports for the generated Playbook. Optional parameter.
+- `testable_imports` - Additional `@testable` imports for the generated Playbook. Optional parameter.
 
 ## Requirements
 

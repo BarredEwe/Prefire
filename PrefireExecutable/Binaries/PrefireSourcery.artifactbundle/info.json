@@ -1,0 +1,15 @@
+{
+    "schemaVersion": "1.0",
+    "artifacts": {
+        "PrefireSourcery": {
+            "type": "executable",
+            "version": "2.1.2",
+            "variants": [
+                {
+                    "path": "sourcery-2.1.2-macos/bin/sourcery",
+                    "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
+                },
+            ]
+        }
+    }
+}

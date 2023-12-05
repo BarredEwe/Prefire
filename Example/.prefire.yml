@@ -2,3 +2,8 @@ test_configuration:
   - target: PrefireExample
   - simulator_device: "iPhone15,2"
   - required_os: 17
+
+playbook_configuration:
+  - imports:
+      - UIKit
+      - Foundation

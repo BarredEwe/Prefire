@@ -38,6 +38,16 @@
                ReferencedContainer = "container:PrefireExample.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "PrefireExecutableTests"
+               BuildableName = "PrefireExecutableTests"
+               BlueprintName = "PrefireExecutableTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

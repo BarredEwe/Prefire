@@ -1,12 +1,5 @@
-//
-//  CicrleImage.swift
-//  PreFireExample
-//
-//  Created by Grishutin Maksim Vladimirovich on 13.09.2022.
-//
-
-import SwiftUI
 import Prefire
+import SwiftUI
 
 struct CircleImage: View {
     var body: some View {

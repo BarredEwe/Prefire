@@ -1,10 +1,3 @@
-//
-//  SafeAreaEnviroment.swift
-//  
-//
-//  Created by Grishutin Maksim Vladimirovich on 25.09.2022.
-//
-
 import SwiftUI
 
 private struct SafeAreaInsetsKey: EnvironmentKey {
@@ -14,7 +7,6 @@ private struct SafeAreaInsetsKey: EnvironmentKey {
 }
 
 public extension EnvironmentValues {
-    /// Отступы, которые используется для определения безопасной области для этого представления.
     var safeAreaInsets: EdgeInsets {
         self[SafeAreaInsetsKey.self]
     }

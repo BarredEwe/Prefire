@@ -1,12 +1,5 @@
-//
-//  AuthView.swift
-//  PrefireExample
-//
-//  Created by Grishutin Maksim Vladimirovich on 03.10.2022.
-//
-
-import SwiftUI
 import Prefire
+import SwiftUI
 
 struct AuthView: View {
     @State var login: String
@@ -48,7 +41,6 @@ struct AuthView: View {
                 .tint(.accentColor)
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-
             }
             .padding()
 
@@ -56,7 +48,6 @@ struct AuthView: View {
                 .font(.headline)
                 .padding()
         }
-
     }
 }
 

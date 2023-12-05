@@ -1,4 +1,4 @@
-// swift-tools-version: 5.6
+// swift-tools-version: 5.8
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -18,7 +18,7 @@ let package = Package(
         .plugin(
             name: "PrefireTestsPlugin",
             targets: ["PrefireTestsPlugin"]
-        )
+        ),
     ],
     targets: [
         .target(
@@ -29,19 +29,25 @@ let package = Package(
             name: "PrefirePlaybookPlugin",
             capability: .buildTool(),
             dependencies: [
-                "PrefireSourcery"
+                "PrefireBinary",
+                "PrefireSourcery",
             ]
         ),
         .plugin(
             name: "PrefireTestsPlugin",
             capability: .buildTool(),
             dependencies: [
-                "PrefireSourcery"
+                "PrefireBinary",
+                "PrefireSourcery",
             ]
         ),
         .binaryTarget(
+            name: "PrefireBinary",
+            path: "Binaries/PrefireBinary.artifactbundle"
+        ),
+        .binaryTarget(
             name: "PrefireSourcery",
-            path: "Binaries/PrefireSourcery.artifactbundle"
-        )
+            path: "PrefireExecutable/Binaries/PrefireSourcery.artifactbundle"
+        ),
     ]
 )
