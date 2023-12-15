@@ -18,8 +18,8 @@ struct GeneratedPlaybookOptions {
         self.output = output
         self.template = template
         self.cacheBasePath = cacheBasePath
-        imports = config?.imports
-        testableImports = config?.testableImports
+        imports = config?.playbook.imports
+        testableImports = config?.playbook.testableImports
         self.verbose = verbose
     }
 }
@@ -39,20 +39,12 @@ enum GeneratePlaybookCommand {
             task.arguments?.append(contentsOf: ["--cacheBasePath", cacheBasePath])
         }
 
-        if var imports = options.imports, !imports.isEmpty {
-            // It is used so that sourcery can determine the type of the parameter as an array
-            imports.append("last")
-
-            let importsArguments = imports.map { "imports=" + $0 }.joined(separator: ",")
-            task.arguments?.append(contentsOf: ["--args", importsArguments])
+        if let imports = options.imports, !imports.isEmpty {
+            task.arguments?.append(contentsOf: imports.makeArgs(name: "imports"))
         }
 
-        if var testableImports = options.testableImports, !testableImports.isEmpty {
-            // It is used so that sourcery can determine the type of the parameter as an array
-            testableImports.append("last")
-
-            let importsArguments = testableImports.map { "testableImports=" + $0 }.joined(separator: ",")
-            task.arguments?.append(contentsOf: ["--args", importsArguments])
+        if let testableImports = options.testableImports, !testableImports.isEmpty {
+            task.arguments?.append(contentsOf: testableImports.makeArgs(name: "testableImports"))
         }
 
         let target = options.target ?? (FileManager.default.currentDirectoryPath as NSString).lastPathComponent

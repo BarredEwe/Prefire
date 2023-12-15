@@ -4,7 +4,6 @@
 import XCTest
 import SwiftUI
 import Prefire
-
 @testable import SnapshotTesting
 #if canImport(AccessibilitySnapshot)
     import AccessibilitySnapshot
@@ -12,6 +11,16 @@ import Prefire
 {% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}
 {% endif %}
+{% for import in argument.imports %}
+{% if import != "last" %}
+import {{ import }}
+{% endif %}
+{% endfor %}
+{% for import in argument.testableImports %}
+{% if import != "last" %}
+@testable import {{ import }}
+{% endif %}
+{% endfor %}
 
 class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX

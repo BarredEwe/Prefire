@@ -10,6 +10,11 @@ class ConfigTests: XCTestCase {
           - template_file_path: CustomPreviewTests.stencil
           - simulator_device: "iPhone15,2"
           - required_os: 17
+          - imports:
+              - UIKit
+              - SwiftUI
+          - testable_imports:
+              - Prefire
         playbook_configuration:
           - imports:
               - UIKit
@@ -21,12 +26,14 @@ class ConfigTests: XCTestCase {
     func test_successCreateConfig() {
         let config = Config.from(configDataString: prefireConfigString, verbose: false)
 
-        XCTAssertEqual(config?.target, "PrefireExample")
-        XCTAssertEqual(config?.testFilePath, "PrefireExampleTests/PreviewTests.generated.swift")
-        XCTAssertEqual(config?.template, "CustomPreviewTests.stencil")
-        XCTAssertEqual(config?.device, "iPhone15,2")
-        XCTAssertEqual(config?.osVersion, "17")
-        XCTAssertEqual(config?.imports, ["UIKit", "Foundation"])
-        XCTAssertEqual(config?.testableImports, ["SwiftUI"])
+        XCTAssertEqual(config?.tests.target, "PrefireExample")
+        XCTAssertEqual(config?.tests.testFilePath, "PrefireExampleTests/PreviewTests.generated.swift")
+        XCTAssertEqual(config?.tests.template, "CustomPreviewTests.stencil")
+        XCTAssertEqual(config?.tests.device, "iPhone15,2")
+        XCTAssertEqual(config?.tests.osVersion, "17")
+        XCTAssertEqual(config?.tests.imports, ["UIKit", "SwiftUI"])
+        XCTAssertEqual(config?.tests.testableImports, ["Prefire"])
+        XCTAssertEqual(config?.playbook.imports, ["UIKit", "Foundation"])
+        XCTAssertEqual(config?.playbook.testableImports, ["SwiftUI"])
     }
 }

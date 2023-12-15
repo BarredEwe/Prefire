@@ -1,13 +1,23 @@
 import Foundation
 
 struct Config {
-    var target: String?
-    var testFilePath: String?
-    var template: String?
-    var device: String?
-    var osVersion: String?
-    var imports: [String]?
-    var testableImports: [String]?
+    struct TestsConfig {
+        var target: String?
+        var testFilePath: String?
+        var template: String?
+        var device: String?
+        var osVersion: String?
+        var imports: [String]?
+        var testableImports: [String]?
+    }
+
+    struct PlaybookConfig {
+        var imports: [String]?
+        var testableImports: [String]?
+    }
+
+    var tests = TestsConfig()
+    var playbook = PlaybookConfig()
 }
 
 // MARK: - Initialization
@@ -51,9 +61,11 @@ extension Config {
 
         for index in 0..<lines.count {
             if lines[index].contains("test_configuration:") {
+                isPlaybookConfig = false
                 isTestConfig = true
                 continue
             } else if lines[index].contains("playbook_configuration:") {
+                isTestConfig = false
                 isPlaybookConfig = true
                 continue
             }
@@ -62,34 +74,42 @@ extension Config {
 
             if isTestConfig {
                 if let target = getValue(from: components, key: .target) {
-                    configuration.target = target
+                    configuration.tests.target = target
                     continue
                 }
                 if let testFilePath = getValue(from: components, key: .test_file_path) {
-                    configuration.testFilePath = testFilePath
+                    configuration.tests.testFilePath = testFilePath
                     continue
                 }
                 if let template = getValue(from: components, key: .template_file_path) {
-                    configuration.template = template
+                    configuration.tests.template = template
                     continue
                 }
                 if let device = getValue(from: components, key: .simulator_device) {
-                    configuration.device = device
+                    configuration.tests.device = device
                     continue
                 }
                 if let osVersion = getValue(from: components, key: .required_os) {
-                    configuration.osVersion = osVersion
+                    configuration.tests.osVersion = osVersion
+                    continue
+                }
+                if let imports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
+                    configuration.tests.imports = imports
+                    continue
+                }
+                if let testableImports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
+                    configuration.tests.testableImports = testableImports
                     continue
                 }
             }
 
             if isPlaybookConfig {
                 if let imports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
-                    configuration.imports = imports
+                    configuration.playbook.imports = imports
                     continue
                 }
                 if let testableImports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
-                    configuration.testableImports = testableImports
+                    configuration.playbook.testableImports = testableImports
                     continue
                 }
             }
@@ -99,7 +119,7 @@ extension Config {
     }
 
     private static func getValues(from components: [String], lines: [String], key: Keys) -> [String]? {
-        guard (components.first?.hasSuffix("- \(key.rawValue)") ?? false) == true else { return nil }
+        guard (components.first?.hasSuffix("- \(key.rawValue)") ?? false) == true, components.last?.isEmpty == true else { return nil }
 
         var values = [String]()
 

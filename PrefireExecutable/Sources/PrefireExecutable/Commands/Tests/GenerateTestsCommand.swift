@@ -9,17 +9,21 @@ struct GeneratedTestsOptions {
     var cacheBasePath: String?
     var device: String?
     var osVersion: String?
+    var imports: [String]?
+    var testableImports: [String]?
     var verbose: Bool
 
     init(sourcery: String, target: String?, template: String, sources: String?, output: String?, cacheBasePath: String?, device: String?, osVerison: String?, config: Config?, verbose: Bool) {
         self.sourcery = sourcery
-        self.target = config?.target ?? target
-        self.template = config?.template ?? template
+        self.target = config?.tests.target ?? target
+        self.template = config?.tests.template ?? template
         self.sources = sources
-        self.output = config?.testFilePath ?? output
+        self.output = config?.tests.testFilePath ?? output
         self.cacheBasePath = cacheBasePath
-        self.device = config?.device ?? device
-        osVersion = config?.osVersion ?? osVerison
+        self.device = config?.tests.device ?? device
+        osVersion = config?.tests.osVersion ?? osVerison
+        imports = config?.tests.imports
+        testableImports = config?.tests.testableImports
         self.verbose = verbose
     }
 }
@@ -66,6 +70,15 @@ enum GenerateTestsCommand {
             task.arguments?.append(contentsOf: ["--args", "simulatorDevice=\(device)"])
         }
 
+        if let imports = options.imports, !imports.isEmpty {
+            task.arguments?.append(contentsOf: imports.makeArgs(name: "imports"))
+        }
+
+        if let testableImports = options.testableImports, !testableImports.isEmpty {
+            task.arguments?.append(contentsOf: testableImports.makeArgs(name: "testableImports"))
+        }
+
+        // Works with `#Preview` macro
         #if swift(>=5.9)
             if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target) {
                 task.arguments?.append(contentsOf: ["--args", "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
