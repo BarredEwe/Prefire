@@ -220,3 +220,4 @@ prefire_configuration:
 
 ## Previews Troubleshooting
 - `NavigationView` in Preview is not supported for Playbook
+- To run Prefire via *CI*, you need to configure permissions: `defaults write com.apple.dt.Xcode ideskippackagepluginfingerprintvalidationbool YES`

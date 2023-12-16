@@ -3,32 +3,29 @@ import Foundation
 enum PreviewLoader {}
 
 extension PreviewLoader {
-    static let viewMarkerStart = "        DeveloperToolsSupport"
-    static let viewMarkerEnd = "    }"
-    static let prefireDisableMarker = ".prefireIgnored()"
+    enum Keys {
+        static let viewMarkerStart = "        DeveloperToolsSupport"
+        static let viewMarkerEnd = "    }"
 
-    static let macroType = "fMf" // freestanding macro
-    static let macroName = "Preview" + macroType
-    static let macroManglingPrefix = "@__swiftmacro_"
+        static let prefireDisableMarker = ".prefireIgnored()"
 
-    static func loadRawPreviewBodies(for target: String) -> [String]? {
+        static let source = "// original-source-range: "
+        static let fileType = "_.swift"
+
+        static let macroType = "fMf" // freestanding macro
+        static let macroName = "Preview" + macroType
+    }
+
+    static func loadRawPreviewBodies(for target: String, and sources: String) -> [String]? {
         let previewMacrosDirectory = FileManager.default.temporaryDirectory.appending(path: "swift-generated-sources")
         let fileURLs = try? FileManager.default.contentsOfDirectory(at: previewMacrosDirectory, includingPropertiesForKeys: nil)
 
         var findedBodies = [String]()
 
         for fileURL in fileURLs ?? [] {
-            var fileName = fileURL.lastPathComponent
-                .replacingOccurrences(of: "_.swift", with: "")
-                .replacingOccurrences(of: macroManglingPrefix, with: "")
-            fileName.removeLastNumber()
+            guard fileURL.lastPathComponent.hasSuffix(Keys.macroName + Keys.fileType) else { continue }
 
-            let charCount = fileName.removeFirstNumber() ?? 0
-            let moduleName = fileName.prefix(charCount)
-
-            guard fileName.hasSuffix(macroName), moduleName == target else { continue }
-
-            if let previewBody = loadPreviewBody(from: fileURL), !findedBodies.contains(previewBody) {
+            if let previewBody = loadPreviewBody(from: fileURL, and: sources), !findedBodies.contains(previewBody) {
                 findedBodies.append(previewBody)
             }
         }
@@ -38,21 +35,26 @@ extension PreviewLoader {
         return findedBodies
     }
 
-    static func loadPreviewBody(from fileURL: URL) -> String? {
+    static func loadPreviewBody(from fileURL: URL, and sources: String) -> String? {
         guard let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty else { return nil }
+
+        var lines = content.components(separatedBy: .newlines)
+        lines.removeLast()
 
         var result = ""
         var isInsideFunction = false
 
-        for line in content.components(separatedBy: .newlines) {
-            if line.hasPrefix(viewMarkerStart) {
+        guard lines.last?.hasPrefix(Keys.source + sources) == true else { return nil }
+
+        for line in lines {
+            if line.hasPrefix(Keys.viewMarkerStart) {
                 isInsideFunction = true
-            } else if line.hasPrefix(viewMarkerEnd) {
+            } else if line.hasPrefix(Keys.viewMarkerEnd) {
                 isInsideFunction = false
                 result.removeLast()
             }
 
-            if line.hasSuffix(prefireDisableMarker) {
+            if line.hasSuffix(Keys.prefireDisableMarker) {
                 return nil
             }
 

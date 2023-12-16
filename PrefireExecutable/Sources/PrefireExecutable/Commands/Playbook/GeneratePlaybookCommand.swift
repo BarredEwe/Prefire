@@ -3,8 +3,8 @@ import Foundation
 struct GeneratedPlaybookOptions {
     var sourcery: String
     var target: String?
-    var sources: String?
-    var output: String?
+    var sources: String
+    var output: String
     var template: String
     var cacheBasePath: String?
     var imports: [String]?
@@ -14,8 +14,8 @@ struct GeneratedPlaybookOptions {
     init(sourcery: String, target: String?, sources: String?, output: String?, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
         self.sourcery = sourcery
         self.target = target
-        self.sources = sources
-        self.output = output
+        self.sources = sources ?? FileManager.default.currentDirectoryPath
+        self.output = output ?? (FileManager.default.currentDirectoryPath + "/PreviewModels.generated.swift")
         self.template = template
         self.cacheBasePath = cacheBasePath
         imports = config?.playbook.imports
@@ -31,8 +31,8 @@ enum GeneratePlaybookCommand {
 
         task.arguments = [
             "--templates", options.template,
-            "--sources", options.sources ?? FileManager.default.currentDirectoryPath,
-            "--output", options.output ?? (FileManager.default.currentDirectoryPath + "/PreviewModels.generated.swift"),
+            "--sources", options.sources,
+            "--output", options.output,
         ]
 
         if let cacheBasePath = options.cacheBasePath {
@@ -51,7 +51,7 @@ enum GeneratePlaybookCommand {
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target) {
+            if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources) {
                 task.arguments?.append(contentsOf: ["--args", "macroPreviewBodies=\"\(macroPreviewBodies)\""])
             }
         #endif

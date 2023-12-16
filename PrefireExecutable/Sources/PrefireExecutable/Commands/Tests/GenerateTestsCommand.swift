@@ -80,7 +80,7 @@ enum GenerateTestsCommand {
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target) {
+            if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target, and: sources) {
                 task.arguments?.append(contentsOf: ["--args", "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
             }
         #endif
