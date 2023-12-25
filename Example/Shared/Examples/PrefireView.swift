@@ -40,6 +40,12 @@ struct PrefireView_Preview: PreviewProvider, PrefireProvider {
         .snapshot(perceptualPrecision: 0.98)
 }
 
+#Preview("PrefireViewMacroAnother", traits: .sizeThatFitsLayout) {
+    PrefireView()
+        .previewUserStory(.auth)
+        .snapshot(perceptualPrecision: 0.98)
+}
+
 #Preview("PrefireViewDisabled", traits: .sizeThatFitsLayout) {
     PrefireView()
         .previewUserStory(.auth)

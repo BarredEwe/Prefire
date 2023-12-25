@@ -23,7 +23,8 @@ extension PreviewLoader {
         var findedBodies = [String]()
 
         for fileURL in fileURLs ?? [] {
-            guard fileURL.lastPathComponent.hasSuffix(Keys.macroName + Keys.fileType) else { continue }
+            let fileName = fileURL.lastPathComponent.components(separatedBy: .decimalDigits).joined()
+            guard fileName.hasSuffix(Keys.macroName + Keys.fileType) else { continue }
 
             if let previewBody = loadPreviewBody(from: fileURL, and: sources), !findedBodies.contains(previewBody) {
                 findedBodies.append(previewBody)
@@ -35,16 +36,41 @@ extension PreviewLoader {
         return findedBodies
     }
 
+    static func checkAvailability(for line: String?, and result: [String]) -> Bool {
+        guard let line = line?.replacingOccurrences(of: Keys.source, with: "") else { return false }
+
+        var components = line.components(separatedBy: ":")
+        components.removeLast()
+        components.removeLast()
+        let firstLine = Int(components.removeLast()) ?? 0
+
+        guard let path = components.first, let fileURL = URL(string: "file://" + path),
+              let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty else { return false }
+
+        let lines = content.components(separatedBy: .newlines)
+        var result = result
+        result.removeFirst()
+        result.removeLast()
+
+        for i in 0..<result.count {
+            guard let left = result[safe: i]?.trimmingCharacters(in: .whitespaces),
+                  let right = lines[safe: firstLine + i]?.trimmingCharacters(in: .whitespaces),
+                    left == right else { return false }
+        }
+
+        return true
+    }
+
     static func loadPreviewBody(from fileURL: URL, and sources: String) -> String? {
         guard let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty else { return nil }
 
         var lines = content.components(separatedBy: .newlines)
         lines.removeLast()
 
+        guard lines.last?.hasPrefix(Keys.source + sources) == true else { return nil }
+
         var result = ""
         var isInsideFunction = false
-
-        guard lines.last?.hasPrefix(Keys.source + sources) == true else { return nil }
 
         for line in lines {
             if line.hasPrefix(Keys.viewMarkerStart) {
@@ -63,28 +89,22 @@ extension PreviewLoader {
             }
         }
 
+        guard checkAvailability(for: lines.last, and: result.components(separatedBy: .newlines)) else { return nil }
+
         return result + "\n"
     }
 }
 
-private extension String {
-    @discardableResult
-    mutating func removeLastNumber() -> Int? {
-        var number = ""
-        while self.last?.isNumber ?? false {
-            number += String(self.removeLast())
+extension MutableCollection {
+    subscript(safe index: Index) -> Element? {
+        get {
+            return indices.contains(index) ? self[index] : nil
         }
 
-        return Int(number)
-    }
-
-    @discardableResult
-    mutating func removeFirstNumber() -> Int? {
-        var number = ""
-        while self.first?.isNumber ?? false {
-            number += String(self.removeFirst())
+        set(newValue) {
+            if let newValue = newValue, indices.contains(index) {
+                self[index] = newValue
+            }
         }
-
-        return Int(number)
     }
 }
