@@ -1,5 +1,5 @@
 import Foundation
-@testable import PrefireExecutable
+@testable import prefire
 import XCTest
 
 class ConfigPathBuilderTests: XCTestCase {

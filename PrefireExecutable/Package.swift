@@ -9,7 +9,7 @@ let package = Package(
     products: [
         .executable(
             name: "prefire",
-            targets: ["PrefireExecutable"]
+            targets: ["prefire"]
         ),
     ],
     dependencies: [
@@ -17,15 +17,15 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "PrefireExecutable",
+            name: "prefire",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "PrefireSourcery",
             ]
         ),
         .testTarget(
-            name: "PrefireExecutableTests",
-            dependencies: ["PrefireExecutable"]
+            name: "PrefireTests",
+            dependencies: ["prefire"]
         ),
         .binaryTarget(
             name: "PrefireSourcery",
