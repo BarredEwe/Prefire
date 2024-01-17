@@ -82,24 +82,26 @@ extension PreviewLoader {
     
     /// Checking the relevance and availability of the code on the basis of which the macro for Previews was developed
     /// - Parameters:
-    ///   - lastLine: The last line of the macro file containing the path to the source file
+    ///   - lastLine: The last line of the macro file containing the path to the source file. Example: `some.swift:22:1-24:2"`
     ///   - result: The result of the macro preview
     static func checkAvailability(for lastLine: String?, and result: [String]) -> Bool {
         guard let line = lastLine?.replacingOccurrences(of: Keys.source, with: "") else { return false }
 
         var components = line.components(separatedBy: ":")
-        components.removeLast()
-        components.removeLast()
-        let firstLine = Int(components.removeLast()) ?? 0
+        components.removeLast(2)
+        guard let firstLine = Int(components.removeLast()) else { return false }
 
         guard let path = components.first, let fileURL = URL(string: "file://" + path),
               let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty else { return false }
 
         let lines = content.components(separatedBy: .newlines)
         var result = result
+        // Remove `DeveloperToolsSupport.Preview`
         result.removeFirst()
+        // Remove `}`
         result.removeLast()
 
+        // We compare the macro file and the source file line by line
         for i in 0..<result.count {
             guard let left = result[safe: i]?.trimmingCharacters(in: .whitespaces),
                   let right = lines[safe: firstLine + i]?.trimmingCharacters(in: .whitespaces),
@@ -110,16 +112,10 @@ extension PreviewLoader {
     }
 }
 
-extension MutableCollection {
+extension Collection {
     subscript(safe index: Index) -> Element? {
         get {
             return indices.contains(index) ? self[index] : nil
-        }
-
-        set(newValue) {
-            if let newValue = newValue, indices.contains(index) {
-                self[index] = newValue
-            }
         }
     }
 }

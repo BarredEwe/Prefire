@@ -10,29 +10,16 @@ extension PreviewLoader {
     }
 
     private static func makeFunc(body: String) -> String {
-        var components = body.components(separatedBy: "\n")
-        let previewName = components.first?.components(separatedBy: "\"")
-            .first(where: { !$0.hasPrefix("        DeveloperToolsSupport") })
-
-        components.removeFirst()
-        components.removeLast()
-
-        let previewBody = components.map { $0 + "\n" }.reduce("", +)
-
-        lazy var viewName = components.first?
-            .components(separatedBy: "(").first?
-            .replacingOccurrences(of: " ", with: "")
-
-        guard let displayName = previewName ?? viewName else {
-            fatalError("Cannot get view name")
-        }
+        let rawPreviewModel = RawPreviewModel(from: body)
+        let isScreen = rawPreviewModel.traits == ".device"
 
         return """
-                func test_\(displayName)_Preview() {
+                func test_\(rawPreviewModel.displayName)_Preview() {
                     let preview = {
-            \(previewBody)
+            \(rawPreviewModel.body)
+                    }
                     \r\n
-                    if let failure = assertSnapshots(matching: AnyView(preview()), name: "\(displayName)", isScreen: true, device: deviceConfig) {
+                    if let failure = assertSnapshots(matching: AnyView(preview()), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig) {
                         XCTFail(failure)
                     }
                 }

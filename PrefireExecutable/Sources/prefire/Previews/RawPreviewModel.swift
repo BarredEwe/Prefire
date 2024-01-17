@@ -1,16 +1,21 @@
 import Foundation
 
 struct RawPreviewModel {
-    var name: String
-    var previewTrait: String
-    var previewBody: String
+    var displayName: String
+    var traits: String
+    var body: String
 }
 
 extension RawPreviewModel {
-    init(from body: String) {
+    private enum Keys {
+        static let viewMarkerStart = "        DeveloperToolsSupport"
+    }
+
+    init(from body: String, lineSymbol: String = "") {
         var components = body.components(separatedBy: "\n")
+
         let previewName = components.first?.components(separatedBy: "\"")
-            .first(where: { !$0.hasPrefix("        DeveloperToolsSupport") })
+            .first(where: { !$0.hasPrefix(Keys.viewMarkerStart) })
 
         var previewTrait: String?
         let traitsComponents = components.first?.components(separatedBy: "traits: ")
@@ -19,10 +24,9 @@ extension RawPreviewModel {
         }
 
         components.removeFirst()
-        components.removeLast()
-        components.removeLast()
+        components.removeLast(2)
 
-        let previewBody = components.map { "\t\t" + $0 + "\n" }.reduce("", +)
+        let previewBody = components.map { lineSymbol + $0 + "\n" }.reduce("", +)
 
         lazy var viewName = components.first?
             .components(separatedBy: "(").first?
@@ -32,9 +36,9 @@ extension RawPreviewModel {
             fatalError("Cannot get view name")
         }
 
-        name = displayName
-        self.previewBody = previewBody
-        self.previewTrait = previewTrait ?? ".device"
+        self.displayName = displayName
+        self.body = previewBody
+        self.traits = previewTrait ?? ".device"
     }
 }
 
@@ -44,11 +48,11 @@ extension RawPreviewModel {
                 PreviewModel(
                     content: {
                         AnyView(
-        \(previewBody)
+        \(body)
                         )
                     },
-                    name: \"\(name)\",
-                    type: \(previewTrait == ".device" ? ".screen" : ".component"),
+                    name: \"\(displayName)\",
+                    type: \(traits == ".device" ? ".screen" : ".component"),
                     device: nil
                 ),\n
         """
