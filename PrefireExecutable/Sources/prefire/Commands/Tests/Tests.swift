@@ -15,12 +15,15 @@ extension Prefire {
 
         @Option(help: "Your project Target for Snapshot tests.")
         var target: String?
+
         @Option(help: "Path to a source swift files or directories.")
         var sources: String?
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
         var output: String?
+        @Option(help: "Path to generated snapshot files `__Snapshot__`")
+        var snapshotOutput: String?
         @Option(help: "Base path to the cache directory.")
         var cacheBasePath: String?
         @Option(help: "Required Device for Snapshot testing.")
@@ -36,10 +39,11 @@ extension Prefire {
                     template: template,
                     sources: sources,
                     output: output,
+                    snapshotOutput: snapshotOutput,
                     cacheBasePath: cacheBasePath,
                     device: device,
                     osVerison: osVersion,
-                    config: Config.from(config: config, verbose: verbose),
+                    config: Config.load(from: config, verbose: verbose),
                     verbose: verbose
                 )
             )

@@ -9,7 +9,7 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
         let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
         let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-        let templatePath = executable.string.components(separatedBy: "Binaries").first! + "PrefireExecutable/Templates/" + "PreviewModels.stencil"
+        let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
 
         // TODO: Add passing the Main Target
 
@@ -44,7 +44,7 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
             let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
             let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-            let templatePath = executable.string.components(separatedBy: "Binaries").first! + "PrefireExecutable/Templates/" + "PreviewModels.stencil"
+            let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
 
             return [
                 .prebuildCommand(

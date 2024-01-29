@@ -33,7 +33,7 @@ extension Prefire {
                     output: output,
                     template: template,
                     cacheBasePath: cacheBasePath,
-                    config: Config.from(config: config, verbose: verbose),
+                    config: Config.load(from: config, verbose: verbose),
                     verbose: verbose
                 )
             )

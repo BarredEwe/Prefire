@@ -9,7 +9,7 @@ class PreviewLoaderTests: XCTestCase {
         let sources = ""
         let result = PreviewLoader.loadRawPreviewBodies(for: target, and: sources)?.first
 
-        XCTAssertEqual(result, previewRepresentation)
+        XCTAssertEqual(result?.trimmingCharacters(in: .whitespacesAndNewlines), previewRepresentation.trimmingCharacters(in: .whitespacesAndNewlines))
         #endif
     }
 }

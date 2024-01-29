@@ -72,10 +72,6 @@ public struct PreviewModel: Identifiable {
         type: LayoutType = .component,
         device: PreviewDevice?
     ) {
-        self.content = content
-        self.name = name
-        self.type = type
-        self.device = device
-        id = name + String(describing: content())
+        self.init(id: name + String(describing: content()), content: content, name: name, type: type, device: device)
     }
 }

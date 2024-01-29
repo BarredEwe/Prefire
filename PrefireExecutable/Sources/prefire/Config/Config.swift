@@ -1,5 +1,10 @@
 import Foundation
 
+private enum Constants {
+    static let separtor = ":"
+    static let fileMark = "file://"
+}
+
 struct Config {
     struct TestsConfig {
         var target: String?
@@ -18,6 +23,69 @@ struct Config {
 
     var tests = TestsConfig()
     var playbook = PlaybookConfig()
+
+    init?(from configDataString: String) {
+        var isTestConfig = false
+        var isPlaybookConfig = false
+
+        let lines = configDataString.components(separatedBy: .newlines)
+
+        for index in 0..<lines.count {
+            if lines[index].contains(Keys.test_configuration.rawValue + Constants.separtor) {
+                isPlaybookConfig = false
+                isTestConfig = true
+                continue
+            } else if lines[index].contains(Keys.playbook_configuration.rawValue + Constants.separtor) {
+                isTestConfig = false
+                isPlaybookConfig = true
+                continue
+            }
+
+            let components = lines[index].components(separatedBy: Constants.separtor)
+
+            if isTestConfig {
+                if let target = Config.getValue(from: components, key: .target) {
+                    tests.target = target
+                    continue
+                }
+                if let testFilePath = Config.getValue(from: components, key: .test_file_path) {
+                    tests.testFilePath = testFilePath
+                    continue
+                }
+                if let template = Config.getValue(from: components, key: .template_file_path) {
+                    tests.template = template
+                    continue
+                }
+                if let device = Config.getValue(from: components, key: .simulator_device) {
+                    tests.device = device
+                    continue
+                }
+                if let osVersion = Config.getValue(from: components, key: .required_os) {
+                    tests.osVersion = osVersion
+                    continue
+                }
+                if let imports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
+                    tests.imports = imports
+                    continue
+                }
+                if let testableImports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
+                    tests.testableImports = testableImports
+                    continue
+                }
+            }
+
+            if isPlaybookConfig {
+                if let imports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
+                    playbook.imports = imports
+                    continue
+                }
+                if let testableImports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
+                    playbook.testableImports = testableImports
+                    continue
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Initialization
@@ -31,13 +99,15 @@ extension Config {
         case required_os
         case imports
         case testable_imports
+        case test_configuration
+        case playbook_configuration
     }
-
-    static func from(config: String?, verbose: Bool) -> Config? {
-        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: config)
+    
+    static func load(from configPath: String?, verbose: Bool) -> Config? {
+        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath)
 
         for path in possibleConfigPaths {
-            guard let configUrl = URL(string: "file://\(path)"),
+            guard let configUrl = URL(string: Constants.fileMark + path),
                   FileManager.default.fileExists(atPath: configUrl.path),
                   let configDataString = try? String(contentsOf: configUrl, encoding: .utf8) else { continue }
 
@@ -45,78 +115,14 @@ extension Config {
                 print("🟢 Successfully found and will use the file '.prefire.yml' on the path: \(configUrl.path)")
             }
 
-            if let configuration = Config.from(configDataString: configDataString, verbose: verbose) {
+            if let configuration = Config(from: configDataString) {
                 return configuration
             }
         }
         return nil
     }
 
-    static func from(configDataString: String, verbose _: Bool) -> Config? {
-        var isTestConfig = false
-        var isPlaybookConfig = false
-        var configuration = Config()
-
-        let lines = configDataString.components(separatedBy: .newlines)
-
-        for index in 0..<lines.count {
-            if lines[index].contains("test_configuration:") {
-                isPlaybookConfig = false
-                isTestConfig = true
-                continue
-            } else if lines[index].contains("playbook_configuration:") {
-                isTestConfig = false
-                isPlaybookConfig = true
-                continue
-            }
-
-            let components = lines[index].components(separatedBy: ":")
-
-            if isTestConfig {
-                if let target = getValue(from: components, key: .target) {
-                    configuration.tests.target = target
-                    continue
-                }
-                if let testFilePath = getValue(from: components, key: .test_file_path) {
-                    configuration.tests.testFilePath = testFilePath
-                    continue
-                }
-                if let template = getValue(from: components, key: .template_file_path) {
-                    configuration.tests.template = template
-                    continue
-                }
-                if let device = getValue(from: components, key: .simulator_device) {
-                    configuration.tests.device = device
-                    continue
-                }
-                if let osVersion = getValue(from: components, key: .required_os) {
-                    configuration.tests.osVersion = osVersion
-                    continue
-                }
-                if let imports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
-                    configuration.tests.imports = imports
-                    continue
-                }
-                if let testableImports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
-                    configuration.tests.testableImports = testableImports
-                    continue
-                }
-            }
-
-            if isPlaybookConfig {
-                if let imports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
-                    configuration.playbook.imports = imports
-                    continue
-                }
-                if let testableImports = getValues(from: components, lines: Array(lines[index..<lines.count]), key: .testable_imports) {
-                    configuration.playbook.testableImports = testableImports
-                    continue
-                }
-            }
-        }
-
-        return configuration
-    }
+    // MARK: - Private
 
     private static func getValues(from components: [String], lines: [String], key: Keys) -> [String]? {
         guard (components.first?.hasSuffix("- \(key.rawValue)") ?? false) == true, components.last?.isEmpty == true else { return nil }
@@ -124,12 +130,13 @@ extension Config {
         var values = [String]()
 
         for line in lines[1..<lines.count] {
-            guard !line.contains(":") else { return values }
+            guard !line.contains(Constants.separtor) else { return values }
 
             let value = line
                 .trimmingCharacters(in: CharacterSet.whitespaces)
                 .replacingOccurrences(of: "\"", with: "")
                 .replacingOccurrences(of: "- ", with: "")
+
             if !value.isEmpty {
                 values.append(value)
             }

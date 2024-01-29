@@ -1,5 +1,9 @@
 import Foundation
 
+private enum Constants {
+    static let outputFileName = "PreviewModels.generated.swift"
+}
+
 struct GeneratedPlaybookOptions {
     var sourcery: String
     var target: String?
@@ -15,7 +19,7 @@ struct GeneratedPlaybookOptions {
         self.sourcery = sourcery
         self.target = target
         self.sources = sources ?? FileManager.default.currentDirectoryPath
-        self.output = output ?? (FileManager.default.currentDirectoryPath + "/PreviewModels.generated.swift")
+        self.output = output ?? "\(FileManager.default.currentDirectoryPath)/\(Constants.outputFileName)"
         self.template = template
         self.cacheBasePath = cacheBasePath
         imports = config?.playbook.imports
@@ -25,26 +29,38 @@ struct GeneratedPlaybookOptions {
 }
 
 enum GeneratePlaybookCommand {
+    private enum Keys {
+        static let templates = "--templates"
+        static let sources = "--sources"
+        static let output = "--output"
+        static let cacheBasePath = "--cacheBasePath"
+        static let args = "--args"
+
+        static let imports = "imports"
+        static let testableImports = "testableImports"
+        static let macroPreviewBodies = "macroPreviewBodies"
+    }
+
     static func run(_ options: GeneratedPlaybookOptions) throws {
         let task = Process()
         task.executableURL = URL(filePath: options.sourcery)
 
         task.arguments = [
-            "--templates", options.template,
-            "--sources", options.sources,
-            "--output", options.output,
+            Keys.templates, options.template,
+            Keys.sources, options.sources,
+            Keys.output, options.output,
         ]
 
         if let cacheBasePath = options.cacheBasePath {
-            task.arguments?.append(contentsOf: ["--cacheBasePath", cacheBasePath])
+            task.arguments?.append(contentsOf: [Keys.cacheBasePath, cacheBasePath])
         }
 
         if let imports = options.imports, !imports.isEmpty {
-            task.arguments?.append(contentsOf: imports.makeArgs(name: "imports"))
+            task.arguments?.append(contentsOf: imports.makeSourceryArgs(name: Keys.imports))
         }
 
         if let testableImports = options.testableImports, !testableImports.isEmpty {
-            task.arguments?.append(contentsOf: testableImports.makeArgs(name: "testableImports"))
+            task.arguments?.append(contentsOf: testableImports.makeSourceryArgs(name: Keys.testableImports))
         }
 
         let target = options.target ?? (FileManager.default.currentDirectoryPath as NSString).lastPathComponent
@@ -52,7 +68,7 @@ enum GeneratePlaybookCommand {
         // Works with `#Preview` macro
         #if swift(>=5.9)
             if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources) {
-                task.arguments?.append(contentsOf: ["--args", "macroPreviewBodies=\"\(macroPreviewBodies)\""])
+                task.arguments?.append(contentsOf: [Keys.args, Keys.macroPreviewBodies + "=\"\(macroPreviewBodies)\""])
             }
         #endif
 

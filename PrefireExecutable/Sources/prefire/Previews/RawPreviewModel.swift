@@ -10,9 +10,13 @@ extension RawPreviewModel {
     private enum Keys {
         static let viewMarkerStart = "        DeveloperToolsSupport"
     }
-
-    init(from body: String, lineSymbol: String = "") {
-        var components = body.components(separatedBy: "\n")
+    
+    /// Initialization from the macro Preview body
+    /// - Parameters:
+    ///   - macroBody: Preview View body
+    ///   - lineSymbol: The line separator symbol
+    init(from macroBody: String, lineSymbol: String = "") {
+        var components = macroBody.components(separatedBy: "\n")
 
         let previewName = components.first?.components(separatedBy: "\"")
             .first(where: { !$0.hasPrefix(Keys.viewMarkerStart) })

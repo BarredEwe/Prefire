@@ -24,7 +24,7 @@ class ConfigTests: XCTestCase {
     """
 
     func test_successCreateConfig() {
-        let config = Config.from(configDataString: prefireConfigString, verbose: false)
+        let config = Config(from: prefireConfigString)
 
         XCTAssertEqual(config?.tests.target, "PrefireExample")
         XCTAssertEqual(config?.tests.testFilePath, "PrefireExampleTests/PreviewTests.generated.swift")

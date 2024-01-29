@@ -1,11 +1,16 @@
 import Foundation
 
+private enum Constants {
+    static let snapshotFileName = "PreviewTests"
+}
+
 struct GeneratedTestsOptions {
     var sourcery: String
     var target: String?
     var template: String
     var sources: String?
     var output: String?
+    var snapshotOutput: String?
     var cacheBasePath: String?
     var device: String?
     var osVersion: String?
@@ -13,12 +18,25 @@ struct GeneratedTestsOptions {
     var testableImports: [String]?
     var verbose: Bool
 
-    init(sourcery: String, target: String?, template: String, sources: String?, output: String?, cacheBasePath: String?, device: String?, osVerison: String?, config: Config?, verbose: Bool) {
+    init(
+        sourcery: String,
+        target: String?,
+        template: String,
+        sources: String?,
+        output: String?,
+        snapshotOutput: String?,
+        cacheBasePath: String?,
+        device: String?,
+        osVerison: String?,
+        config: Config?,
+        verbose: Bool
+    ) {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
         self.template = config?.tests.template ?? template
         self.sources = sources
         self.output = config?.tests.testFilePath ?? output
+        self.snapshotOutput = snapshotOutput
         self.cacheBasePath = cacheBasePath
         self.device = config?.tests.device ?? device
         osVersion = config?.tests.osVersion ?? osVerison
@@ -29,17 +47,42 @@ struct GeneratedTestsOptions {
 }
 
 enum GenerateTestsCommand {
+    private enum Keys {
+        static let templates = "--templates"
+        static let sources = "--sources"
+        static let output = "--output"
+        static let cacheBasePath = "--cacheBasePath"
+        static let args = "--args"
+
+        static let mainTarget = "mainTarget"
+        static let file = "file"
+        static let imports = "imports"
+        static let testableImports = "testableImports"
+        static let previewsMacros = "previewsMacros"
+    }
+
     static func run(_ options: GeneratedTestsOptions) throws {
+        let task = Process()
+        task.executableURL = URL(filePath: options.sourcery)
+        task.arguments = makeArguments(for: options)
+
+        try task.run()
+        task.waitUntilExit()
+    }
+
+    // MARK: - Private
+
+    private static func makeArguments(for options: GeneratedTestsOptions) -> [String] {
         guard let target = options.target else {
             fatalError("You must provide the --target")
         }
 
-        let task = Process()
-        task.executableURL = URL(filePath: options.sourcery)
+        var arguments = [String]()
 
         let sources = options.sources ?? FileManager.default.currentDirectoryPath
-        let output = options.output ?? (FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift")
-        let snapshotsPath = (options.sources?.appending("/\(target)") ?? FileManager.default.currentDirectoryPath).appending("/PreviewTests.swift")
+        let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
+        let snapshotOutput = (options.snapshotOutput ?? options.sources?.appending("/\(target)") ?? FileManager.default.currentDirectoryPath)
+            .appending("/\(Constants.snapshotFileName).swift")
 
         if options.verbose {
             print(
@@ -49,47 +92,46 @@ enum GenerateTestsCommand {
                 Target used for tests: \(target)
                 Template path: \(options.template)
                 Generated test path: \(output)
-                The Snapshot resources will be placed in the path: \(snapshotsPath)
+                The Snapshot resources will be placed in the path: \(snapshotOutput)
                 """
             )
         }
 
-        task.arguments = [
-            "--sources", sources,
-            "--output", output,
-            "--templates", options.template,
-            "--args", "mainTarget=\(target)",
-            "--args", "file=\(snapshotsPath)",
+        arguments = [
+            Keys.sources, sources,
+            Keys.output, output,
+            Keys.templates, options.template,
+            Keys.args, "\(Keys.mainTarget)=\(target)",
+            Keys.args, "\(Keys.file)=\(snapshotOutput)",
         ]
 
         if let osVersion = options.osVersion {
-            task.arguments?.append(contentsOf: ["--args", "simulatorOSVersion=\(osVersion)"])
+            arguments.append(contentsOf: [Keys.args, "simulatorOSVersion=\(osVersion)"])
         }
 
         if let device = options.device {
-            task.arguments?.append(contentsOf: ["--args", "simulatorDevice=\(device)"])
+            arguments.append(contentsOf: [Keys.args, "simulatorDevice=\(device)"])
         }
 
         if let imports = options.imports, !imports.isEmpty {
-            task.arguments?.append(contentsOf: imports.makeArgs(name: "imports"))
+            arguments.append(contentsOf: imports.makeSourceryArgs(name: Keys.imports))
         }
 
         if let testableImports = options.testableImports, !testableImports.isEmpty {
-            task.arguments?.append(contentsOf: testableImports.makeArgs(name: "testableImports"))
+            arguments.append(contentsOf: testableImports.makeSourceryArgs(name: Keys.testableImports))
         }
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
             if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target, and: sources) {
-                task.arguments?.append(contentsOf: ["--args", "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
+                arguments.append(contentsOf: [Keys.args, "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
             }
         #endif
 
         if let cacheBasePath = options.cacheBasePath {
-            task.arguments?.append(contentsOf: ["--cacheBasePath", cacheBasePath])
+            arguments.append(contentsOf: [Keys.cacheBasePath, cacheBasePath])
         }
 
-        try task.run()
-        task.waitUntilExit()
+        return arguments
     }
 }
