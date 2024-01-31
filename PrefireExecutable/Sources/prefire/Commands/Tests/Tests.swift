@@ -13,8 +13,10 @@ extension Prefire {
         @Option(help: "Path to your custom template.")
         var template: String
 
-        @Option(help: "Your project Target for Snapshot tests.")
+        @Option(help: "Your project Target tested by snapshots.")
         var target: String?
+        @Option(help: "Your Snapshot Tests Target.")
+        var testTarget: String?
 
         @Option(help: "Path to a source swift files or directories.")
         var sources: String?
@@ -22,8 +24,8 @@ extension Prefire {
         var config: String?
         @Option(help: "Path to generated file.")
         var output: String?
-        @Option(help: "Path to generated snapshot files `__Snapshot__`")
-        var snapshotOutput: String?
+        @Option(help: "Path to your Snapshot Tests Target.")
+        var testTargetPath: String?
         @Option(help: "Base path to the cache directory.")
         var cacheBasePath: String?
         @Option(help: "Required Device for Snapshot testing.")
@@ -36,14 +38,15 @@ extension Prefire {
                 GeneratedTestsOptions(
                     sourcery: sourcery,
                     target: target,
+                    testTarget: testTarget,
                     template: template,
                     sources: sources,
                     output: output,
-                    snapshotOutput: snapshotOutput,
+                    testTargetPath: testTargetPath,
                     cacheBasePath: cacheBasePath,
                     device: device,
                     osVerison: osVersion,
-                    config: Config.load(from: config, verbose: verbose),
+                    config: Config.load(from: config, testTargetPath: testTargetPath, verbose: verbose),
                     verbose: verbose
                 )
             )

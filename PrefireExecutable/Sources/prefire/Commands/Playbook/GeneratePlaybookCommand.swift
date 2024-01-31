@@ -76,9 +76,10 @@ enum GeneratePlaybookCommand {
             print(
                 """
                 Prefire configuration
-                Sourcery url: \(options.sourcery)
-                Target used for tests: \(target)
-                Template path: \(options.template)
+                    ➜ Target used for tests: \(target)
+                    ➜ Sources path: \(options.sources)
+                    ➜ Sourcery path: \(options.sourcery)
+                    ➜ Template path: \(options.template)
                 """
             )
         }

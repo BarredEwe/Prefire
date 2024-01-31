@@ -5,8 +5,9 @@ enum ConfigPathBuilder {
     
     /// Unifying the format of the config path and creating additional possible paths
     /// - Parameter configPath: The current path to the config, or `nil` if not provided
+    /// - Parameter testTargetPath: Path to Snapshot Tests Target
     /// - Returns: An array of possible paths for the configuration file
-    static func possibleConfigPaths(for configPath: String?) -> [String] {
+    static func possibleConfigPaths(for configPath: String?, testTargetPath: String?) -> [String] {
         var possibleConfigPaths = [String]()
 
         if var configPath = configPath {
@@ -27,6 +28,10 @@ enum ConfigPathBuilder {
         } else {
             // Add the default path if no specific one is provided
             possibleConfigPaths.append(FileManager.default.currentDirectoryPath + "/\(configFileName)")
+        }
+
+        if let testTargetPath {
+            possibleConfigPaths.insert(testTargetPath + "/\(configFileName)", at: 0)
         }
 
         return possibleConfigPaths

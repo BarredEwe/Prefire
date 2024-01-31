@@ -103,8 +103,8 @@ extension Config {
         case playbook_configuration
     }
     
-    static func load(from configPath: String?, verbose: Bool) -> Config? {
-        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath)
+    static func load(from configPath: String?, testTargetPath: String?, verbose: Bool) -> Config? {
+        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: testTargetPath)
 
         for path in possibleConfigPaths {
             guard let configUrl = URL(string: Constants.fileMark + path),
@@ -112,13 +112,18 @@ extension Config {
                   let configDataString = try? String(contentsOf: configUrl, encoding: .utf8) else { continue }
 
             if verbose {
-                print("🟢 Successfully found and will use the file '.prefire.yml' on the path: \(configUrl.path)")
+                print("🟢 The '.prefire' file is used on the path: \(configUrl.path)")
             }
 
             if let configuration = Config(from: configDataString) {
                 return configuration
             }
         }
+
+        if verbose {
+            print("🟡 The '.prefire' file was not found by paths:" + possibleConfigPaths.map({ "\n  - " + $0 }).reduce("", +))
+        }
+
         return nil
     }
 

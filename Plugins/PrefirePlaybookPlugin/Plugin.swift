@@ -11,8 +11,6 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
         let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
         let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
 
-        // TODO: Add passing the Main Target
-
         return [
             .prebuildCommand(
                 displayName: "Running Prefire",
@@ -21,9 +19,9 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
                     "playbook",
                     "--sourcery", sourcery,
                     "--target", target.name,
-                    "--sources", target.directory,
+                    "--sources", target.directory.string,
                     "--output", outputPath,
-                    "--config", target.directory,
+                    "--config", target.directory.string,
                     "--template", templatePath,
                     "--cache-base-path", cachePath,
                     "--verbose",
@@ -48,15 +46,15 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
             return [
                 .prebuildCommand(
-                    displayName: "Running Prefire",
+                    displayName: "Running Prefire Playbook",
                     executable: executable,
                     arguments: [
                         "playbook",
                         "--sourcery", sourcery,
                         "--target", target.displayName,
-                        "--sources", context.xcodeProject.directory,
+                        "--sources", context.xcodeProject.directory.string,
                         "--output", outputPath,
-                        "--config", context.xcodeProject.directory,
+                        "--config", context.xcodeProject.directory.string,
                         "--template", templatePath,
                         "--cache-base-path", cachePath,
                         "--verbose",

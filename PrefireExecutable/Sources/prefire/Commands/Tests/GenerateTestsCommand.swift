@@ -7,10 +7,11 @@ private enum Constants {
 struct GeneratedTestsOptions {
     var sourcery: String
     var target: String?
+    var testTarget: String?
     var template: String
     var sources: String?
     var output: String?
-    var snapshotOutput: String?
+    var testTargetPath: String?
     var cacheBasePath: String?
     var device: String?
     var osVersion: String?
@@ -21,10 +22,11 @@ struct GeneratedTestsOptions {
     init(
         sourcery: String,
         target: String?,
+        testTarget: String?,
         template: String,
         sources: String?,
         output: String?,
-        snapshotOutput: String?,
+        testTargetPath: String?,
         cacheBasePath: String?,
         device: String?,
         osVerison: String?,
@@ -33,10 +35,11 @@ struct GeneratedTestsOptions {
     ) {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
+        self.testTarget = testTarget
         self.template = config?.tests.template ?? template
         self.sources = sources
         self.output = config?.tests.testFilePath ?? output
-        self.snapshotOutput = snapshotOutput
+        self.testTargetPath = testTargetPath
         self.cacheBasePath = cacheBasePath
         self.device = config?.tests.device ?? device
         osVersion = config?.tests.osVersion ?? osVerison
@@ -70,9 +73,7 @@ enum GenerateTestsCommand {
         task.waitUntilExit()
     }
 
-    // MARK: - Private
-
-    private static func makeArguments(for options: GeneratedTestsOptions) -> [String] {
+    static func makeArguments(for options: GeneratedTestsOptions) -> [String] {
         guard let target = options.target else {
             fatalError("You must provide the --target")
         }
@@ -81,18 +82,20 @@ enum GenerateTestsCommand {
 
         let sources = options.sources ?? FileManager.default.currentDirectoryPath
         let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
-        let snapshotOutput = (options.snapshotOutput ?? options.sources?.appending("/\(target)") ?? FileManager.default.currentDirectoryPath)
+        let snapshotOutput = (options.testTargetPath ?? FileManager.default.currentDirectoryPath)
             .appending("/\(Constants.snapshotFileName).swift")
 
         if options.verbose {
             print(
                 """
                 Prefire configuration
-                Sourcery url: \(options.sourcery)
-                Target used for tests: \(target)
-                Template path: \(options.template)
-                Generated test path: \(output)
-                The Snapshot resources will be placed in the path: \(snapshotOutput)
+                    ➜ Target used for tests: \(target)
+                    ➜ Tests target: \(options.testTarget ?? "nil")
+                    ➜ Sourcery path: \(options.sourcery)
+                    ➜ Sources path: \(sources)
+                    ➜ Template path: \(options.template)
+                    ➜ Generated test path: \(output)
+                    ➜ Snapshot resources path: \(snapshotOutput)
                 """
             )
         }
