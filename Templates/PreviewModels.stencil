@@ -1,6 +1,6 @@
 // swiftlint:disable all
 // swiftformat:disable all
-
+#if DEBUG
 import SwiftUI
 import Prefire
 
@@ -38,3 +38,4 @@ public enum PreviewModels {
         return views
     }
 }
+#endif
