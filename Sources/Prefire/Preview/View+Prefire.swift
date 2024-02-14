@@ -12,4 +12,11 @@ public extension View {
     func prefireIgnored() -> some View {
         self
     }
+
+    /// Include View for working with `Prefire` and generate Playbook and Snapshots
+    /// - Returns: Self View
+    @inlinable
+    func prefireEnabled() -> some View {
+        self
+    }
 }

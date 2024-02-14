@@ -10,6 +10,7 @@ class ConfigTests: XCTestCase {
           - template_file_path: CustomPreviewTests.stencil
           - simulator_device: "iPhone15,2"
           - required_os: 17
+          - preview_default_enabled: true
           - imports:
               - UIKit
               - SwiftUI
@@ -31,6 +32,7 @@ class ConfigTests: XCTestCase {
         XCTAssertEqual(config?.tests.template, "CustomPreviewTests.stencil")
         XCTAssertEqual(config?.tests.device, "iPhone15,2")
         XCTAssertEqual(config?.tests.osVersion, "17")
+        XCTAssertEqual(config?.tests.previewDefaultEnabled, true)
         XCTAssertEqual(config?.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config?.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config?.playbook.imports, ["UIKit", "Foundation"])

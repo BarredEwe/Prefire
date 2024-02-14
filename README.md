@@ -87,11 +87,21 @@ struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
 }
 ```
-If you use the **`#Preview`** macro, **🔥Prefire** will automatically find it. If you don't need it, mark view - `.prefireIgnored()`:
+If you use the **`#Preview`** macro, **🔥Prefire** will automatically find it!
+
+If you don't need it, mark view - `.prefireIgnored()`:
 ```swift
 #Preview {
     Text("")
         .prefireIgnored()
+}
+```
+
+If you want to disable the automatic get of all previews, use the setting `preview_default_enabled`: false. Then to include preview in the test, you need to call the `.prefireEnabled()`:
+```swift
+#Preview {
+    Text("")
+        .prefireEnabled()
 }
 ```
 
@@ -127,7 +137,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 ## API
 **Prefire** provide new commands for previews:
 
-- You can set the [delay, precision and perceptualPrecision](https://github.com/pointfreeco/swift-snapshot-testing/blob/main/Documentation/Available-Snapshot-Strategies.md#image-10) parameters for the snapshot:
+- You can set the delay, precision and perceptualPrecision parameters for the snapshot:
 
     ```swift
     .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
@@ -196,8 +206,15 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
+  - preview_default_enabled: true
+  - imports:
+    - UIKit
+    - SwiftUI
+  - testable_imports:
+    - Prefire
 
 prefire_configuration:
+  - preview_default_enabled: true
   - imports:
     - UIKit
     - Foundation
@@ -210,8 +227,9 @@ prefire_configuration:
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. Optional parameter.
 - `required_os` - iOS version for Snapshot testing. Optional parameter.
-- `imports` - Additional imports for the generated Playbook. Optional parameter.
-- `testable_imports` - Additional `@testable` imports for the generated Playbook. Optional parameter.
+- `preview_default_enabled` - Do I need to automatically add all previews based on the new syntax to the tests.  __Default__: true
+- `imports` - Additional imports for the generated Playbook/Tests. Optional parameter.
+- `testable_imports` - Additional `@testable` imports for the generated Playbook/Tests. Optional parameter.
 
 ## Requirements
 

@@ -12,11 +12,13 @@ struct Config {
         var template: String?
         var device: String?
         var osVersion: String?
+        var previewDefaultEnabled: Bool?
         var imports: [String]?
         var testableImports: [String]?
     }
 
     struct PlaybookConfig {
+        var previewDefaultEnabled: Bool?
         var imports: [String]?
         var testableImports: [String]?
     }
@@ -64,6 +66,10 @@ struct Config {
                     tests.osVersion = osVersion
                     continue
                 }
+                if let previewDefaultEnabled = Config.getValue(from: components, key: .preview_default_enabled) {
+                    tests.previewDefaultEnabled = previewDefaultEnabled == "true"
+                    continue
+                }
                 if let imports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
                     tests.imports = imports
                     continue
@@ -75,6 +81,10 @@ struct Config {
             }
 
             if isPlaybookConfig {
+                if let previewDefaultEnabled = Config.getValue(from: components, key: .preview_default_enabled) {
+                    playbook.previewDefaultEnabled = previewDefaultEnabled == "true"
+                    continue
+                }
                 if let imports = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .imports) {
                     playbook.imports = imports
                     continue
@@ -97,6 +107,7 @@ extension Config {
         case template_file_path
         case simulator_device
         case required_os
+        case preview_default_enabled
         case imports
         case testable_imports
         case test_configuration

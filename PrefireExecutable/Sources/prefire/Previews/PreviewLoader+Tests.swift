@@ -1,8 +1,8 @@
 import Foundation
 
 extension PreviewLoader {
-    static func loadPreviewBodies(for target: String, and sources: String) -> String? {
-        guard let findedBodies = loadRawPreviewBodies(for: target, and: sources) else { return nil }
+    static func loadPreviewBodies(for target: String, and sources: String, defaultEnabled: Bool) -> String? {
+        guard let findedBodies = loadRawPreviewBodies(for: target, and: sources, defaultEnabled: true) else { return nil }
 
         let result = findedBodies.map { makeFunc(body: $0) + "\r\n" }.reduce("", +)
 

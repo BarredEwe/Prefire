@@ -9,6 +9,7 @@ struct GeneratedPlaybookOptions {
     var target: String?
     var sources: String
     var output: String
+    var previewDefaultEnabled: Bool
     var template: String
     var cacheBasePath: String?
     var imports: [String]?
@@ -20,6 +21,7 @@ struct GeneratedPlaybookOptions {
         self.target = target
         self.sources = sources ?? FileManager.default.currentDirectoryPath
         self.output = output ?? "\(FileManager.default.currentDirectoryPath)/\(Constants.outputFileName)"
+        previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
         self.template = template
         self.cacheBasePath = cacheBasePath
         imports = config?.playbook.imports
@@ -67,7 +69,7 @@ enum GeneratePlaybookCommand {
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources) {
+            if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources, defaultEnabled: options.previewDefaultEnabled) {
                 task.arguments?.append(contentsOf: [Keys.args, Keys.macroPreviewBodies + "=\"\(macroPreviewBodies)\""])
             }
         #endif

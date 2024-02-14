@@ -11,6 +11,7 @@ struct GeneratedTestsOptions {
     var template: String
     var sources: String?
     var output: String?
+    var prefireEnabledMarker: Bool
     var testTargetPath: String?
     var cacheBasePath: String?
     var device: String?
@@ -39,6 +40,7 @@ struct GeneratedTestsOptions {
         self.template = config?.tests.template ?? template
         self.sources = sources
         self.output = config?.tests.testFilePath ?? output
+        prefireEnabledMarker = config?.tests.previewDefaultEnabled ?? true
         self.testTargetPath = testTargetPath
         self.cacheBasePath = cacheBasePath
         self.device = config?.tests.device ?? device
@@ -126,7 +128,7 @@ enum GenerateTestsCommand {
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target, and: sources) {
+            if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target, and: sources, defaultEnabled: options.prefireEnabledMarker) {
                 arguments.append(contentsOf: [Keys.args, "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
             }
         #endif
