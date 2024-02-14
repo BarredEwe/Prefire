@@ -3,18 +3,30 @@
 
 import SwiftUI
 import Prefire
-
-{% if argument.mainTarget %}
-@testable import {{ argument.mainTarget }}
+{% for import in argument.imports %}
+{% if import != "last" %}
+import {{ import }}
 {% endif %}
+{% endfor %}
+{% for import in argument.testableImports %}
+{% if import != "last" %}
+@testable import {{ import }}
+{% endif %}
+{% endfor %}
 
 public enum PreviewModels {
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
 
+        // PreviewProvider
         {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
         views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name | replace:"_Previews","" | replace:"_Preview","" }}"))
         {% endfor %}
+        {% if argument.macroPreviewBodies %}
+
+        // #Preview macro
+        views.append(contentsOf: MacroPreviews.previews)
+        {% endif %}
 
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
@@ -38,3 +50,7 @@ public enum PreviewModels {
         return views
     }
 }
+{% if argument.macroPreviewBodies %}
+
+{{ argument.macroPreviewBodies }}
+{% endif %}

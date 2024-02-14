@@ -1,12 +1,5 @@
-//
-//  MainMenu.swift
-//  SnapshotAppSwiftUI (iOS)
-//
-//  Created by Maksim Grishutin on 08.08.2022.
-//
-
-import SwiftUI
 import Prefire
+import SwiftUI
 
 struct MainMenu: View {
     var body: some View {

@@ -1,13 +1,6 @@
-//
-//  TestView.swift
-//  SnapshotAppSwiftUI (iOS)
-//
-//  Created by Maksim Grishutin on 04.08.2022.
-//
-
 import Foundation
-import SwiftUI
 import Prefire
+import SwiftUI
 
 struct TestView: View {
     @State
@@ -81,7 +74,7 @@ struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
 
 struct GreenButton_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
-        Button("Apply", action: { })
+        Button("Apply", action: {})
             .foregroundColor(.black)
             .font(.title)
             .padding()
@@ -91,4 +84,11 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
             .previewLayout(.sizeThatFits)
             .previewUserStory("Buttons")
     }
+}
+
+#Preview(traits: .sizeThatFitsLayout) {
+    TestView(isLoading: true)
+        .previewUserStory(.testStory)
+        .snapshot(delay: 0.1, precision: 0.9)
+        .previewUserStory(.auth)
 }

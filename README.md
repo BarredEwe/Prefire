@@ -12,18 +12,18 @@
 
 # Prefire
 
-<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right" style="border-radius: 20px 20px; box-shadow: 0px 0px 15px gray;">
+<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
 
 Do you like **SwiftUI Preview** and use it? Then you must try 🔥**Prefire**!
 
 You can try 🔥**Prefire** starting from example project.
 
-- ✅ Easy to use
+- ✅ Easy to use: Get started with the example project.
 - ✅ Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
-- ✅ Generation _Playbook (Demo) view_
+- ✅ Generation _Playbook (Demo) views_
 - ✅ Generation _Snapshot tests_ based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
 - ✅ Generation _Accesability Snapshot_ tests
-- ✅ _Xcode Plugin_ supported
+- ✅ Support for _Xcode Plugin_
 
 <br clear="all">
 
@@ -81,10 +81,27 @@ dependencies: [
 ---
 
 ## Usage
-For generate **tests** and **playbook**, simply mark your preview using protocol - `PrefireProvider`:
+To generate **tests** and **playbook**, simply mark your preview using the `PrefireProvider` protocol:
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
+}
+```
+If you use the **`#Preview`** macro, **🔥Prefire** will automatically find it!
+
+If you don't need it, mark view - `.prefireIgnored()`:
+```swift
+#Preview {
+    Text("")
+        .prefireIgnored()
+}
+```
+
+If you want to disable the automatic get of all previews, use the setting `preview_default_enabled`: false. Then to include preview in the test, you need to call the `.prefireEnabled()`:
+```swift
+#Preview {
+    Text("")
+        .prefireEnabled()
 }
 ```
 
@@ -107,29 +124,29 @@ struct ContentView: View {
 ### **Snapshot tests**
 
 Just run generated tests 🚀
-And all tests will be generated in DerivedData.
+All tests will be generated in the DerivedData folder.
 
 <img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
 
-Plugin `PrefireTestsPlugin` will do everything for you 🛠️
+Plugin `PrefireTestsPlugin` will handle everything for you 🛠️
 
-For detailed instruction you can see [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) or examine an example project.
+For detailed instruction, check out [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) or examine an example project.
 
 ---
 
 ## API
-New commands for previews:
+**Prefire** provide new commands for previews:
 
-- You can set the [delay and precision](https://github.com/pointfreeco/swift-snapshot-testing/blob/main/Documentation/Available-Snapshot-Strategies.md#image-10) parameters for the snapshot:
+- You can set the delay, precision and perceptualPrecision parameters for the snapshot:
 
     ```swift
-    .snapshot(delay: 0.3, precision: 0.95)
+    .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
     ```
     
     ```swift
     static var previews: some View {
         TestView()
-            .snapshot(delay: 0.3, precision: 0.95)
+            .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
     }
     ```
 
@@ -180,7 +197,7 @@ New commands for previews:
 
 ## Config
 
-You can additionaly configure **Prefire** by adding a `.prefire.yml` file to root folder. For example:
+To further customize **Prefire**, you can create a `.prefire.yml` file in the root directory of your project. Here's an example of its content:
 
 ```yaml
 test_configuration:
@@ -189,18 +206,41 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
+  - preview_default_enabled: true
+  - imports:
+    - UIKit
+    - SwiftUI
+  - testable_imports:
+    - Prefire
+
+prefire_configuration:
+  - preview_default_enabled: true
+  - imports:
+    - UIKit
+    - Foundation
+  - testable_imports:
+    - SwiftUI
 ```
+### Configuration keys and their descriptions
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
 - `test_file_path` - Filepath to generated file (⚠️ Not compatible with Xcode 15). __Default__: _DerivedData_
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
-- `simulator_device` - Device for Snapshot testing. __Default__: _iPhone 14 Pro_
-- `required_os` - iOS version for Snapshot testing. __Default__: _iOS 16_
+- `simulator_device` - Device for Snapshot testing. Optional parameter.
+- `required_os` - iOS version for Snapshot testing. Optional parameter.
+- `preview_default_enabled` - Do I need to automatically add all previews based on the new syntax to the tests.  __Default__: true
+- `imports` - Additional imports for the generated Playbook/Tests. Optional parameter.
+- `testable_imports` - Additional `@testable` imports for the generated Playbook/Tests. Optional parameter.
 
 ## Requirements
 
-- Swift 5.6+
-- Xcode 14.0+
-- iOS 14+
+- Swift 5.6 or higher
+- Xcode 14.0 or higher
+- iOS 14 or higher
 
-## Previews Troubleshooting
-- `NavigationView` in Preview is not supported for Playbook
+## Troubleshooting
+`NavigationView` in Preview not supported for Playbook
+- Consider using other views or layouts for your Playbook needs.
+
+Running Prefire via CI
+- To run Prefire via Continuous Integration (CI), you need to configure permissions:
+`defaults write com.apple.dt.Xcode ideskippackagepluginfingerprintvalidationbool YES`

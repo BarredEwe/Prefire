@@ -1,10 +1,3 @@
-//
-//  SystemViewModel.swift
-//  
-//
-//  Created by Maksim Grishutin on 05.08.2022.
-//
-
 import SwiftUI
 
 /// Preview model
@@ -17,12 +10,12 @@ public struct PreviewModel: Identifiable {
     /// Preview state (just a `String`)
     public typealias State = String
 
-    /// View type. Is nedded for understanding type of layout
+    /// Layout type. Is nedded for understanding type of layout
     ///
     /// For example:
     /// `Button`, `TextField`, `Cell`  - component
     /// FullScreen `View` -  screen
-    public enum ViewType: Equatable {
+    public enum LayoutType: Equatable {
         case screen
         case component
     }
@@ -43,8 +36,8 @@ public struct PreviewModel: Identifiable {
     ///     (.default, loading etc.)
     public var state: State?
 
-    /// View type
-    public var type: ViewType
+    /// Layout type
+    public var type: LayoutType
 
     /// Device for showing preview
     public var device: PreviewDevice?
@@ -63,7 +56,7 @@ public struct PreviewModel: Identifiable {
         id: String,
         content: @escaping () -> AnyView,
         name: String,
-        type: ViewType = .component,
+        type: LayoutType = .component,
         device: PreviewDevice?
     ) {
         self.id = id
@@ -71,5 +64,14 @@ public struct PreviewModel: Identifiable {
         self.name = name
         self.type = type
         self.device = device
+    }
+
+    public init(
+        content: @escaping () -> AnyView,
+        name: String,
+        type: LayoutType = .component,
+        device: PreviewDevice?
+    ) {
+        self.init(id: name + String(describing: content()), content: content, name: name, type: type, device: device)
     }
 }
