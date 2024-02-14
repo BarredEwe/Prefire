@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 #### 1.x Releases
 
+- `1.5.x` Releases - [1.5.0](#150)
 - `1.4.x` Releases - [1.4.0](#140) | [1.4.1](#141)
 - `1.3.x` Releases - [1.3.0](#130)
 - `1.2.x` Releases - [1.2.0](#120)
@@ -20,7 +21,30 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0](https://github.com/BarredEwe/Prefire/releases/tag/2.0.0)
 
-Release ---
+Release Feb 14, 2024
+
+### Added
+- Supporting Preview Macro
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+- Create an .executableTarget to be able to run through the terminal
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+- Add correct error output from snapshots.
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+- Add the perceptualPrecision parameter setting
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+- Pass the imports to the PreviewModel
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+- Add tests
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/29
+
+## [1.5.0](https://github.com/BarredEwe/Prefire/releases/tag/1.5.0)
+
+Release Sep 20, 2023
+
+### Added
+
+- Xcode 15 supporting
+    - Added by @BarredEwe in https://github.com/BarredEwe/Prefire/pull/25
 
 
 ## [1.4.1](https://github.com/BarredEwe/Prefire/releases/tag/1.4.1)
