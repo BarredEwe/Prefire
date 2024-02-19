@@ -223,7 +223,7 @@ prefire_configuration:
 ```
 ### Configuration keys and their descriptions
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
-- `test_file_path` - Filepath to generated file (⚠️ Not compatible with Xcode 15). __Default__: _DerivedData_
+- `test_file_path` - Filepath to generated file. __Default__: _DerivedData_
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. Optional parameter.
 - `required_os` - iOS version for Snapshot testing. Optional parameter.
@@ -244,3 +244,7 @@ prefire_configuration:
 Running Prefire via CI
 - To run Prefire via Continuous Integration (CI), you need to configure permissions:
 `defaults write com.apple.dt.Xcode ideskippackagepluginfingerprintvalidationbool YES`
+
+Xcode is unable to generate tests in a custom path.
+- To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
+`defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES`
