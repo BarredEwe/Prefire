@@ -31,7 +31,7 @@ You can try 🔥**Prefire** starting from example project.
 
 ## Installation
 
-**Prefire** can be install for an `Xcode Project` or only for one `Package`.
+**Prefire** can be installed for an `Xcode Project` or only for one `Package`.
 
 ### **Xcode Project Plugin**
 
