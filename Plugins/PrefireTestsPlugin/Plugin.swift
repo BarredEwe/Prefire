@@ -54,6 +54,8 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
             }
 
+            let sources = commonPrefix(with: testedTarget.inputFiles.filter({ $0.type == .source }).map(\.path.string)) ?? context.xcodeProject.directory.string
+
             return [
                 .prebuildCommand(
                     displayName: "Running Prefire Tests",
@@ -63,7 +65,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                         "--sourcery", sourcery,
                         "--target", testedTarget.displayName,
                         "--test-target", target.displayName,
-                        "--sources", context.xcodeProject.directory.string,
+                        "--sources", sources,
                         "--output", outputPath,
                         "--test-target-path", context.xcodeProject.directory.appending(subpath: target.displayName).string,
                         "--config", context.xcodeProject.directory.string,
@@ -74,6 +76,18 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                     outputFilesDirectory: outputPath
                 ),
             ]
+        }
+
+        private func commonPrefix(with strings: [String]) -> String? {
+            guard !strings.isEmpty else { return nil }
+
+            var common = strings[0]
+
+            for char in strings {
+                common = char.commonPrefix(with: common)
+            }
+
+            return common
         }
     }
 #endif
