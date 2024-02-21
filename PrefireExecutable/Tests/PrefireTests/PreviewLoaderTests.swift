@@ -9,11 +9,13 @@ class PreviewLoaderTests: XCTestCase {
     ]
 
     var previewText = ["TestView", "TestView_Prefire", "TestView_Ignored"].map({ "\"" + $0 + "\"" })
+    let source = #file
 
     func test_loadRawPreviewBodiesDefaultEnable() {
         #if swift(>=5.9)
         let target = "PrefireTests"
-        let sources = ""
+        let sources = [source]
+
         let bodies = PreviewLoader.loadRawPreviewBodies(for: target, and: sources, defaultEnabled: true)?
             .filter { $0.contains(previewText[0]) || $0.contains(previewText[1]) || $0.contains(previewText[2]) }
 
@@ -26,7 +28,8 @@ class PreviewLoaderTests: XCTestCase {
     func test_loadRawPreviewBodiesDefaultDisabled() {
         #if swift(>=5.9)
         let target = "PrefireTests"
-        let sources = ""
+        let sources = [source]
+
         let bodies = PreviewLoader.loadRawPreviewBodies(for: target, and: sources, defaultEnabled: false)?
             .filter { $0.contains(previewText[0]) || $0.contains(previewText[1]) || $0.contains(previewText[2]) }
 

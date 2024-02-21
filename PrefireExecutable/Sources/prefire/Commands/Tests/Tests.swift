@@ -5,8 +5,8 @@ extension Prefire {
     struct Tests: ParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Generate Snapshot/Accessibility Tests")
 
-        @Flag(help: "Display full info")
-        var verbose = false
+        @Argument(help: "Paths to a source swift files or directories.")
+        var sources: [String]
 
         @Option(help: "Path to the sourcery.")
         var sourcery: String
@@ -18,8 +18,6 @@ extension Prefire {
         @Option(help: "Your Snapshot Tests Target.")
         var testTarget: String?
 
-        @Option(help: "Path to a source swift files or directories.")
-        var sources: String?
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
@@ -32,6 +30,9 @@ extension Prefire {
         var device: String?
         @Option(help: "Required OS version for Snapshot testing.")
         var osVersion: String?
+
+        @Flag(help: "Display full info")
+        var verbose = false
 
         func run() throws {
             try GenerateTestsCommand.run(
