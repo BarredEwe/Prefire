@@ -45,7 +45,7 @@ extension Prefire {
                     testTargetPath: testTargetPath,
                     cacheBasePath: cacheBasePath,
                     device: device,
-                    osVerison: osVersion,
+                    osVersion: osVersion,
                     config: Config.load(from: config, testTargetPath: testTargetPath, verbose: verbose),
                     verbose: verbose
                 )

@@ -26,6 +26,9 @@ class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
+    private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
+    
+    
     {% if argument.file %}
 
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
@@ -43,9 +46,7 @@ class PreviewTests: XCTestCase {
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            if let failure = assertSnapshots(matching: preview) {
-                XCTFail(failure)
-            }
+            assertSnapshots(matching: preview)
         }
     }
     {%- if not forloop.last %}
@@ -59,17 +60,45 @@ class PreviewTests: XCTestCase {
     {% endif %}
     // MARK: Private
 
-    private func assertSnapshots(matching preview: _Preview, testName: String = #function) -> String? {
-        assertSnapshots(
-            matching: AnyView(preview.content),
-            name: preview.displayName,
-            isScreen: preview.layout == .device,
-            device: preview.device?.snapshotDevice() ?? deviceConfig,
-            testName: testName
-        )
+    private func assertSnapshots(matching preview: _Preview, testName: String = #function) {
+        guard !snapshotDevices.isEmpty else {
+            if let failure = assertSnapshots(matching: AnyView(preview.content),
+                                             name: preview.displayName,
+                                             isScreen: preview.layout == .device,
+                                             device: preview.device?.snapshotDevice() ?? deviceConfig,
+                                             testName: testName) {
+                XCTFail(failure)
+            }
+            return
+        }
+        
+        for deviceName in snapshotDevices {
+            guard var device = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
+                fatalError("Unknown device name: \(deviceName)")
+            }
+            
+            // Ignore specific device safe area
+            device.safeArea = .zero
+            
+            // Ignore specific device display scale
+            let traits = UITraitCollection(displayScale: 2.0)
+            
+            if let failure = assertSnapshots(matching: AnyView(preview.content),
+                                            name: preview.displayName,
+                                            isScreen: preview.layout == .device,
+                                            device: device,
+                                            testName: testName + deviceName,
+                                            traits: traits) {
+                XCTFail(failure)
+            }
+        }
     }
 
-    private func assertSnapshots(matching view: AnyView, name: String?, isScreen: Bool, device: ViewImageConfig, testName: String = #function) -> String? {
+    private func assertSnapshots(matching view: AnyView,
+                                 name: String?, isScreen: Bool,
+                                 device: ViewImageConfig,
+                                 testName: String = #function,
+                                 traits: UITraitCollection = .init()) -> String? {
         var delay: TimeInterval = 0
         var precision: Float = 1
         var perceptualPrecision: Float = 1
@@ -86,7 +115,11 @@ class PreviewTests: XCTestCase {
 
         let failure = verifySnapshot(
             of: matchingView,
-            as: .prefireImage(precision: { precision }, perceptualPrecision: { perceptualPrecision }, duration: { delay }, layout: isScreen ? .device(config: device) : .sizeThatFits),
+            as: .prefireImage(precision: { precision },
+                              perceptualPrecision: { perceptualPrecision },
+                              duration: { delay },
+                              layout: isScreen ? .device(config: device) : .sizeThatFits,
+                              traits: traits),
             named: name{% if argument.file %},
             file: file{% endif %},
             testName: testName
@@ -137,6 +170,14 @@ private extension PreviewDevice {
             return .iPhone8Plus
         case "iPhone SE (1st generation)", "iPhone SE (2nd generation)":
             return .iPhoneSe
+        case "iPad":
+            return .iPad10_2
+        case "iPad Mini":
+            return .iPadMini
+        case "iPad Pro 11":
+            return .iPadPro11
+        case "iPad Pro 12.9":
+            return .iPadPro12_9
         default: return nil
         }
     }

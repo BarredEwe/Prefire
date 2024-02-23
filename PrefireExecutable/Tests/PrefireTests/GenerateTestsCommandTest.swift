@@ -17,7 +17,7 @@ class GenerateTestsCommandTests: XCTestCase {
             testTargetPath: nil,
             cacheBasePath: nil,
             device: nil,
-            osVerison: nil,
+            osVersion: nil,
             config: nil,
             verbose: false
         )
@@ -31,6 +31,24 @@ class GenerateTestsCommandTests: XCTestCase {
             "--templates", options.template,
             "--args", "mainTarget=\(options.target ?? "")",
             "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift"
+        ]
+
+        let arguments = GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(arguments, expectedArguments)
+    }
+    
+    func test_makeArguments_snapshot_devices() {
+        options.snapshotDevices = ["iPhone 15", "iPad"]
+        options.sources = "some/sources"
+        
+        let expectedArguments = [
+            "--sources", options.sources,
+            "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
+            "--templates", options.template,
+            "--args", "mainTarget=\(options.target ?? "")",
+            "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+            "--args", "snapshotDevices=iPhone 15|iPad"
         ]
 
         let arguments = GenerateTestsCommand.makeArguments(for: options)
