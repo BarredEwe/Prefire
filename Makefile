@@ -7,8 +7,8 @@ build:
 
 binary:
 	swift run --package-path PrefireExecutable/ -c release prefire
-	rm -rf Binaries/PrefireBinary.artifactbundle/prefire-2.0.0-macos/bin/*
-	cp PrefireExecutable/.build/arm64-apple-macosx/release/prefire Binaries/PrefireBinary.artifactbundle/prefire-2.0.0-macos/bin
+	rm -rf Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/*
+	cp PrefireExecutable/.build/arm64-apple-macosx/release/prefire Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin
 
 test:
 	cd PrefireExecutable; swift test
@@ -21,4 +21,4 @@ update:
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '6 s/.*/            "version": "$(version)",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
-	cd PrefireExecutable/Sources/PrefireExecutable/Commands/Version/; sed -i '' -e '8 s/.*/        static var value: String = "$(version)"/g' Version.swift
+	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static var value: String = "$(version)"/g' Version.swift
