@@ -18,8 +18,8 @@ extension Prefire {
         @Option(help: "Your Snapshot Tests Target.")
         var testTarget: String?
 
-        @Option(help: "Path to a source swift files or directories.")
-        var sources: String?
+        @Argument(help: "Paths to a source swift files or directories.")
+        var sources: [String]
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
