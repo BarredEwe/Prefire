@@ -16,6 +16,7 @@ struct GeneratedTestsOptions {
     var cacheBasePath: String?
     var device: String?
     var osVersion: String?
+    var snapshotDevices: [String]?
     var imports: [String]?
     var testableImports: [String]?
     var verbose: Bool
@@ -30,7 +31,7 @@ struct GeneratedTestsOptions {
         testTargetPath: String?,
         cacheBasePath: String?,
         device: String?,
-        osVerison: String?,
+        osVersion: String?,
         config: Config?,
         verbose: Bool
     ) {
@@ -48,7 +49,8 @@ struct GeneratedTestsOptions {
         self.testTargetPath = testTargetPath
         self.cacheBasePath = cacheBasePath
         self.device = config?.tests.device ?? device
-        osVersion = config?.tests.osVersion ?? osVerison
+        self.osVersion = config?.tests.osVersion ?? osVersion
+        snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
         self.verbose = verbose
@@ -120,6 +122,10 @@ enum GenerateTestsCommand {
 
         if let device = options.device {
             arguments.append(contentsOf: [Keys.args, "simulatorDevice=\(device)"])
+        }
+        
+        if let snapshotDevices = options.snapshotDevices {
+            arguments.append(contentsOf: [Keys.args, "snapshotDevices=\(snapshotDevices.joined(separator: "|"))"])
         }
 
         if let imports = options.imports, !imports.isEmpty {

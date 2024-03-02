@@ -206,6 +206,7 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
+  - snapshot_devices: [iPhone 14, iPad]
   - preview_default_enabled: true
   - imports:
     - UIKit
@@ -227,6 +228,7 @@ prefire_configuration:
 - `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. Optional parameter.
 - `required_os` - iOS version for Snapshot testing. Optional parameter.
+- `snapshot_devices` - the list of devices snapshots should be generated for. The `simulator_device` specified above will still be required and used, but snapshotting will take on the traits of the `snapshot_devices`. The `displayScale` will default to `2.0` and device specific safe areas will be `.zero`. Optional parameter.
 - `preview_default_enabled` - Do I need to automatically add all previews based on the new syntax to the tests.  __Default__: true
 - `imports` - Additional imports for the generated Playbook/Tests. Optional parameter.
 - `testable_imports` - Additional `@testable` imports for the generated Playbook/Tests. Optional parameter.

@@ -12,6 +12,7 @@ struct Config {
         var template: String?
         var device: String?
         var osVersion: String?
+        var snapshotDevices: [String]?
         var previewDefaultEnabled: Bool?
         var imports: [String]?
         var testableImports: [String]?
@@ -66,6 +67,10 @@ struct Config {
                     tests.osVersion = osVersion
                     continue
                 }
+                if let snapshotDevices = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .snapshot_devices) {
+                    tests.snapshotDevices = snapshotDevices
+                    continue
+                }
                 if let previewDefaultEnabled = Config.getValue(from: components, key: .preview_default_enabled) {
                     tests.previewDefaultEnabled = previewDefaultEnabled == "true"
                     continue
@@ -107,6 +112,7 @@ extension Config {
         case template_file_path
         case simulator_device
         case required_os
+        case snapshot_devices
         case preview_default_enabled
         case imports
         case testable_imports
