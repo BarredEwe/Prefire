@@ -14,6 +14,7 @@ test:
 	cd PrefireExecutable; swift test
 
 update:
+	@[ "${version}" ] || ( echo "You have to pass version. For example: \"version=1.0.0\""; exit 1 )
 	echo "New version: $(version)"
 	echo "Old version: $(CUR_VERSION)"
 
