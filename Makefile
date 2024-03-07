@@ -6,9 +6,9 @@ build:
 	set -o pipefail && xcodebuild -scheme Prefire -destination 'generic/platform=iOS'
 
 binary:
-	swift run --package-path PrefireExecutable/ -c release prefire
+	(cd PrefireExecutable; swift build -c release --arch arm64 --arch x86_64)
 	rm -rf Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/*
-	cp PrefireExecutable/.build/arm64-apple-macosx/release/prefire Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin
+	cp PrefireExecutable/.build/apple/products/release/prefire Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin
 
 test:
 	cd PrefireExecutable; swift test
