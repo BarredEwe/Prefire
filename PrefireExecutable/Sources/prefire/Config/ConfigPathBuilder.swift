@@ -9,30 +9,26 @@ enum ConfigPathBuilder {
     /// - Returns: An array of possible paths for the configuration file
     static func possibleConfigPaths(for configPath: String?, testTargetPath: String?) -> [String] {
         var possibleConfigPaths = [String]()
-
-        if var configPath = configPath {
-            // Check if the provided path is absolute and remove leading slash if so
-            if configPath.hasPrefix("/") {
-                configPath.removeFirst()
+        
+        for path in [testTargetPath, configPath] {
+            guard let path else {
+                continue
             }
-            if configPath.hasSuffix("/") {
-                configPath.removeLast()
+            
+            // This will build the absolute path relative to the current directory
+            var configURL = URL(filePath: path)
+            
+            // Add the config file name if not provided
+            if configURL.lastPathComponent != configFileName {
+                configURL.append(component: configFileName)
             }
-
-            possibleConfigPaths.append(configPath)
-            possibleConfigPaths.append(FileManager.default.currentDirectoryPath + "/\(configPath)")
-
-            if !configPath.hasSuffix(configFileName) {
-                possibleConfigPaths = possibleConfigPaths.map { $0 + "/\(configFileName)" }
-            }
-        } else {
-            // Add the default path if no specific one is provided
-            possibleConfigPaths.append(FileManager.default.currentDirectoryPath + "/\(configFileName)")
+            
+            possibleConfigPaths.append(configURL.absoluteURL.path())
         }
-
-        if let testTargetPath {
-            possibleConfigPaths.insert(testTargetPath + "/\(configFileName)", at: 0)
-        }
+        
+        // Add the default path
+        let configURL = URL(filePath: configFileName) // Relative to the current directory
+        possibleConfigPaths.append(configURL.absoluteURL.path())
 
         return possibleConfigPaths
     }

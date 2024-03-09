@@ -38,11 +38,15 @@ struct GeneratedTestsOptions {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
         self.testTarget = testTarget
-        if let template = config?.tests.template, let testTargetURL = testTargetPath.flatMap(URL.init(string:)) {
-            self.template = testTargetURL.deletingLastPathComponent().appending(path: template).absoluteString
+        
+        if let template = config?.tests.template, let testTargetPath {
+            let testTargetURL = URL(filePath: testTargetPath)
+            let templateURL = testTargetURL.appending(path: template)
+            self.template = templateURL.absoluteURL.path()
         } else {
             self.template = template
         }
+        
         self.sources = sources
         self.output = config?.tests.testFilePath ?? output
         prefireEnabledMarker = config?.tests.previewDefaultEnabled ?? true

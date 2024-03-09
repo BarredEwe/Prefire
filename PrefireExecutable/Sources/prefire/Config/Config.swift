@@ -2,7 +2,6 @@ import Foundation
 
 private enum Constants {
     static let separtor = ":"
-    static let fileMark = "file://"
 }
 
 struct Config {
@@ -124,8 +123,8 @@ extension Config {
         let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: testTargetPath)
 
         for path in possibleConfigPaths {
-            guard let configUrl = URL(string: Constants.fileMark + path),
-                  FileManager.default.fileExists(atPath: configUrl.path),
+            let configUrl = URL(filePath: path)
+            guard FileManager.default.fileExists(atPath: configUrl.path),
                   let configDataString = try? String(contentsOf: configUrl, encoding: .utf8) else { continue }
 
             if verbose {
