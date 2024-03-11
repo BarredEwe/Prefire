@@ -58,7 +58,10 @@ enum PreviewLoader {
     ///   - defaultEnabled: Automatic view addition is enabled
     /// - Returns: PreviewBody - `DeveloperToolsSupport.Preview { EmptyView() }`
     static func loadPreviewBody(from fileURL: URL, and sources: String, defaultEnabled: Bool) -> String? {
-        guard let contents = try? String(contentsOf: fileURL, encoding: .utf8), !contents.isEmpty else { return nil }
+        guard let contents = try? String(contentsOfFile: fileURL.path), !contents.isEmpty else {
+            print("⚠️ Cannot load file with Preview macro at path: \(fileURL.path)")
+            return nil
+        }
 
         var lines = contents.components(separatedBy: .newlines)
         lines.removeLast()
@@ -72,7 +75,7 @@ enum PreviewLoader {
         for line in lines {
             if line.hasPrefix(Keys.viewMarkerStart) {
                 isInsideFunction = true
-            } else if line.hasPrefix(Keys.viewMarkerEnd) {
+            } else if isInsideFunction, line.hasPrefix(Keys.viewMarkerEnd) {
                 isInsideFunction = false
                 result.removeLast()
             }
