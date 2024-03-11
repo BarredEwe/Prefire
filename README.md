@@ -206,7 +206,9 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
-  - snapshot_devices: [iPhone 14, iPad]
+  - snapshot_devices:
+  	- iPhone 14
+  	- iPad
   - preview_default_enabled: true
   - imports:
     - UIKit
