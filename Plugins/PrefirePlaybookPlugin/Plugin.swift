@@ -19,7 +19,7 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
                     "playbook",
                     "--sourcery", sourcery,
                     "--target", target.name,
-                    "--sources", target.directory.string,
+                    "--sources", target.directory.string,  // This need to be tested
                     "--output", outputPath,
                     "--config", target.directory.string,
                     "--template", templatePath,
@@ -43,22 +43,25 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
             let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
             let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
             let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+            let sources = target.inputFiles.filter { $0.type == .source }.map { $0.path.string }
+
+            var arguments: [CustomStringConvertible] = [
+                "playbook",
+                "--sourcery", sourcery,
+                "--target", target.displayName,
+                "--output", outputPath,
+                "--config", context.xcodeProject.directory.string,
+                "--template", templatePath,
+                "--cache-base-path", cachePath,
+                "--verbose",
+            ]
+            arguments.append(contentsOf: sources)
 
             return [
                 .prebuildCommand(
                     displayName: "Running Prefire Playbook",
                     executable: executable,
-                    arguments: [
-                        "playbook",
-                        "--sourcery", sourcery,
-                        "--target", target.displayName,
-                        "--sources", context.xcodeProject.directory.string,
-                        "--output", outputPath,
-                        "--config", context.xcodeProject.directory.string,
-                        "--template", templatePath,
-                        "--cache-base-path", cachePath,
-                        "--verbose",
-                    ],
+                    arguments: arguments,
                     outputFilesDirectory: outputPath
                 ),
             ]

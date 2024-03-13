@@ -12,8 +12,8 @@ class GenerateTestsCommandTests: XCTestCase {
             target: "GenerateTestsCommand",
             testTarget: "GenerateTestsCommandTests",
             template: "templatePath",
-            sources: nil,
-            output: nil, 
+            sources: [],
+            output: nil,
             testTargetPath: nil,
             cacheBasePath: nil,
             device: nil,
@@ -24,9 +24,9 @@ class GenerateTestsCommandTests: XCTestCase {
     }
 
     func test_makeArguments_sources() {
-        options.sources = "some/sources"
+        options.sources = ["some/sources"]
         let expectedArguments = [
-            "--sources", options.sources,
+            "--sources", options.sources.first!,
             "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
             "--templates", options.template,
             "--args", "mainTarget=\(options.target ?? "")",

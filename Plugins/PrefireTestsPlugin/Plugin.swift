@@ -54,23 +54,27 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
             }
 
+            var arguments: [CustomStringConvertible] = [
+                "tests",
+                "--sourcery", sourcery,
+                "--target", testedTarget.displayName,
+                "--test-target", target.displayName,
+                "--output", outputPath,
+                "--test-target-path", context.xcodeProject.directory.appending(subpath: target.displayName).string,
+                "--config", context.xcodeProject.directory.string,
+                "--template", templatePath,
+                "--cache-base-path", cachePath,
+                "--verbose",
+            ]
+
+            let sources = testedTarget.inputFiles.filter { $0.type == .source }.map { $0.path.string }
+            arguments.append(contentsOf: sources)
+
             return [
                 .prebuildCommand(
                     displayName: "Running Prefire Tests",
                     executable: executable,
-                    arguments: [
-                        "tests",
-                        "--sourcery", sourcery,
-                        "--target", testedTarget.displayName,
-                        "--test-target", target.displayName,
-                        "--sources", context.xcodeProject.directory.string,
-                        "--output", outputPath,
-                        "--test-target-path", context.xcodeProject.directory.appending(subpath: target.displayName).string,
-                        "--config", context.xcodeProject.directory.string,
-                        "--template", templatePath,
-                        "--cache-base-path", cachePath,
-                        "--verbose",
-                    ],
+                    arguments: arguments,
                     outputFilesDirectory: outputPath
                 ),
             ]
