@@ -9,7 +9,7 @@ struct GeneratedTestsOptions {
     var target: String?
     var testTarget: String?
     var template: String
-    var sources: String?
+    var sources: [String]
     var output: String?
     var prefireEnabledMarker: Bool
     var testTargetPath: String?
@@ -26,7 +26,7 @@ struct GeneratedTestsOptions {
         target: String?,
         testTarget: String?,
         template: String,
-        sources: String?,
+        sources: [String],
         output: String?,
         testTargetPath: String?,
         cacheBasePath: String?,
@@ -92,7 +92,7 @@ enum GenerateTestsCommand {
 
         var arguments = [String]()
 
-        let sources = options.sources ?? FileManager.default.currentDirectoryPath
+        let sources = options.sources
         let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
         let snapshotOutput = (options.testTargetPath ?? FileManager.default.currentDirectoryPath)
             .appending("/\(Constants.snapshotFileName).swift")
@@ -113,12 +113,12 @@ enum GenerateTestsCommand {
         }
 
         arguments = [
-            Keys.sources, sources,
             Keys.output, output,
             Keys.templates, options.template,
             Keys.args, "\(Keys.mainTarget)=\(target)",
             Keys.args, "\(Keys.file)=\(snapshotOutput)",
         ]
+        arguments.append(contentsOf: sources.flatMap({ [Keys.sources, $0] }))
 
         if let osVersion = options.osVersion {
             arguments.append(contentsOf: [Keys.args, "simulatorOSVersion=\(osVersion)"])

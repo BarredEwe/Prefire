@@ -12,8 +12,8 @@ class GenerateTestsCommandTests: XCTestCase {
             target: "GenerateTestsCommand",
             testTarget: "GenerateTestsCommandTests",
             template: "templatePath",
-            sources: nil,
-            output: nil, 
+            sources: [],
+            output: nil,
             testTargetPath: nil,
             cacheBasePath: nil,
             device: nil,
@@ -24,13 +24,13 @@ class GenerateTestsCommandTests: XCTestCase {
     }
 
     func test_makeArguments_sources() {
-        options.sources = "some/sources"
+        options.sources = ["some/sources"]
         let expectedArguments = [
-            "--sources", options.sources,
             "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
             "--templates", options.template,
             "--args", "mainTarget=\(options.target ?? "")",
-            "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift"
+            "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+            "--sources", options.sources.first!,
         ]
 
         let arguments = GenerateTestsCommand.makeArguments(for: options)
@@ -40,15 +40,16 @@ class GenerateTestsCommandTests: XCTestCase {
     
     func test_makeArguments_snapshot_devices() {
         options.snapshotDevices = ["iPhone 15", "iPad"]
-        options.sources = "some/sources"
-        
+        options.sources = ["some/sources", "some/other/sources"]
+
         let expectedArguments = [
-            "--sources", options.sources,
             "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
             "--templates", options.template,
             "--args", "mainTarget=\(options.target ?? "")",
             "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
-            "--args", "snapshotDevices=iPhone 15|iPad"
+            "--sources", "some/sources",
+            "--sources", "some/other/sources",
+            "--args", "snapshotDevices=iPhone 15|iPad",
         ]
 
         let arguments = GenerateTestsCommand.makeArguments(for: options)

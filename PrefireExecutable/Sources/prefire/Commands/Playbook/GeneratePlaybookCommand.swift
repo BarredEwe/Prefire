@@ -7,7 +7,7 @@ private enum Constants {
 struct GeneratedPlaybookOptions {
     var sourcery: String
     var target: String?
-    var sources: String
+    var sources: [String]
     var output: String
     var previewDefaultEnabled: Bool
     var template: String
@@ -16,10 +16,10 @@ struct GeneratedPlaybookOptions {
     var testableImports: [String]?
     var verbose: Bool
 
-    init(sourcery: String, target: String?, sources: String?, output: String?, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
+    init(sourcery: String, target: String?, sources: [String], output: String?, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
         self.sourcery = sourcery
         self.target = target
-        self.sources = sources ?? FileManager.default.currentDirectoryPath
+        self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
         self.output = output ?? "\(FileManager.default.currentDirectoryPath)/\(Constants.outputFileName)"
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
         self.template = template
@@ -49,9 +49,9 @@ enum GeneratePlaybookCommand {
 
         task.arguments = [
             Keys.templates, options.template,
-            Keys.sources, options.sources,
             Keys.output, options.output,
         ]
+        task.arguments?.append(contentsOf: options.sources.flatMap { [Keys.sources, $0] })
 
         if let cacheBasePath = options.cacheBasePath {
             task.arguments?.append(contentsOf: [Keys.cacheBasePath, cacheBasePath])
