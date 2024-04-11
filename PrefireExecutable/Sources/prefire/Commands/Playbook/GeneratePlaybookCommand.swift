@@ -16,11 +16,11 @@ struct GeneratedPlaybookOptions {
     var testableImports: [String]?
     var verbose: Bool
 
-    init(sourcery: String, target: String?, sources: [String], output: String?, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
+    init(sourcery: String, target: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
         self.sourcery = sourcery
         self.target = target
         self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
-        self.output = output ?? "\(FileManager.default.currentDirectoryPath)/\(Constants.outputFileName)"
+        self.output = output
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
         self.template = template
         self.cacheBasePath = cacheBasePath
@@ -78,10 +78,10 @@ enum GeneratePlaybookCommand {
             print(
                 """
                 Prefire configuration
-                    ➜ Target used for tests: \(target)
-                    ➜ Sources path: \(options.sources)
+                    ➜ Target used for playbook: \(target)
                     ➜ Sourcery path: \(options.sourcery)
                     ➜ Template path: \(options.template)
+                    ➜ Generated test path: \(options.output)
                 """
             )
         }
