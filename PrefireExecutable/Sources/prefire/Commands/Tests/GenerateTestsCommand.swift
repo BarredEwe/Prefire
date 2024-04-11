@@ -104,7 +104,6 @@ enum GenerateTestsCommand {
                     ➜ Target used for tests: \(target)
                     ➜ Tests target: \(options.testTarget ?? "nil")
                     ➜ Sourcery path: \(options.sourcery)
-                    ➜ Sources path: \(sources)
                     ➜ Template path: \(options.template)
                     ➜ Generated test path: \(output)
                     ➜ Snapshot resources path: \(snapshotOutput)

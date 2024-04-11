@@ -18,7 +18,7 @@ extension Prefire {
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
-        var output: String?
+        var output: String
         @Option(help: "Base path to the cache directory.")
         var cacheBasePath: String?
 
