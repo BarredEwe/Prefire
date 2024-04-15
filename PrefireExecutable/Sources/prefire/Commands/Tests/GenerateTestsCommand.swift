@@ -63,12 +63,15 @@ struct GeneratedTestsOptions {
 
 enum GenerateTestsCommand {
     private enum Keys {
-        static let templates = "--templates"
-        static let sources = "--sources"
-        static let output = "--output"
-        static let cacheBasePath = "--cacheBasePath"
-        static let args = "--args"
+        static let templates = "templates"
+        static let sources = "sources"
+        static let output = "output"
+        static let cacheBasePath = "cacheBasePath"
+        static let args = "args"
 
+        static let simulatorOSVersion = "simulatorOSVersion"
+        static let simulatorDevice = "simulatorDevice"
+        static let snapshotDevices = "snapshotDevices"
         static let mainTarget = "mainTarget"
         static let file = "file"
         static let imports = "imports"
@@ -90,8 +93,6 @@ enum GenerateTestsCommand {
             fatalError("You must provide the --target")
         }
 
-        var arguments = [String]()
-
         let sources = options.sources
         let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
         let snapshotOutput = (options.testTargetPath ?? FileManager.default.currentDirectoryPath)
@@ -111,45 +112,64 @@ enum GenerateTestsCommand {
             )
         }
 
-        arguments = [
-            Keys.output, output,
-            Keys.templates, options.template,
-            Keys.args, "\(Keys.mainTarget)=\(target)",
-            Keys.args, "\(Keys.file)=\(snapshotOutput)",
-        ]
-        arguments.append(contentsOf: sources.flatMap({ [Keys.sources, $0] }))
-
-        if let osVersion = options.osVersion {
-            arguments.append(contentsOf: [Keys.args, "simulatorOSVersion=\(osVersion)"])
-        }
-
-        if let device = options.device {
-            arguments.append(contentsOf: [Keys.args, "simulatorDevice=\(device)"])
-        }
-        
-        if let snapshotDevices = options.snapshotDevices {
-            arguments.append(contentsOf: [Keys.args, "snapshotDevices=\(snapshotDevices.joined(separator: "|"))"])
-        }
-
-        if let imports = options.imports, !imports.isEmpty {
-            arguments.append(contentsOf: imports.makeSourceryArgs(name: Keys.imports))
-        }
-
-        if let testableImports = options.testableImports, !testableImports.isEmpty {
-            arguments.append(contentsOf: testableImports.makeSourceryArgs(name: Keys.testableImports))
-        }
-
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let previewMacrosSnapshotingFunc = PreviewLoader.loadPreviewBodies(for: target, and: sources, defaultEnabled: options.prefireEnabledMarker) {
-                arguments.append(contentsOf: [Keys.args, "previewsMacros=\"\(previewMacrosSnapshotingFunc)\""])
-            }
+            let previewBodies = PreviewLoader.loadPreviewBodies(for: target, and: sources, defaultEnabled: options.prefireEnabledMarker)
+        #else
+            let previewBodies: String? = nil
         #endif
 
-        if let cacheBasePath = options.cacheBasePath {
-            arguments.append(contentsOf: [Keys.cacheBasePath, cacheBasePath])
+        let finalResult: [String: Any?] = [
+            Keys.output: output,
+            Keys.templates: [options.template],
+            Keys.sources: options.sources,
+            Keys.cacheBasePath: options.cacheBasePath,
+            Keys.args: [
+                Keys.simulatorOSVersion: options.osVersion,
+                Keys.simulatorDevice: options.device,
+                Keys.snapshotDevices: options.snapshotDevices?.joined(separator: "|"),
+                Keys.previewsMacros: previewBodies,
+                Keys.imports: "[\((options.imports ?? []).joined(separator: ","))]",
+                Keys.testableImports: "[\((options.testableImports ?? []).joined(separator: ","))]",
+                Keys.mainTarget: target,
+                Keys.file: snapshotOutput,
+
+            ] as [String: String?]
+        ]
+
+        let configFolder = options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path()
+        let filePath = configFolder + "sourcery.yml"
+
+        do {
+            try? FileManager.default.removeItem(atPath: filePath)
+            try? FileManager.default.createDirectory(atPath: configFolder, withIntermediateDirectories: true)
+            FileManager.default.createFile(atPath: filePath, contents: nil)
+
+            let string = finalResult.makeYaml()
+            try string.write(toFile: filePath, atomically: true, encoding: .utf8)
+        } catch {
+            print(error)
         }
 
-        return arguments
+        return ["--config", filePath]
+    }
+}
+
+extension Dictionary where Key == String, Value == Any? {
+    func makeYaml() -> String {
+        var result = ""
+
+        for item in self {
+            if let values = item.value as? [String] {
+                result += "\(item.key):\n" + values.map({ "  - \($0)\n" }).reduce("", +)
+            } else if let values = item.value as? [String: Any?] {
+                result += "\(item.key):\n  " + values.makeYaml().replacingOccurrences(of: "\n", with: "\n  ")
+                result.removeLast(2)
+            } else if let value = item.value {
+                result += "\(item.key): \(value)\n"
+            }
+        }
+
+        return result
     }
 }
