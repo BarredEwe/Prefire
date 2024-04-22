@@ -2,13 +2,14 @@ import Foundation
 
 extension PreviewLoader {
     private static let funcCharacterSet = CharacterSet(arrayLiteral: "_").inverted.intersection(.alphanumerics.inverted)
+    private static let yamlSettings = "|-4\n\n"
 
     static func loadPreviewBodies(for target: String, and sources: [String], defaultEnabled: Bool) -> String? {
         guard let findedBodies = loadRawPreviewBodies(for: target, and: sources, defaultEnabled: true) else { return nil }
 
         let result = findedBodies.map { makeFunc(body: $0) + "\r\n" }.joined()
 
-        return result
+        return yamlSettings + result
     }
 
     private static func makeFunc(body: String) -> String {
@@ -17,7 +18,7 @@ extension PreviewLoader {
         let componentTestName = rawPreviewModel.displayName.components(separatedBy: funcCharacterSet).joined()
 
         return """
-                func test_\(componentTestName)_Preview() {
+                	func test_\(componentTestName)_Preview() {
                     let preview = {
             \(rawPreviewModel.body)
                     }
@@ -27,6 +28,6 @@ extension PreviewLoader {
                     }
                 }
 
-            """
+            """.replacingOccurrences(of: "\n", with: "\n    ")
     }
 }

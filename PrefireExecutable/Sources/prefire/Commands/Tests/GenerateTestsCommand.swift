@@ -2,6 +2,7 @@ import Foundation
 
 private enum Constants {
     static let snapshotFileName = "PreviewTests"
+    static let configFileName = "sourcery.yml"
 }
 
 struct GeneratedTestsOptions {
@@ -19,7 +20,6 @@ struct GeneratedTestsOptions {
     var snapshotDevices: [String]?
     var imports: [String]?
     var testableImports: [String]?
-    var verbose: Bool
 
     init(
         sourcery: String,
@@ -32,8 +32,7 @@ struct GeneratedTestsOptions {
         cacheBasePath: String?,
         device: String?,
         osVersion: String?,
-        config: Config?,
-        verbose: Bool
+        config: Config?
     ) {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
@@ -57,7 +56,6 @@ struct GeneratedTestsOptions {
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
-        self.verbose = verbose
     }
 }
 
@@ -82,13 +80,21 @@ enum GenerateTestsCommand {
     static func run(_ options: GeneratedTestsOptions) throws {
         let task = Process()
         task.executableURL = URL(filePath: options.sourcery)
-        task.arguments = makeArguments(for: options)
+
+        let rawArguments = makeArguments(for: options)
+        let yamlContent = YAMLParser().string(from: rawArguments)
+        let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
+            .appending(Constants.configFileName)
+
+        yamlContent.rewrite(toFile: URL(string: filePath))
+
+        task.arguments =  ["--config", filePath]
 
         try task.run()
         task.waitUntilExit()
     }
 
-    static func makeArguments(for options: GeneratedTestsOptions) -> [String] {
+    static func makeArguments(for options: GeneratedTestsOptions) -> [String: Any?] {
         guard let target = options.target else {
             fatalError("You must provide the --target")
         }
@@ -98,19 +104,18 @@ enum GenerateTestsCommand {
         let snapshotOutput = (options.testTargetPath ?? FileManager.default.currentDirectoryPath)
             .appending("/\(Constants.snapshotFileName).swift")
 
-        if options.verbose {
-            print(
-                """
-                Prefire configuration
-                    ➜ Target used for tests: \(target)
-                    ➜ Tests target: \(options.testTarget ?? "nil")
-                    ➜ Sourcery path: \(options.sourcery)
-                    ➜ Template path: \(options.template)
-                    ➜ Generated test path: \(output)
-                    ➜ Snapshot resources path: \(snapshotOutput)
-                """
-            )
-        }
+        Logger.print(
+            """
+            Prefire configuration
+                ➜ Target used for tests: \(target)
+                ➜ Tests target: \(options.testTarget ?? "nil")
+                ➜ Sourcery path: \(options.sourcery)
+                ➜ Template path: \(options.template)
+                ➜ Generated test path: \(output)
+                ➜ Snapshot resources path: \(snapshotOutput)
+                ➜ Preview default enabled: \(options.prefireEnabledMarker)
+            """
+        )
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
@@ -119,7 +124,7 @@ enum GenerateTestsCommand {
             let previewBodies: String? = nil
         #endif
 
-        let finalResult: [String: Any?] = [
+        let arguments: [String: Any?] = [
             Keys.output: output,
             Keys.templates: [options.template],
             Keys.sources: options.sources,
@@ -129,47 +134,13 @@ enum GenerateTestsCommand {
                 Keys.simulatorDevice: options.device,
                 Keys.snapshotDevices: options.snapshotDevices?.joined(separator: "|"),
                 Keys.previewsMacros: previewBodies,
-                Keys.imports: "[\((options.imports ?? []).joined(separator: ","))]",
-                Keys.testableImports: "[\((options.testableImports ?? []).joined(separator: ","))]",
+                Keys.imports: options.imports,
+                Keys.testableImports: options.testableImports,
                 Keys.mainTarget: target,
                 Keys.file: snapshotOutput,
-
-            ] as [String: String?]
+            ] as [String: Any?]
         ]
 
-        let configFolder = options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path()
-        let filePath = configFolder + "sourcery.yml"
-
-        do {
-            try? FileManager.default.removeItem(atPath: filePath)
-            try? FileManager.default.createDirectory(atPath: configFolder, withIntermediateDirectories: true)
-            FileManager.default.createFile(atPath: filePath, contents: nil)
-
-            let string = finalResult.makeYaml()
-            try string.write(toFile: filePath, atomically: true, encoding: .utf8)
-        } catch {
-            print(error)
-        }
-
-        return ["--config", filePath]
-    }
-}
-
-extension Dictionary where Key == String, Value == Any? {
-    func makeYaml() -> String {
-        var result = ""
-
-        for item in self {
-            if let values = item.value as? [String] {
-                result += "\(item.key):\n" + values.map({ "  - \($0)\n" }).reduce("", +)
-            } else if let values = item.value as? [String: Any?] {
-                result += "\(item.key):\n  " + values.makeYaml().replacingOccurrences(of: "\n", with: "\n  ")
-                result.removeLast(2)
-            } else if let value = item.value {
-                result += "\(item.key): \(value)\n"
-            }
-        }
-
-        return result
+        return arguments
     }
 }

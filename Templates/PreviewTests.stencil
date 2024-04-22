@@ -53,6 +53,7 @@ class PreviewTests: XCTestCase {
     // MARK: - Macros
 
     {{ argument.previewsMacros }}
+
     {% endif %}
     // MARK: Private
 
