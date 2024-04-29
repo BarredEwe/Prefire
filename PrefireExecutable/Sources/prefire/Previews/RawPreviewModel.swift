@@ -7,10 +7,16 @@ struct RawPreviewModel {
 }
 
 extension RawPreviewModel {
-    private enum Keys {
-        static let viewMarkerStart = "        DeveloperToolsSupport"
+    private enum Markers {
+        static let macroViewStart = "DeveloperToolsSupport"
+        static let traits = "traits: "
     }
-    
+
+    private enum Constants {
+        static let bodySeparatorCharacters = CharacterSet(charactersIn: "{(")
+        static let defaultTrait = ".device"
+    }
+
     /// Initialization from the macro Preview body
     /// - Parameters:
     ///   - macroBody: Preview View body
@@ -19,10 +25,10 @@ extension RawPreviewModel {
         var components = macroBody.components(separatedBy: "\n")
 
         let previewName = components.first?.components(separatedBy: "\"")
-            .first(where: { !$0.hasPrefix(Keys.viewMarkerStart) })
+            .first(where: { !$0.contains(Markers.macroViewStart) })
 
         var previewTrait: String?
-        let traitsComponents = components.first?.components(separatedBy: "traits: ")
+        let traitsComponents = components.first?.components(separatedBy: Markers.traits)
         if traitsComponents?.count ?? 0 > 1 {
             previewTrait = traitsComponents?.last?.components(separatedBy: ")").first
         }
@@ -33,7 +39,7 @@ extension RawPreviewModel {
         let previewBody = components.map { lineSymbol + $0 + "\n" }.reduce("", +)
 
         lazy var viewName = components.first?
-            .components(separatedBy: "(").first?
+            .components(separatedBy: Constants.bodySeparatorCharacters).first?
             .replacingOccurrences(of: " ", with: "")
 
         guard let displayName = previewName ?? viewName else {
@@ -42,7 +48,7 @@ extension RawPreviewModel {
 
         self.displayName = displayName
         self.body = previewBody
-        self.traits = previewTrait ?? ".device"
+        self.traits = previewTrait ?? Constants.defaultTrait
     }
 }
 
