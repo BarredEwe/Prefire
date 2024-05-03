@@ -26,6 +26,8 @@ extension Prefire {
         var verbose = false
 
         func run() throws {
+            Logger.verbose = verbose
+
             try GeneratePlaybookCommand.run(
                 GeneratedPlaybookOptions(
                     sourcery: sourcery,
@@ -34,8 +36,7 @@ extension Prefire {
                     output: output,
                     template: template,
                     cacheBasePath: cacheBasePath,
-                    config: Config.load(from: config, testTargetPath: nil, verbose: verbose),
-                    verbose: verbose
+                    config: Config.load(from: config, testTargetPath: nil)
                 )
             )
         }

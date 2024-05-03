@@ -4,23 +4,19 @@
 import XCTest
 import SwiftUI
 import Prefire
+{% for import in argument.imports %}
+import {{ import }}
+{% endfor %}
+{% if argument.mainTarget %}
+@testable import {{ argument.mainTarget }}
+{% endif %}
+{% for import in argument.testableImports %}
+@testable import {{ import }}
+{% endfor %}
 @testable import SnapshotTesting
 #if canImport(AccessibilitySnapshot)
     import AccessibilitySnapshot
 #endif
-{% if argument.mainTarget %}
-@testable import {{ argument.mainTarget }}
-{% endif %}
-{% for import in argument.imports %}
-{% if import != "last" %}
-import {{ import }}
-{% endif %}
-{% endfor %}
-{% for import in argument.testableImports %}
-{% if import != "last" %}
-@testable import {{ import }}
-{% endif %}
-{% endfor %}
 
 class PreviewTests: XCTestCase {
     private let deviceConfig: ViewImageConfig = .iPhoneX
@@ -57,6 +53,7 @@ class PreviewTests: XCTestCase {
     // MARK: - Macros
 
     {{ argument.previewsMacros }}
+
     {% endif %}
     // MARK: Private
 

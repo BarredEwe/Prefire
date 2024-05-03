@@ -35,6 +35,8 @@ extension Prefire {
         var verbose = false
 
         func run() throws {
+            Logger.verbose = verbose
+
             try GenerateTestsCommand.run(
                 GeneratedTestsOptions(
                     sourcery: sourcery,
@@ -47,8 +49,7 @@ extension Prefire {
                     cacheBasePath: cacheBasePath,
                     device: device,
                     osVersion: osVersion,
-                    config: Config.load(from: config, testTargetPath: testTargetPath, verbose: verbose),
-                    verbose: verbose
+                    config: Config.load(from: config, testTargetPath: testTargetPath)
                 )
             )
         }

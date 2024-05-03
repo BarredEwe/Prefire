@@ -2,6 +2,7 @@ import Foundation
 
 private enum Constants {
     static let outputFileName = "PreviewModels.generated.swift"
+    static let configFileName = "sourcery.yml"
 }
 
 struct GeneratedPlaybookOptions {
@@ -14,9 +15,8 @@ struct GeneratedPlaybookOptions {
     var cacheBasePath: String?
     var imports: [String]?
     var testableImports: [String]?
-    var verbose: Bool
 
-    init(sourcery: String, target: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?, verbose: Bool) {
+    init(sourcery: String, target: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
         self.sourcery = sourcery
         self.target = target
         self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
@@ -26,17 +26,16 @@ struct GeneratedPlaybookOptions {
         self.cacheBasePath = cacheBasePath
         imports = config?.playbook.imports
         testableImports = config?.playbook.testableImports
-        self.verbose = verbose
     }
 }
 
 enum GeneratePlaybookCommand {
     private enum Keys {
-        static let templates = "--templates"
-        static let sources = "--sources"
-        static let output = "--output"
-        static let cacheBasePath = "--cacheBasePath"
-        static let args = "--args"
+        static let templates = "templates"
+        static let sources = "sources"
+        static let output = "output"
+        static let cacheBasePath = "cacheBasePath"
+        static let args = "args"
 
         static let imports = "imports"
         static let testableImports = "testableImports"
@@ -47,46 +46,52 @@ enum GeneratePlaybookCommand {
         let task = Process()
         task.executableURL = URL(filePath: options.sourcery)
 
-        task.arguments = [
-            Keys.templates, options.template,
-            Keys.output, options.output,
-        ]
-        task.arguments?.append(contentsOf: options.sources.flatMap { [Keys.sources, $0] })
+        let rawArguments = makeArguments(for: options)
+        let yamlContent = YAMLParser().string(from: rawArguments)
+        let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
+            .appending(Constants.configFileName)
 
-        if let cacheBasePath = options.cacheBasePath {
-            task.arguments?.append(contentsOf: [Keys.cacheBasePath, cacheBasePath])
-        }
+        yamlContent.rewrite(toFile: URL(string: filePath))
 
-        if let imports = options.imports, !imports.isEmpty {
-            task.arguments?.append(contentsOf: imports.makeSourceryArgs(name: Keys.imports))
-        }
+        task.arguments =  ["--config", filePath]
 
-        if let testableImports = options.testableImports, !testableImports.isEmpty {
-            task.arguments?.append(contentsOf: testableImports.makeSourceryArgs(name: Keys.testableImports))
-        }
+        try task.run()
+        task.waitUntilExit()
+    }
 
+    static func makeArguments(for options: GeneratedPlaybookOptions) -> [String: Any?] {
         let target = options.target ?? (FileManager.default.currentDirectoryPath as NSString).lastPathComponent
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            if let macroPreviewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources, defaultEnabled: options.previewDefaultEnabled) {
-                task.arguments?.append(contentsOf: [Keys.args, Keys.macroPreviewBodies + "=\"\(macroPreviewBodies)\""])
-            }
+            let previewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources, defaultEnabled: options.previewDefaultEnabled)
+        #else
+            let previewBodies: String? = nil
         #endif
 
-        if options.verbose {
-            print(
-                """
-                Prefire configuration
-                    ➜ Target used for playbook: \(target)
-                    ➜ Sourcery path: \(options.sourcery)
-                    ➜ Template path: \(options.template)
-                    ➜ Generated test path: \(options.output)
-                """
-            )
-        }
+        Logger.print(
+            """
+            Prefire configuration
+                ➜ Target used for playbook: \(target)
+                ➜ Sourcery path: \(options.sourcery)
+                ➜ Template path: \(options.template)
+                ➜ Generated test path: \(options.output)
+                ➜ Preview default enabled: \(options.previewDefaultEnabled)
+            """
+        )
 
-        try task.run()
-        task.waitUntilExit()
+        let arguments: [String: Any?] = [
+            Keys.templates: [options.template],
+            Keys.output: options.output,
+            Keys.sources: options.sources,
+            Keys.cacheBasePath: options.cacheBasePath,
+            Keys.args: [
+                Keys.imports: options.imports,
+                Keys.testableImports: options.testableImports,
+                Keys.macroPreviewBodies: previewBodies
+            ] as [String: Any?]
+        ]
+
+        return arguments
     }
 }

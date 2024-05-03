@@ -18,24 +18,32 @@ class GenerateTestsCommandTests: XCTestCase {
             cacheBasePath: nil,
             device: nil,
             osVersion: nil,
-            config: nil,
-            verbose: false
+            config: nil
         )
     }
 
     func test_makeArguments_sources() {
         options.sources = ["some/sources"]
         let expectedArguments = [
-            "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
-            "--templates", options.template,
-            "--args", "mainTarget=\(options.target ?? "")",
-            "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
-            "--sources", options.sources.first!,
-        ]
+            "output": FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
+            "sources": options.sources,
+            "templates": [options.template],
+            "cacheBasePath": options.cacheBasePath,
+            "args": [
+                "simulatorOSVersion": options.osVersion,
+                "simulatorDevice": options.device,
+                "snapshotDevices": options.snapshotDevices?.joined(separator: "|"),
+                "previewsMacros": nil,
+                "imports": options.imports,
+                "testableImports": options.testableImports,
+                "mainTarget": options.target,
+                "file": "\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+            ],
+        ] as [String: Any?]
 
         let arguments = GenerateTestsCommand.makeArguments(for: options)
 
-        XCTAssertEqual(arguments, expectedArguments)
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
     
     func test_makeArguments_snapshot_devices() {
@@ -43,17 +51,18 @@ class GenerateTestsCommandTests: XCTestCase {
         options.sources = ["some/sources", "some/other/sources"]
 
         let expectedArguments = [
-            "--output", FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
-            "--templates", options.template,
-            "--args", "mainTarget=\(options.target ?? "")",
-            "--args", "file=\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
-            "--sources", "some/sources",
-            "--sources", "some/other/sources",
-            "--args", "snapshotDevices=iPhone 15|iPad",
-        ]
+            "templates": [options.template],
+            "sources": ["some/sources", "some/other/sources"],
+            "output": FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
+            "args": [
+                "mainTarget": "\(options.target ?? "")",
+                "file": "\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+                "snapshotDevices": "iPhone 15|iPad",
+            ]
+        ] as [String: Any?]
 
         let arguments = GenerateTestsCommand.makeArguments(for: options)
 
-        XCTAssertEqual(arguments, expectedArguments)
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
 }

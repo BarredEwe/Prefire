@@ -1,6 +1,8 @@
 import Foundation
 
 extension PreviewLoader {
+    private static let yamlSettings = "|-4\n\n"
+
     /// Loading and creating lines of code with the `PreviewModel` array
     /// - Parameters:
     ///   - target: Working target
@@ -12,12 +14,12 @@ extension PreviewLoader {
 
         let previewModels = findedBodies.map { RawPreviewModel(from: $0, lineSymbol: "\t\t").previewModel }.reduce("", +)
 
-        return """
-            private struct MacroPreviews {
+        return yamlSettings + """
+                private struct MacroPreviews {
                 static var previews: [PreviewModel] = [
             \(previewModels)
                 ]
             }
-            """
+            """.replacingOccurrences(of: "\n", with: "\n    ")
     }
 }

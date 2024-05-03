@@ -4,14 +4,10 @@
 import SwiftUI
 import Prefire
 {% for import in argument.imports %}
-{% if import != "last" %}
 import {{ import }}
-{% endif %}
 {% endfor %}
 {% for import in argument.testableImports %}
-{% if import != "last" %}
 @testable import {{ import }}
-{% endif %}
 {% endfor %}
 
 public enum PreviewModels {
