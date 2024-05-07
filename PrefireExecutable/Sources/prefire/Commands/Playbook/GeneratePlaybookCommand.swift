@@ -7,7 +7,6 @@ private enum Constants {
 
 struct GeneratedPlaybookOptions {
     var sourcery: String
-    var target: String?
     var sources: [String]
     var output: String
     var previewDefaultEnabled: Bool
@@ -16,9 +15,8 @@ struct GeneratedPlaybookOptions {
     var imports: [String]?
     var testableImports: [String]?
 
-    init(sourcery: String, target: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
+    init(sourcery: String, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
         self.sourcery = sourcery
-        self.target = target
         self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
         self.output = output
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
@@ -60,11 +58,9 @@ enum GeneratePlaybookCommand {
     }
 
     static func makeArguments(for options: GeneratedPlaybookOptions) -> [String: Any?] {
-        let target = options.target ?? (FileManager.default.currentDirectoryPath as NSString).lastPathComponent
-
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            let previewBodies = PreviewLoader.loadMacroPreviewBodies(for: target, and: options.sources, defaultEnabled: options.previewDefaultEnabled)
+            let previewBodies = PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
         #else
             let previewBodies: String? = nil
         #endif
@@ -72,7 +68,6 @@ enum GeneratePlaybookCommand {
         Logger.print(
             """
             Prefire configuration
-                ➜ Target used for playbook: \(target)
                 ➜ Sourcery path: \(options.sourcery)
                 ➜ Template path: \(options.template)
                 ➜ Generated test path: \(options.output)

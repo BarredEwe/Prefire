@@ -14,7 +14,6 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
         var arguments: [CustomStringConvertible] = [
             "playbook",
             "--sourcery", sourcery,
-            "--target", target.name,
             "--output", outputPath,
             "--config", target.directory.string,
             "--template", templatePath,
@@ -51,7 +50,6 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
             var arguments: [CustomStringConvertible] = [
                 "playbook",
                 "--sourcery", sourcery,
-                "--target", target.displayName,
                 "--output", outputPath,
                 "--config", context.xcodeProject.directory.string,
                 "--template", templatePath,
