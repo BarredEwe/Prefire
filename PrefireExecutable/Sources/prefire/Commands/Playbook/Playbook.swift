@@ -13,8 +13,6 @@ extension Prefire {
         @Option(help: "Path to your custom template.")
         var template: String
 
-        @Option(help: "Your project Target for Playbook.")
-        var target: String?
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
@@ -31,7 +29,6 @@ extension Prefire {
             try GeneratePlaybookCommand.run(
                 GeneratedPlaybookOptions(
                     sourcery: sourcery,
-                    target: target,
                     sources: sources,
                     output: output,
                     template: template,
