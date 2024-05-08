@@ -216,7 +216,7 @@ test_configuration:
   - testable_imports:
     - Prefire
 
-prefire_configuration:
+playbook_configuration:
   - preview_default_enabled: true
   - imports:
     - UIKit
