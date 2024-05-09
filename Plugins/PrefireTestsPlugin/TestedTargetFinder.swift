@@ -75,7 +75,7 @@ extension TestedTargetFinder {
                     return true
                 }
             }
-            .first(where: { $0.displayName != target.displayName })
+            .first(where: { target.displayName.hasPrefix($0.displayName) })
     }
 }
 #endif
