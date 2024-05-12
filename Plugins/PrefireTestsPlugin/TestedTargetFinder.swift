@@ -8,8 +8,8 @@ enum TestedTargetFinder {
     static func findTestedTarget(for target: Target) -> SwiftSourceModuleTarget? {
         let swiftTarget = target as? SwiftSourceModuleTarget
 
-        if swiftTarget?.kind != .test {
-            print("The `PrefireTestsPlugin` must be connected to the test package")
+        guard swiftTarget?.kind == .test else {
+            fatalError("`PrefireTestsPlugin` must be connected to the test target. \(target.name) is not a test target.")
         }
 
         let targetDependencies = swiftTarget?.dependencies
@@ -21,14 +21,15 @@ enum TestedTargetFinder {
                 }
             }
 
-        let expectedTarget = loadTargetNameFromConfig(for: target.directory, targetName: target.name)
-            .flatMap { targetName in targetDependencies?.first(where: { $0.name == targetName }) }
+        let targetNameFromConfig = loadTargetNameFromConfig(for: target.directory, targetName: target.name)
+        let potentialTargetName = target.name.replacingOccurrences(of: "Tests", with: "")
+        let targetName = targetNameFromConfig ?? potentialTargetName
 
-        return expectedTarget ?? targetDependencies?.first(where: { $0.kind == .generic })
+        return targetDependencies?.first(where: { $0.name == targetName }) ?? targetDependencies?.first(where: { $0.kind == .generic })
     }
 
     // MARK: - Private
-    
+
     /// Easy loading of testTarget from a configuration file `.prefire.yml`
     /// - Parameters:
     ///   - targetDirectory: Test target directory
@@ -45,11 +46,9 @@ enum TestedTargetFinder {
                   FileManager.default.fileExists(atPath: configUrl.path) else { continue }
 
             let configDataString = try? String(contentsOf: configUrl, encoding: .utf8).components(separatedBy: .newlines)
-            let targetLine = configDataString?.first(where: { $0.contains("target") })
 
-            if var targetName = targetLine?.split(separator: ":").last.flatMap({ String($0) }) {
-                targetName.removeFirst()
-                return targetName
+            if let targetName = configDataString?.first(where: { $0.contains("target:") })?.components(separatedBy: ":").last {
+                return targetName.trimmingCharacters(in: .whitespaces)
             }
         }
 
@@ -67,15 +66,26 @@ extension TestedTargetFinder {
     ///   - project: Current Xcode Project
     /// - Returns: Tested Xcode Target
     static func findTestedTarget(for target: XcodeTarget, project: XcodeProject) -> XcodeTarget? {
-        project.targets.lazy
-            .filter {
-                if case .other("com.apple.product-type.bundle.unit-test") = $0.product?.kind {
-                    return false
-                } else {
-                    return true
-                }
-            }
-            .first(where: { $0.displayName != target.displayName })
+        guard target.isTestKind else {
+            fatalError("`PrefireTestsPlugin` must be connected to the test target. \(target.displayName) is not a test target.")
+        }
+
+        let targetNameFromConfig = loadTargetNameFromConfig(for: project.directory, targetName: target.displayName)
+        let potentialTargetName = target.displayName.replacingOccurrences(of: "Tests", with: "")
+        let targetName = targetNameFromConfig ?? potentialTargetName
+
+        let testedTargets = project.targets.filter { !$0.isTestKind }
+        return testedTargets.first(where: { $0.displayName == targetName }) ?? testedTargets.first
+    }
+}
+
+extension XcodeTarget {
+    var isTestKind: Bool {
+        if case .other("com.apple.product-type.bundle.unit-test") = product?.kind {
+            return true
+        } else {
+            return false
+        }
     }
 }
 #endif
