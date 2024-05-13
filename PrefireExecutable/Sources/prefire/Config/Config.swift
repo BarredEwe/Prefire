@@ -18,6 +18,7 @@ struct Config {
     }
 
     struct PlaybookConfig {
+        var testTargetPath: String?
         var template: String?
         var previewDefaultEnabled: Bool?
         var imports: [String]?
