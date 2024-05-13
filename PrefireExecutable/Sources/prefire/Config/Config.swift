@@ -18,6 +18,7 @@ struct Config {
     }
 
     struct PlaybookConfig {
+        var template: String?
         var previewDefaultEnabled: Bool?
         var imports: [String]?
         var testableImports: [String]?
@@ -85,6 +86,10 @@ struct Config {
             }
 
             if isPlaybookConfig {
+                if let template = Config.getValue(from: components, key: .template_file_path) {
+                    playbook.template = template
+                    continue
+                }
                 if let previewDefaultEnabled = Config.getValue(from: components, key: .preview_default_enabled) {
                     playbook.previewDefaultEnabled = previewDefaultEnabled == "true"
                     continue
