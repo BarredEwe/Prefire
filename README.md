@@ -218,6 +218,7 @@ test_configuration:
 
 playbook_configuration:
   - preview_default_enabled: true
+  - template_file_path: CustomModels.stencil
   - imports:
     - UIKit
     - Foundation
@@ -227,7 +228,9 @@ playbook_configuration:
 ### Configuration keys and their descriptions
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
 - `test_file_path` - Filepath to generated file. __Default__: _DerivedData_
-- `template_file_path` - Stencil file for generated file. Optional parameter. __Default__: _Templates/PreviewTests.stencil_ from the package
+- `template_file_path` - Stencil file for generated file. Optional parameter.\
+   For test plugin __Default__: _Templates/PreviewTests.stencil_ from the package.\
+   For playbook plugin __Default__: _Templates/PreviewModels.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. Optional parameter.
 - `required_os` - iOS version for Snapshot testing. Optional parameter.
 - `snapshot_devices` - the list of devices snapshots should be generated for. The `simulator_device` specified above will still be required and used, but snapshotting will take on the traits of the `snapshot_devices`. The `displayScale` will default to `2.0` and device specific safe areas will be `.zero`. Optional parameter.
