@@ -17,6 +17,8 @@ extension Prefire {
         var config: String?
         @Option(help: "Path to generated file.")
         var output: String
+        @Option(help: "Path to Playbook destination target.")
+        var targetPath: String?
         @Option(help: "Base path to the cache directory.")
         var cacheBasePath: String?
 
@@ -29,6 +31,7 @@ extension Prefire {
             try GeneratePlaybookCommand.run(
                 GeneratedPlaybookOptions(
                     sourcery: sourcery,
+                    targetPath: targetPath,
                     sources: sources,
                     output: output,
                     template: template,

@@ -20,6 +20,7 @@ class ConfigTests: XCTestCase {
           - testable_imports:
               - Prefire
         playbook_configuration:
+          - template_file_path: CustomModels.stencil
           - imports:
               - UIKit
               - Foundation
@@ -41,5 +42,6 @@ class ConfigTests: XCTestCase {
         XCTAssertEqual(config?.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config?.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config?.playbook.testableImports, ["SwiftUI"])
+        XCTAssertEqual(config?.playbook.template, "CustomModels.stencil")
     }
 }
