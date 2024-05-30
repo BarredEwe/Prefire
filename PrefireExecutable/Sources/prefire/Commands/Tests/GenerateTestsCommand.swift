@@ -95,31 +95,26 @@ enum GenerateTestsCommand {
     }
 
     static func makeArguments(for options: GeneratedTestsOptions) -> [String: Any?] {
-        guard let target = options.target else {
-            fatalError("You must provide the --target")
-        }
-
         let sources = options.sources
         let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
-        let snapshotOutput = (options.testTargetPath ?? FileManager.default.currentDirectoryPath)
-            .appending("/\(Constants.snapshotFileName).swift")
+        let snapshotOutput = options.testTargetPath?.appending("/\(Constants.snapshotFileName).swift")
 
         Logger.print(
             """
             Prefire configuration
-                ➜ Target used for tests: \(target)
+                ➜ Target used for tests: \(options.target ?? "nil")
                 ➜ Tests target: \(options.testTarget ?? "nil")
                 ➜ Sourcery path: \(options.sourcery)
                 ➜ Template path: \(options.template)
                 ➜ Generated test path: \(output)
-                ➜ Snapshot resources path: \(snapshotOutput)
+                ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
             """
         )
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            let previewBodies = PreviewLoader.loadPreviewBodies(for: target, and: sources, defaultEnabled: options.prefireEnabledMarker)
+            let previewBodies = PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
         #else
             let previewBodies: String? = nil
         #endif
@@ -136,7 +131,7 @@ enum GenerateTestsCommand {
                 Keys.previewsMacros: previewBodies,
                 Keys.imports: options.imports,
                 Keys.testableImports: options.testableImports,
-                Keys.mainTarget: target,
+                Keys.mainTarget: options.target,
                 Keys.file: snapshotOutput,
             ] as [String: Any?]
         ]

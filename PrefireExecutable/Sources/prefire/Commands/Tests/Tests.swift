@@ -6,7 +6,7 @@ extension Prefire {
         static let configuration = CommandConfiguration(abstract: "Generate Snapshot/Accessibility Tests")
 
         @Argument(help: "Paths to a source swift files or directories.")
-        var sources: [String]
+        var sources: [String] = []
 
         @Option(help: "Path to the sourcery.")
         var sourcery: String
@@ -49,7 +49,7 @@ extension Prefire {
                     cacheBasePath: cacheBasePath,
                     device: device,
                     osVersion: osVersion,
-                    config: Config.load(from: config, testTargetPath: testTargetPath)
+                    config: Config.load(from: config, testTargetPath: testTargetPath, env: ProcessInfo.processInfo.environment)
                 )
             )
         }
