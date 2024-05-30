@@ -197,7 +197,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */;
+			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -336,6 +336,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS[arch=*]" = PLAYBOOK_DISABLED;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -512,7 +513,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */ = {
+		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9735EE3E289C5CF300309267 /* Debug */,
