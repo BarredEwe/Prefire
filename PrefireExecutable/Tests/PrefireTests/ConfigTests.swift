@@ -6,7 +6,7 @@ class ConfigTests: XCTestCase {
     private let prefireConfigString = """
         test_configuration:
           - target: PrefireExample
-          - test_file_path: PrefireExampleTests/PreviewTests.generated.swift
+          - test_file_path: ${TARGET_DIR}/PrefireExampleTests/PreviewTests.generated.swift
           - template_file_path: CustomPreviewTests.stencil
           - simulator_device: "iPhone15,2"
           - required_os: 17
@@ -26,13 +26,14 @@ class ConfigTests: XCTestCase {
               - Foundation
           - testable_imports:
               - SwiftUI
+          - preview_default_enabled: false
     """
 
     func test_successCreateConfig() {
-        let config = Config(from: prefireConfigString)
+        let config = Config(from: prefireConfigString, env: ["TARGET_DIR":"/User/Tests"])
 
         XCTAssertEqual(config?.tests.target, "PrefireExample")
-        XCTAssertEqual(config?.tests.testFilePath, "PrefireExampleTests/PreviewTests.generated.swift")
+        XCTAssertEqual(config?.tests.testFilePath, "/User/Tests/PrefireExampleTests/PreviewTests.generated.swift")
         XCTAssertEqual(config?.tests.template, "CustomPreviewTests.stencil")
         XCTAssertEqual(config?.tests.device, "iPhone15,2")
         XCTAssertEqual(config?.tests.osVersion, "17")
@@ -43,5 +44,6 @@ class ConfigTests: XCTestCase {
         XCTAssertEqual(config?.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config?.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config?.playbook.template, "CustomModels.stencil")
+        XCTAssertEqual(config?.playbook.previewDefaultEnabled, false)
     }
 }

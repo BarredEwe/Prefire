@@ -5,7 +5,7 @@ extension PreviewLoader {
     private static let yamlSettings = "|-4\n\n"
     private static let previewSpaces = "            "
 
-    static func loadPreviewBodies(for target: String, and sources: [String], defaultEnabled: Bool) -> String? {
+    static func loadPreviewBodies(for sources: [String], defaultEnabled: Bool) -> String? {
         guard let findedBodies = loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
 
         let result = findedBodies.map { makeFunc(body: $0) + "\r\n" }.joined()

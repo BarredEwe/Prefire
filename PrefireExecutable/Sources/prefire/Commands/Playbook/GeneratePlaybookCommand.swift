@@ -1,7 +1,6 @@
 import Foundation
 
 private enum Constants {
-    static let outputFileName = "PreviewModels.generated.swift"
     static let configFileName = "sourcery.yml"
 }
 

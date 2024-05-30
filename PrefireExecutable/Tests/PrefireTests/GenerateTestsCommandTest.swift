@@ -13,8 +13,8 @@ class GenerateTestsCommandTests: XCTestCase {
             testTarget: "GenerateTestsCommandTests",
             template: "templatePath",
             sources: [],
-            output: nil,
-            testTargetPath: nil,
+            output: "User/Tests/PreviewTests.generated.swift",
+            testTargetPath: "User/Tests",
             cacheBasePath: nil,
             device: nil,
             osVersion: nil,
@@ -25,7 +25,7 @@ class GenerateTestsCommandTests: XCTestCase {
     func test_makeArguments_sources() {
         options.sources = ["some/sources"]
         let expectedArguments = [
-            "output": FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
+            "output": options.output,
             "sources": options.sources,
             "templates": [options.template],
             "cacheBasePath": options.cacheBasePath,
@@ -37,7 +37,7 @@ class GenerateTestsCommandTests: XCTestCase {
                 "imports": options.imports,
                 "testableImports": options.testableImports,
                 "mainTarget": options.target,
-                "file": "\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+                "file": options.testTargetPath.flatMap({ $0 + "/PreviewTests.swift"}),
             ],
         ] as [String: Any?]
 
@@ -53,10 +53,10 @@ class GenerateTestsCommandTests: XCTestCase {
         let expectedArguments = [
             "templates": [options.template],
             "sources": ["some/sources", "some/other/sources"],
-            "output": FileManager.default.currentDirectoryPath + "/PreviewTests.generated.swift",
+            "output": options.output,
             "args": [
                 "mainTarget": "\(options.target ?? "")",
-                "file": "\(FileManager.default.currentDirectoryPath)/PreviewTests.swift",
+                "file": options.testTargetPath.flatMap({ $0 + "/PreviewTests.swift"}),
                 "snapshotDevices": "iPhone 15|iPad",
             ]
         ] as [String: Any?]

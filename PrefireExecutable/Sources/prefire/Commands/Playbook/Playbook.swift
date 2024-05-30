@@ -36,7 +36,7 @@ extension Prefire {
                     output: output,
                     template: template,
                     cacheBasePath: cacheBasePath,
-                    config: Config.load(from: config, testTargetPath: nil)
+                    config: Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
                 )
             )
         }
