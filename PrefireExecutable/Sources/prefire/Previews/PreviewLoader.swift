@@ -20,6 +20,13 @@ enum PreviewLoader {
         let urls = sources.compactMap { URL(string: $0) }
 
         for url in urls {
+            guard !url.pathExtension.isEmpty else {
+                let urls = FileManager.default.listFiles(atPath: url.path())
+                let bodies = loadRawPreviewBodies(for: urls, defaultEnabled: defaultEnabled) ?? []
+                previewMacroBodies.append(contentsOf: bodies)
+                continue
+            }
+
             guard let content = try? String(contentsOfFile: url.path), !content.isEmpty else {
                 Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
                 continue

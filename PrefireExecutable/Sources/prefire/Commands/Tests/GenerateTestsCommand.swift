@@ -46,7 +46,7 @@ struct GeneratedTestsOptions {
             self.template = template
         }
         
-        self.sources = sources
+        self.sources = config?.tests.sources ?? sources
         self.output = config?.tests.testFilePath ?? output
         prefireEnabledMarker = config?.tests.previewDefaultEnabled ?? true
         self.testTargetPath = testTargetPath
