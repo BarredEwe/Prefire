@@ -13,7 +13,7 @@ import {{ import }}
 public enum PreviewModels {
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
-
+#if !PLAYBOOK_DISABLED
         // PreviewProvider
         {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
         views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name | replace:"_Previews","" | replace:"_Preview","" }}"))
@@ -23,7 +23,7 @@ public enum PreviewModels {
         // #Preview macro
         views.append(contentsOf: MacroPreviews.previews)
         {% endif %}
-
+#endif
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
 
