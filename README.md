@@ -206,10 +206,12 @@ test_configuration:
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
   - required_os: 16
+  - preview_default_enabled: true
+  - sources:
+    - ${PROJECT_DIR}/Sources/
   - snapshot_devices:
   	- iPhone 14
   	- iPad
-  - preview_default_enabled: true
   - imports:
     - UIKit
     - SwiftUI
@@ -237,6 +239,7 @@ playbook_configuration:
 - `preview_default_enabled` - Do I need to automatically add all previews based on the new syntax to the tests.  __Default__: true
 - `imports` - Additional imports for the generated Playbook/Tests. Optional parameter.
 - `testable_imports` - Additional `@testable` imports for the generated Playbook/Tests. Optional parameter.
+- `sources` - Paths to swift file or directory sources. __Default__: File paths of a specific target or project
 
 ## Requirements
 

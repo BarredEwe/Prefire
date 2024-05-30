@@ -7,6 +7,7 @@ private enum Constants {
 struct Config {
     struct TestsConfig {
         var target: String?
+        var sources: [String]?
         var testFilePath: String?
         var template: String?
         var device: String?
@@ -50,6 +51,10 @@ struct Config {
             if isTestConfig {
                 if let target = Config.getValue(from: components, key: .target, env: env) {
                     tests.target = target
+                    continue
+                }
+                if let sources = Config.getValues(from: components, lines: Array(lines[index..<lines.count]), key: .sources, env: env) {
+                    tests.sources = sources
                     continue
                 }
                 if let testFilePath = Config.getValue(from: components, key: .test_file_path, env: env) {
@@ -113,6 +118,7 @@ struct Config {
 extension Config {
     enum Keys: String {
         case target
+        case sources
         case test_file_path
         case template_file_path
         case simulator_device
