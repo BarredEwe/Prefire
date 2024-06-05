@@ -238,6 +238,24 @@ playbook_configuration:
 - `imports` - Additional imports for the generated Playbook/Tests. Optional parameter.
 - `testable_imports` - Additional `@testable` imports for the generated Playbook/Tests. Optional parameter.
 
+## Distribution
+
+When preparing for distribution, you may want to exclude your `PreviewProvider` and mock data from release builds. This can be achieved by wrapping them in `#if DEBUG` compiler directives. Alternatively, you can pass a compiler flag to exclude `PreviewModels` from release builds.
+
+To exclude `PreviewModels` using Swift Package Manager, pass the `NO_PLAYBOOK` swift setting in the package that links `PrefirePlaybookPlugin`:
+
+```swift
+swiftSettings: [
+    .define("NO_PLAYBOOK", .when(configuration: .release)),
+]
+```
+
+If you are using Xcode, you can pass the compiler flag in the Xcode build settings:
+
+```
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = NO_PLAYBOOK;
+```
+
 ## Requirements
 
 - Swift 5.6 or higher
