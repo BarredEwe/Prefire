@@ -11,7 +11,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithName)
+        let rawPreviewModel = RawPreviewModel(from: previewBodyWithName, filename: "Test")
 
         XCTAssertEqual(rawPreviewModel.body, "    Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel.displayName, "TestViewName")
@@ -29,10 +29,10 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithoutName)
+        let rawPreviewModel = RawPreviewModel(from: previewBodyWithoutName, filename: "TestView")
 
         XCTAssertEqual(rawPreviewModel.body, "    VStack {\n        Text(\"TestView\")\n    }")
-        XCTAssertEqual(rawPreviewModel.displayName, "VStack")
+        XCTAssertEqual(rawPreviewModel.displayName, "TestView")
         XCTAssertEqual(rawPreviewModel.traits, ".sizeThatFitsLayout")
         #endif
     }

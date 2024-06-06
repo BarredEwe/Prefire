@@ -15,8 +15,8 @@ class PreviewLoaderTests: XCTestCase {
         let bodies = PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: true)
 
         XCTAssertEqual(bodies?.count, 2)
-        XCTAssertEqual(bodies?[0], previewRepresentations[0])
-        XCTAssertEqual(bodies?[1], previewRepresentations[1])
+        XCTAssertEqual(bodies?["PreviewLoaderTests_0"], previewRepresentations[0])
+        XCTAssertEqual(bodies?["PreviewLoaderTests_1"], previewRepresentations[1])
         #endif
     }
 
@@ -25,7 +25,7 @@ class PreviewLoaderTests: XCTestCase {
         let bodies = PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: false)
 
         XCTAssertEqual(bodies?.count, 1)
-        XCTAssertEqual(bodies?[0], previewRepresentations[1])
+        XCTAssertEqual(bodies?["PreviewLoaderTests_0"], previewRepresentations[1])
         #endif
     }
 }
