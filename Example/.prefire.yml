@@ -1,6 +1,6 @@
 test_configuration:
   - target: PrefireExample
-  - simulator_device: "iPhone15,2"
+  - simulator_device: "iPhone16,2"
   - required_os: 17
   - snapshot_devices:
       - iPhone 15

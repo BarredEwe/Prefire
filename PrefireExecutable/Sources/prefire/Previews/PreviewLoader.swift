@@ -14,34 +14,34 @@ enum PreviewLoader {
     /// - Parameters:
     ///   - sources: Paths to a source swift files or directories.
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
-    /// - Returns: Array of Strings
-    static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) -> [String]? {
-        var previewMacroBodies = [String]()
-        let urls = sources.compactMap { URL(string: $0) }
+    /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
+    static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) -> [String: String]? {
+        var previewBodyDictionary = [String: String]()
 
-        for url in urls {
-            guard !url.pathExtension.isEmpty else {
-                let urls = FileManager.default.listFiles(atPath: url.path())
-                let bodies = loadRawPreviewBodies(for: urls, defaultEnabled: defaultEnabled) ?? []
-                previewMacroBodies.append(contentsOf: bodies)
-                continue
-            }
+        for url in sources.compactMap(URL.init(string:)) {
+            do {
+                guard !url.isDirectory else {
+                    let urls = FileManager.default.listFiles(atPath: url.path())
+                    let bodies = loadRawPreviewBodies(for: urls, defaultEnabled: defaultEnabled) ?? [:]
+                    previewBodyDictionary.merge(bodies) { _, new in new }
+                    continue
+                }
 
-            guard let content = try? String(contentsOfFile: url.path), !content.isEmpty else {
+                let content = try String(contentsOfFile: url.path)
+                guard !content.isEmpty, content.contains(Constants.previewMarker) else { continue }
+
+                if let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled) {
+                    let fileName = url.fileName
+                    previewBodies.enumerated().forEach { index, previewBody in
+                        previewBodyDictionary["\(fileName)_\(index)"] = previewBody
+                    }
+                }
+            } catch {
                 Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
-                continue
-            }
-
-            guard content.contains(Constants.previewMarker) else { continue }
-
-            let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled)
-
-            if !previewBodies.isEmpty {
-                previewMacroBodies.append(contentsOf: previewBodies)
             }
         }
 
-        return previewMacroBodies.isEmpty ? nil : previewMacroBodies
+        return previewBodyDictionary.isEmpty ? nil : previewBodyDictionary
     }
 
     /// Extract the preview body using the passed content
@@ -50,7 +50,7 @@ enum PreviewLoader {
     ///   - content: File content
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
     /// - Returns: An array representing the results of the macro preview without the initial `#Preview` and final `}`.
-    static func previewBodies(from content: String, defaultEnabled: Bool) -> [String] {
+    static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
         var previewBodies: [String] = []
 
         let lines = content.components(separatedBy: .newlines)
@@ -67,34 +67,34 @@ enum PreviewLoader {
                 previewWasFound = true
             }
 
-            if previewWasFound {
-                openingBraceCount += line.filter { $0 == Constants.openingBrace }.count
-                closingBraceCount += line.filter { $0 == Constants.closingBrace }.count
+            guard previewWasFound else { continue }
 
-                if defaultEnabled {
-                    if line.hasSuffix(Constants.prefireDisableMarker) {
-                        viewMustBeLoaded = false
-                    }
-                } else if !viewMustBeLoaded {
-                    viewMustBeLoaded = line.hasSuffix(Constants.prefireEnabledMarker)
+            openingBraceCount += line.filter { $0 == Constants.openingBrace }.count
+            closingBraceCount += line.filter { $0 == Constants.closingBrace }.count
+
+            if defaultEnabled {
+                if line.hasSuffix(Constants.prefireDisableMarker) {
+                    viewMustBeLoaded = false
+                }
+            } else if !viewMustBeLoaded {
+                viewMustBeLoaded = line.hasSuffix(Constants.prefireEnabledMarker)
+            }
+
+            result += (line + "\n")
+
+            if openingBraceCount == closingBraceCount {
+                if !result.isEmpty, viewMustBeLoaded {
+                    previewBodies.append(result)
                 }
 
-                result += (line + "\n")
-
-                if openingBraceCount == closingBraceCount {
-                    if !result.isEmpty, viewMustBeLoaded {
-                        previewBodies.append(result)
-                    }
-
-                    result = ""
-                    previewWasFound = false
-                    viewMustBeLoaded = defaultEnabled
-                    openingBraceCount = .zero
-                    closingBraceCount = .zero
-                }
+                result = ""
+                previewWasFound = false
+                viewMustBeLoaded = defaultEnabled
+                openingBraceCount = .zero
+                closingBraceCount = .zero
             }
         }
 
-        return previewBodies
+        return previewBodies.isEmpty ? nil : previewBodies
     }
 }

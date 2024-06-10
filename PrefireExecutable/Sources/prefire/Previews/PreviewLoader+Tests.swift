@@ -8,13 +8,16 @@ extension PreviewLoader {
     static func loadPreviewBodies(for sources: [String], defaultEnabled: Bool) -> String? {
         guard let findedBodies = loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
 
-        let result = findedBodies.map { makeFunc(body: $0) + "\r\n" }.joined()
+        let result = findedBodies
+            .sorted(by: { $0.key > $1.key })
+            .map { makeFunc(fileName: $0.key, body: $0.value) + "\r\n" }
+            .joined()
 
         return yamlSettings + result
     }
 
-    private static func makeFunc(body: String) -> String {
-        let rawPreviewModel = RawPreviewModel(from: body, lineSymbol: previewSpaces)
+    private static func makeFunc(fileName: String, body: String) -> String {
+        let rawPreviewModel = RawPreviewModel(from: body, filename: fileName, lineSymbol: previewSpaces)
         let isScreen = rawPreviewModel.traits == ".device"
         let componentTestName = rawPreviewModel.displayName.components(separatedBy: funcCharacterSet).joined()
 

@@ -20,12 +20,14 @@ extension RawPreviewModel {
     /// Initialization from the macro Preview body
     /// - Parameters:
     ///   - macroBody: Preview View body
+    ///   - filename: File name in which the macro was found
     ///   - lineSymbol: The line separator symbol
-    init(from macroBody: String, lineSymbol: String = "") {
+    init(from macroBody: String, filename: String, lineSymbol: String = "") {
         var components = macroBody.components(separatedBy: "\n")
 
         let previewName = components.first?.components(separatedBy: "\"")
             .first(where: { !$0.contains(Markers.previewMacro) })
+        self.displayName = previewName ?? filename
 
         var previewTrait: String?
         let traitsComponents = components.first?.components(separatedBy: Markers.traits)
@@ -38,15 +40,6 @@ extension RawPreviewModel {
 
         let previewBody = components.map { lineSymbol + $0 }.joined(separator: "\n")
 
-        lazy var viewName = components.first?
-            .components(separatedBy: Constants.bodySeparatorCharacters).first?
-            .replacingOccurrences(of: " ", with: "")
-
-        guard let displayName = previewName ?? viewName else {
-            fatalError("Cannot get view name")
-        }
-
-        self.displayName = displayName
         self.body = previewBody
         self.traits = previewTrait ?? Constants.defaultTrait
     }

@@ -12,7 +12,9 @@ extension PreviewLoader {
     static func loadMacroPreviewBodies(for sources: [String], defaultEnabled: Bool) -> String? {
         guard let findedBodies = loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
 
-        let previewModels = findedBodies.map { RawPreviewModel(from: $0, lineSymbol: previewSpaces).previewModel }.joined(separator: "\n")
+        let previewModels = findedBodies
+            .map { RawPreviewModel(from: $0.value, filename: $0.key, lineSymbol: previewSpaces).previewModel }
+            .joined(separator: "\n")
 
         return yamlSettings +
             """
