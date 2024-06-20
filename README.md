@@ -245,18 +245,18 @@ playbook_configuration:
 
 When preparing for distribution, you may want to exclude your `PreviewProvider` and mock data from release builds. This can be achieved by wrapping them in `#if DEBUG` compiler directives. Alternatively, you can pass a compiler flag to exclude `PreviewModels` from release builds.
 
-To exclude `PreviewModels` using Swift Package Manager, pass the `NO_PLAYBOOK` swift setting in the package that links `PrefirePlaybookPlugin`:
+To exclude `PreviewModels` using Swift Package Manager, pass the `PLAYBOOK_DISABLED` swift setting in the package that links `PrefirePlaybookPlugin`:
 
 ```swift
 swiftSettings: [
-    .define("NO_PLAYBOOK", .when(configuration: .release)),
+    .define("PLAYBOOK_DISABLED", .when(configuration: .release)),
 ]
 ```
 
 If you are using Xcode, you can pass the compiler flag in the Xcode build settings:
 
 ```
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = NO_PLAYBOOK;
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 ```
 
 ## Requirements
