@@ -271,7 +271,7 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 
 Running Prefire via CI
 - To run Prefire via Continuous Integration (CI), you need to configure permissions:
-`defaults write com.apple.dt.Xcode ideskippackagepluginfingerprintvalidationbool YES`
+`defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES`
 
 Xcode is unable to generate tests in a custom path.
 - To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
