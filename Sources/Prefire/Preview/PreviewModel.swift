@@ -53,25 +53,36 @@ public struct PreviewModel: Identifiable {
     public var renderTime: String?
 
     public init(
-        id: String,
-        content: @escaping () -> AnyView,
+        id: String? = nil,
+        content: @escaping () -> any View,
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice?
     ) {
-        self.id = id
-        self.content = content
+        self.id = id ?? name + String(describing: content.self)
+        self.content = { AnyView(content()) }
         self.name = name
         self.type = type
         self.device = device
     }
 
     public init(
-        content: @escaping () -> AnyView,
+        id: String? = nil,
+        content: @escaping () -> UIView,
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice?
     ) {
-        self.init(id: name + String(describing: content()), content: content, name: name, type: type, device: device)
+        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device)
+    }
+
+    public init(
+        id: String? = nil,
+        content: @escaping () -> UIViewController,
+        name: String,
+        type: LayoutType = .component,
+        device: PreviewDevice?
+    ) {
+        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device)
     }
 }
