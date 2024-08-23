@@ -50,9 +50,7 @@ extension RawPreviewModel {
         """
                     PreviewModel(
                         content: {
-                            AnyView(
         \(body)
-                            )
                         },
                         name: \"\(displayName)\",
                         type: \(traits == ".device" ? ".screen" : ".component"),

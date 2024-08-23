@@ -91,7 +91,23 @@ class PreviewTests: XCTestCase {
         }
     }
 
-    private func assertSnapshots(matching view: AnyView,
+    private func assertSnapshots(matching view: UIView,
+                                 name: String?, isScreen: Bool,
+                                 device: ViewImageConfig,
+                                 testName: String = #function,
+                                 traits: UITraitCollection = .init()) -> String? {
+        assertSnapshots(matching: ViewRepresentable(view: view), name: name, isScreen: isScreen, device: device, testName: testName, traits: traits)
+    }
+
+    private func assertSnapshots(matching view: UIViewController,
+                             name: String?, isScreen: Bool,
+                             device: ViewImageConfig,
+                             testName: String = #function,
+                             traits: UITraitCollection = .init()) -> String? {
+        assertSnapshots(matching: ViewControllerRepresentable(viewController: view), name: name, isScreen: isScreen, device: device, testName: testName, traits: traits)
+    }
+
+    private func assertSnapshots(matching view: any SwiftUI.View,
                                  name: String?, isScreen: Bool,
                                  device: ViewImageConfig,
                                  testName: String = #function,
