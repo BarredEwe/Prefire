@@ -21,15 +21,27 @@ extension PreviewLoader {
         let isScreen = rawPreviewModel.traits == ".device"
         let componentTestName = rawPreviewModel.displayName.components(separatedBy: funcCharacterSet).joined()
 
-        return 
+        let assertionStatement: String
+        if isScreen {
+            assertionStatement = """
+            if let failure = assertSnapshots(matching: preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig) {
+                XCTFail(failure)
+            }
+            """
+        } else {
+            // Ensure we call on the test looping devices:
+            assertionStatement = """
+            assertSnapshots(matching: preview(), testName: "\(rawPreviewModel.displayName)")
+            """
+        }
+
+        return
             """
                     func test_\(componentTestName)_Preview() {
                         let preview = {
             \(rawPreviewModel.body)
                         }
-                        if let failure = assertSnapshots(matching: preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig) {
-                            XCTFail(failure)
-                        }
+                        \(assertionStatement)
                     }
             """
     }
