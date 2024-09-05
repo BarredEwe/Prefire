@@ -39,7 +39,7 @@ public struct PlaybookView: View {
             ScrollView {
                 VStack {
                     ForEach(sectionNames, id: \.self) { name in
-                        if searchText.isEmpty || name.contains(searchText) {
+                        if searchText.isEmpty || name.lowercased().contains(searchText.lowercased()) {
                             VStack(alignment: .leading) {
                                 Text(isComponent ? name : "📙 \(name.capitalized)")
                                     .font(.title.bold())
