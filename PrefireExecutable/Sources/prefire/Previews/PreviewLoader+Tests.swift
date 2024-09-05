@@ -31,7 +31,7 @@ extension PreviewLoader {
         } else {
             // Ensure we call on the test looping devices:
             assertionStatement = """
-            assertSnapshots(matching: preview(), testName: "\(rawPreviewModel.displayName)")
+            assertSnapshots(matching: preview, testName: "\(rawPreviewModel.displayName)")
             """
         }
 
