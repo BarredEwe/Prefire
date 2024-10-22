@@ -25,7 +25,7 @@ struct PrefireView: View {
     }
 }
 
-struct PrefireView_Preview: PreviewProvider, PrefireProvider {
+struct PrefireView_Preview: PreviewProvider, Prefire.PrefireProvider {
     static var previews: some View {
         PrefireView()
             .previewLayout(.sizeThatFits)

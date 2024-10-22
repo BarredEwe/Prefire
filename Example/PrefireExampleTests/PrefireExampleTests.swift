@@ -3,4 +3,4 @@ import Prefire
 
 // MARK: - Generated Tests
 
-let tests = PreviewTests.self
+//let tests = PreviewTests.self

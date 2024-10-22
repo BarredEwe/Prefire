@@ -10,9 +10,33 @@ struct CircleImage: View {
     }
 }
 
-struct CircleImage_Previews: PreviewProvider, PrefireProvider {
-    static var previews: some View {
-        CircleImage()
-            .previewLayout(.sizeThatFits)
-    }
+//struct CircleImage_Previews: PreviewProvider, PrefireProvider {
+//    static var previews: some View {
+//        CircleImage()
+//            .previewLayout(.sizeThatFits)
+//    }
+//}
+
+#Preview {
+    CircleImage()
+        .writeSnapshot()
+        // rewriteSnapshot
+//        .onAppear {
+//            Task { @MainActor in
+//                print("Run write Snapshot")
+//
+//                let image = ImageRenderer(content: CircleImage()).uiImage
+//                //            let directory = FileManager.default.temporaryDirectory.appending(component: "prefire/test.png")
+//
+//                if let pngData = image?.pngData() {
+//                    let url = URL(string: "file:///Users/mgrishutin/Documents/Presentations/image.png")!
+//                    do {
+//                        try pngData.write(to: url)
+//                        print("🟢 Success: \(url)")
+//                    } catch {
+//                        print(error)
+//                    }
+//                }
+//            }
+//        }
 }
