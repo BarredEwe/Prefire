@@ -42,7 +42,9 @@ class PreviewTests: XCTestCase {
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            assertSnapshots(matching: preview)
+            if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: deviceConfig)) {
+                XCTFail(failure)
+            }
         }
     }
     {%- if not forloop.last %}
@@ -57,72 +59,46 @@ class PreviewTests: XCTestCase {
     {% endif %}
     // MARK: Private
 
-    private func assertSnapshots(matching preview: _Preview, testName: String = #function) {
+    private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>, testName: String = #function) -> String? {
         guard !snapshotDevices.isEmpty else {
-            if let failure = assertSnapshots(matching: AnyView(preview.content),
-                                             name: preview.displayName,
-                                             isScreen: preview.layout == .device,
-                                             device: preview.device?.snapshotDevice() ?? deviceConfig,
-                                             testName: testName) {
-                XCTFail(failure)
-            }
-            return
+            return assertSnapshot(for: prefireSnapshot, testName: testName)
         }
-        
+
         for deviceName in snapshotDevices {
-            guard var device = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
-                fatalError("Unknown device name: \(deviceName)")
+            var snapshot = prefireSnapshot
+            guard let device = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
+                fatalError("Unknown device name from configuration file: \(deviceName)")
             }
-            
+
+            snapshot.name = (prefireSnapshot.name ?? "") + deviceName
+            snapshot.device = device
+
             // Ignore specific device safe area
-            device.safeArea = .zero
-            
+            snapshot.device.safeArea = .zero
+
             // Ignore specific device display scale
-            let traits = UITraitCollection(displayScale: 2.0)
-            
-            if let failure = assertSnapshots(matching: AnyView(preview.content),
-                                            name: preview.displayName,
-                                            isScreen: preview.layout == .device,
-                                            device: device,
-                                            testName: testName + deviceName,
-                                            traits: traits) {
+            snapshot.traits = UITraitCollection(displayScale: 2.0)
+
+            if let failure = assertSnapshot(for: snapshot, testName: testName + deviceName) {
                 XCTFail(failure)
             }
         }
+
+        return nil
     }
 
-    private func assertSnapshots(matching view: UIView,
-                                 name: String?, isScreen: Bool,
-                                 device: ViewImageConfig,
-                                 testName: String = #function,
-                                 traits: UITraitCollection = .init()) -> String? {
-        assertSnapshots(matching: ViewRepresentable(view: view), name: name, isScreen: isScreen, device: device, testName: testName, traits: traits)
-    }
-
-    private func assertSnapshots(matching view: UIViewController,
-                             name: String?, isScreen: Bool,
-                             device: ViewImageConfig,
-                             testName: String = #function,
-                             traits: UITraitCollection = .init()) -> String? {
-        assertSnapshots(matching: ViewControllerRepresentable(viewController: view), name: name, isScreen: isScreen, device: device, testName: testName, traits: traits)
-    }
-
-    private func assertSnapshots(matching view: any SwiftUI.View,
-                                 name: String?, isScreen: Bool,
-                                 device: ViewImageConfig,
-                                 testName: String = #function,
-                                 traits: UITraitCollection = .init()) -> String? {
+    private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>, testName: String = #function) -> String? {
         var delay: TimeInterval = 0
         var precision: Float = 1
         var perceptualPrecision: Float = 1
 
-        let view = view
+        let view = prefireSnapshot.content
             .onPreferenceChange(DelayPreferenceKey.self) { delay = $0 }
             .onPreferenceChange(PrecisionPreferenceKey.self) { precision = $0 }
             .onPreferenceChange(PerceptualPrecisionPreferenceKey.self) { perceptualPrecision = $0 }
 
-        let matchingView = isScreen ? AnyView(view) : AnyView(view
-            .frame(width: device.size?.width)
+        let matchingView = prefireSnapshot.isScreen ? AnyView(view) : AnyView(view
+            .frame(width: prefireSnapshot.device.size?.width)
             .fixedSize(horizontal: false, vertical: true)
         )
 
@@ -131,8 +107,8 @@ class PreviewTests: XCTestCase {
             as: .prefireImage(precision: { precision },
                               perceptualPrecision: { perceptualPrecision },
                               duration: { delay },
-                              layout: isScreen ? .device(config: device) : .sizeThatFits,
-                              traits: traits),
+                              layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device) : .sizeThatFits,
+                              traits: prefireSnapshot.traits),
             named: name{% if argument.file %},
             file: file{% endif %},
             testName: testName
@@ -144,7 +120,7 @@ class PreviewTests: XCTestCase {
             assertSnapshot(
                 matching: vc,
                 as: .wait(for: delay, on: .accessibilityImage(showActivationPoints: .always)),
-                named: name.flatMap { $0 + ".accessibility" }{% if argument.file %},
+                named: prefireSnapshot.name.flatMap { $0 + ".accessibility" }{% if argument.file %},
                 file: file{% endif %},
                 testName: testName
             )
@@ -154,19 +130,57 @@ class PreviewTests: XCTestCase {
 
     /// Check environments to avoid problems with snapshots on different devices or OS.
     private func checkEnvironments() {
-        if let simulatorDevice {
-            let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]
-            guard deviceModel?.contains(simulatorDevice) ?? false else {
-                fatalError("Switch to using \(simulatorDevice) for these tests.")
+        if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            guard deviceModel.contains(simulatorDevice) else {
+                fatalError("Switch to using \(simulatorDevice) for these tests. (You are using \(deviceModel))")
             }
         }
 
         if let requiredOSVersion {
             let osVersion = ProcessInfo().operatingSystemVersion
             guard osVersion.majorVersion == requiredOSVersion else {
-                fatalError("Switch to iOS \(requiredOSVersion) for these tests.")
+                fatalError("Switch to iOS \(requiredOSVersion) for these tests. (You are using \(osVersion))")
             }
         }
+    }
+}
+
+struct PrefireSnapshot<Content: SwiftUI.View> {
+    var content: Content
+    var name: String?
+    var isScreen: Bool
+    var device: ViewImageConfig
+    var traits: UITraitCollection = .init()
+
+    init(_ preview: _Preview, device: ViewImageConfig) where Content == AnyView {
+        content = preview.content
+        name = preview.displayName
+        isScreen = preview.layout == .device
+        self.device = preview.device?.snapshotDevice() ?? device
+    }
+
+    init(_ view: Content, name: String?, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) {
+        content = view
+        self.name = name
+        self.isScreen = isScreen
+        self.device = device
+        self.traits = traits
+    }
+
+    init(_ view: UIView, name: String?, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
+        content = ViewRepresentable(view: view)
+        self.name = name
+        self.isScreen = isScreen
+        self.device = device
+        self.traits = traits
+    }
+
+    init(_ viewController: UIViewController, name: String?, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
+        content = ViewControllerRepresentable(viewController: viewController)
+        self.name = name
+        self.isScreen = isScreen
+        self.device = device
+        self.traits = traits
     }
 }
 

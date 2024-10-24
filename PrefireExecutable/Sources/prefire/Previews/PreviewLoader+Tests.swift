@@ -27,7 +27,7 @@ extension PreviewLoader {
                         let preview = {
             \(rawPreviewModel.body)
                         }
-                        if let failure = assertSnapshots(matching: preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig) {
+                        if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig)) {
                             XCTFail(failure)
                         }
                     }
