@@ -18,6 +18,7 @@ extension PreviewLoader {
 
         return yamlSettings +
             """
+                @MainActor
                 private struct MacroPreviews {
                     static var previews: [PreviewModel] = [
             \(previewModels)

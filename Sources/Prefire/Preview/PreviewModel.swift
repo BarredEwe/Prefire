@@ -52,6 +52,7 @@ public struct PreviewModel: Identifiable {
     /// The time from when a view was created (`.init`) to when it was shown (`.onAppear`)
     public var renderTime: String?
 
+    @MainActor
     public init(
         id: String? = nil,
         content: @escaping () -> any View,
@@ -66,6 +67,7 @@ public struct PreviewModel: Identifiable {
         self.device = device
     }
 
+    @MainActor
     public init(
         id: String? = nil,
         content: @escaping () -> UIView,
@@ -76,6 +78,7 @@ public struct PreviewModel: Identifiable {
         self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device)
     }
 
+    @MainActor
     public init(
         id: String? = nil,
         content: @escaping () -> UIViewController,
