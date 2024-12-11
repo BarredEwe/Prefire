@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - xcode: "Xcode_15.0.1"
-            runsOn: macos-13
-          - xcode: "Xcode_14.3.1"
-            runsOn: macos-13
+          - xcode: "Xcode_16.0"
+            runsOn: macos-15
+          - xcode: "Xcode_15.4"
+            runsOn: macos-14
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode

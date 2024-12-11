@@ -4,8 +4,8 @@ import SwiftUI
 extension CGFloat {
     static let scale: CGFloat = 0.55
     static let infoViewHeight: CGFloat = 42
-    static let screenHeight = UIScreen.main.bounds.height
-    static let screeenWidth = UIScreen.main.bounds.width
+    @MainActor static let screenHeight = UIScreen.main.bounds.height
+    @MainActor static let screenWidth = UIScreen.main.bounds.width
 }
 
 /// View to show different states of components and screens
@@ -78,7 +78,7 @@ public struct PlaybookView: View {
     private func componentList(for name: String) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
-                ForEach($viewModels) { $viewModel in
+                ForEach($viewModels, id: \.id) { $viewModel in
                     if viewModel.name == name || viewModel.story == name {
                         VStack {
                             if !isComponent {
@@ -102,10 +102,7 @@ public struct PlaybookView: View {
     }
 
     struct PreviewView: View, Identifiable {
-        @inlinable
-        var id: String {
-            viewModel.id
-        }
+        let id: String
 
         let isComponent: Bool
 
@@ -115,6 +112,16 @@ public struct PlaybookView: View {
         @Binding var viewModels: [PreviewModel]
         @Binding var sectionNames: [String]
         @Environment(\.colorScheme) private var colorScheme
+
+        init(isComponent: Bool, selectedId: Binding<String>, navigationLinkTriggered: Binding<Bool>, viewModel: Binding<PreviewModel>, viewModels: Binding<[PreviewModel]>, sectionNames: Binding<[String]>) {
+            self.id = viewModel.wrappedValue.id
+            self.isComponent = isComponent
+            _selectedId = selectedId
+            _navigationLinkTriggered = navigationLinkTriggered
+            _viewModel = viewModel
+            _viewModels = viewModels
+            _sectionNames = sectionNames
+        }
 
         var body: some View {
             Button(action: {
@@ -160,12 +167,13 @@ public struct PlaybookView: View {
         let id: String
         let isScreen: Bool
         var view: Content
-        @Environment(\.safeAreaInsets) private var safeAreaInsets
+
+        @State private var safeAreaInsets = UIApplication.shared.windows.first?.safeAreaInsets ?? UIEdgeInsets()
 
         var body: some View {
             view
                 .allowsHitTesting(false)
-                .frame(width: .screeenWidth)
+                .frame(width: .screenWidth)
                 .transformIf(isScreen) { view in
                     view.frame(height: .screenHeight - safeAreaInsets.top + safeAreaInsets.bottom - .infoViewHeight)
                 }

@@ -116,12 +116,12 @@ class PreviewTests: XCTestCase {
         #if canImport(AccessibilitySnapshot)
             let vc = UIHostingController(rootView: matchingView)
             vc.view.frame = UIScreen.main.bounds
-            assertSnapshot(
+
+            SnapshotTesting.assertSnapshot(
                 matching: vc,
-                as: .wait(for: delay, on: .accessibilityImage(showActivationPoints: .always)),
-                named: prefireSnapshot.name.flatMap { $0 + ".accessibility" }{% if argument.file %},
+                as: .wait(for: delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
                 file: file{% endif %},
-                testName: prefireSnapshot.name
+                testName: prefireSnapshot.name + ".accessibility"
             )
         #endif
         return failure

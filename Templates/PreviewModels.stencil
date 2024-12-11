@@ -11,6 +11,7 @@ import {{ import }}
 {% endfor %}
 
 public enum PreviewModels {
+    @MainActor
     public static var models: [PreviewModel] = {
         var views: [PreviewModel] = []
 #if !PLAYBOOK_DISABLED
@@ -28,6 +29,7 @@ public enum PreviewModels {
     }()
 
     @inlinable
+    @MainActor
     static func createModel<Preview: PreviewProvider>(for preview: Preview.Type, name: String) -> [PreviewModel] {
         var views: [PreviewModel] = []
 

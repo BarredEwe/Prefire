@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct UserStoryPreferenceKey: PreferenceKey {
-    public static var defaultValue: PreviewModel.UserStory?
+    public static let defaultValue: PreviewModel.UserStory? = nil
 
     public static func reduce(value: inout PreviewModel.UserStory?, nextValue: () -> PreviewModel.UserStory?) {
         value = nextValue()
@@ -22,7 +22,7 @@ public extension View {
 // MARK: - State
 
 public struct StatePreferenceKey: PreferenceKey {
-    public static var defaultValue: PreviewModel.State?
+    public static let defaultValue: PreviewModel.State? = nil
 
     public static func reduce(value: inout PreviewModel.State?, nextValue: () -> PreviewModel.State?) {
         value = nextValue()
@@ -43,7 +43,7 @@ public extension View {
 // MARK: - Snapshot Attributes
 
 public struct DelayPreferenceKey: PreferenceKey {
-    public static var defaultValue: TimeInterval = 0.0
+    public static let defaultValue: TimeInterval = 0.0
 
     public static func reduce(value: inout TimeInterval, nextValue: () -> TimeInterval) {
         value = nextValue()
@@ -51,7 +51,7 @@ public struct DelayPreferenceKey: PreferenceKey {
 }
 
 public struct PrecisionPreferenceKey: PreferenceKey {
-    public static var defaultValue: Float = 1.0
+    public static let defaultValue: Float = 1.0
 
     public static func reduce(value: inout Float, nextValue: () -> Float) {
         value = nextValue()
@@ -59,7 +59,7 @@ public struct PrecisionPreferenceKey: PreferenceKey {
 }
 
 public struct PerceptualPrecisionPreferenceKey: PreferenceKey {
-    public static var defaultValue: Float = 1.0
+    public static let defaultValue: Float = 1.0
 
     public static func reduce(value: inout Float, nextValue: () -> Float) {
         value = nextValue()
