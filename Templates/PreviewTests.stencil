@@ -18,7 +18,7 @@ import {{ import }}
     import AccessibilitySnapshot
 #endif
 
-class PreviewTests: XCTestCase {
+@MainActor class PreviewTests: XCTestCase, Sendable {
     private let deviceConfig: ViewImageConfig = .iPhoneX
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
@@ -30,8 +30,8 @@ class PreviewTests: XCTestCase {
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
     {% endif %}
 
-    override func setUp() {
-        super.setUp()
+    @MainActor override func setUp() async throws {
+        try await super.setUp()
 
         checkEnvironments()
         UIView.setAnimationsEnabled(false)
@@ -144,7 +144,7 @@ class PreviewTests: XCTestCase {
     }
 }
 
-struct PrefireSnapshot<Content: SwiftUI.View> {
+@MainActor struct PrefireSnapshot<Content: SwiftUI.View> {
     var content: Content
     var name: String
     var isScreen: Bool
@@ -214,6 +214,7 @@ private extension PreviewDevice {
 }
 
 private extension Snapshotting where Value: SwiftUI.View, Format == UIImage {
+    @MainActor
     static func prefireImage(
         drawHierarchyInKeyWindow: Bool = false,
         precision: @escaping () -> Float,
@@ -239,7 +240,6 @@ private extension Snapshotting where Value: SwiftUI.View, Format == UIImage {
         return SimplySnapshotting<UIImage>(pathExtension: "png", diffing: .prefireImage(precision: precision, perceptualPrecision: perceptualPrecision, scale: traits.displayScale))
             .asyncPullback { view in
                 var config = config
-
                 let controller: UIViewController
 
                 if config.size != nil {
