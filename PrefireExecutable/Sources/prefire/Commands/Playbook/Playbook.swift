@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 extension Prefire {
-    struct Playbook: ParsableCommand {
+    struct Playbook: AsyncParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Generate Playbook")
 
         @Argument(help: "Paths to a source swift files or directories.")
@@ -25,10 +25,10 @@ extension Prefire {
         @Flag(help: "Display full info")
         var verbose = false
 
-        func run() throws {
+        func run() async throws {
             Logger.verbose = verbose
 
-            try GeneratePlaybookCommand.run(
+            try await GeneratePlaybookCommand.run(
                 GeneratedPlaybookOptions(
                     sourcery: sourcery,
                     targetPath: targetPath,

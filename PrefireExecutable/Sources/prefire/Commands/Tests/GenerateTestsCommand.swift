@@ -77,11 +77,11 @@ enum GenerateTestsCommand {
         static let previewsMacros = "previewsMacros"
     }
 
-    static func run(_ options: GeneratedTestsOptions) throws {
+    static func run(_ options: GeneratedTestsOptions) async throws {
         let task = Process()
         task.executableURL = URL(filePath: options.sourcery)
 
-        let rawArguments = makeArguments(for: options)
+        let rawArguments = await makeArguments(for: options)
         let yamlContent = YAMLParser().string(from: rawArguments)
         let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
             .appending(Constants.configFileName)
@@ -94,7 +94,7 @@ enum GenerateTestsCommand {
         task.waitUntilExit()
     }
 
-    static func makeArguments(for options: GeneratedTestsOptions) -> [String: Any?] {
+    static func makeArguments(for options: GeneratedTestsOptions) async -> [String: Any?] {
         let sources = options.sources
         let output = options.output ?? FileManager.default.currentDirectoryPath.appending("/\(Constants.snapshotFileName).generated.swift")
         let snapshotOutput = options.testTargetPath?.appending("/\(Constants.snapshotFileName).swift")
@@ -114,7 +114,7 @@ enum GenerateTestsCommand {
 
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            let previewBodies = PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
+            let previewBodies = await PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
         #else
             let previewBodies: String? = nil
         #endif

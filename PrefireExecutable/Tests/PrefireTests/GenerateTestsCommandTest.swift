@@ -22,7 +22,7 @@ class GenerateTestsCommandTests: XCTestCase {
         )
     }
 
-    func test_makeArguments_sources() {
+    func test_makeArguments_sources() async {
         options.sources = ["some/sources"]
         let expectedArguments = [
             "output": options.output,
@@ -41,12 +41,12 @@ class GenerateTestsCommandTests: XCTestCase {
             ],
         ] as [String: Any?]
 
-        let arguments = GenerateTestsCommand.makeArguments(for: options)
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
     
-    func test_makeArguments_snapshot_devices() {
+    func test_makeArguments_snapshot_devices() async {
         options.snapshotDevices = ["iPhone 15", "iPad"]
         options.sources = ["some/sources", "some/other/sources"]
 
@@ -61,7 +61,7 @@ class GenerateTestsCommandTests: XCTestCase {
             ]
         ] as [String: Any?]
 
-        let arguments = GenerateTestsCommand.makeArguments(for: options)
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }

@@ -10,9 +10,9 @@ class PreviewLoaderTests: XCTestCase {
 
     let source = #file
 
-    func test_loadRawPreviewBodiesDefaultEnable() {
+    func test_loadRawPreviewBodiesDefaultEnable() async {
         #if swift(>=5.9)
-        let bodies = PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: true)
+        let bodies = await PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: true)
 
         XCTAssertEqual(bodies?.count, 2)
         XCTAssertEqual(bodies?["PreviewLoaderTests_0"], previewRepresentations[0])
@@ -20,9 +20,9 @@ class PreviewLoaderTests: XCTestCase {
         #endif
     }
 
-    func test_loadRawPreviewBodiesDefaultDisabled() {
+    func test_loadRawPreviewBodiesDefaultDisabled() async {
         #if swift(>=5.9)
-        let bodies = PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: false)
+        let bodies = await PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: false)
 
         XCTAssertEqual(bodies?.count, 1)
         XCTAssertEqual(bodies?["PreviewLoaderTests_0"], previewRepresentations[1])

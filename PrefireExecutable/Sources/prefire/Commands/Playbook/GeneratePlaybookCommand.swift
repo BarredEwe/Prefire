@@ -49,11 +49,11 @@ enum GeneratePlaybookCommand {
         static let macroPreviewBodies = "macroPreviewBodies"
     }
 
-    static func run(_ options: GeneratedPlaybookOptions) throws {
+    static func run(_ options: GeneratedPlaybookOptions) async throws {
         let task = Process()
         task.executableURL = URL(filePath: options.sourcery)
 
-        let rawArguments = makeArguments(for: options)
+        let rawArguments = await makeArguments(for: options)
         let yamlContent = YAMLParser().string(from: rawArguments)
         let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
             .appending(Constants.configFileName)
@@ -66,10 +66,10 @@ enum GeneratePlaybookCommand {
         task.waitUntilExit()
     }
 
-    static func makeArguments(for options: GeneratedPlaybookOptions) -> [String: Any?] {
+    static func makeArguments(for options: GeneratedPlaybookOptions) async -> [String: Any?] {
         // Works with `#Preview` macro
         #if swift(>=5.9)
-            let previewBodies = PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
+            let previewBodies = await PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
         #else
             let previewBodies: String? = nil
         #endif
