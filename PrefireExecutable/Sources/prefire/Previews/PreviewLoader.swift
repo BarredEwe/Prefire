@@ -15,29 +15,40 @@ enum PreviewLoader {
     ///   - sources: Paths to a source swift files or directories.
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
     /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
-    static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) -> [String: String]? {
+    static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) async -> [String: String]? {
         var previewBodyDictionary = [String: String]()
+        let fileManager = FileManager.default
 
-        for url in sources.compactMap(URL.init(string:)) {
-            do {
-                guard !url.isDirectory else {
-                    let urls = FileManager.default.listFiles(atPath: url.path())
-                    let bodies = loadRawPreviewBodies(for: urls, defaultEnabled: defaultEnabled) ?? [:]
-                    previewBodyDictionary.merge(bodies) { _, new in new }
-                    continue
-                }
+        await withTaskGroup(of: [String: String]?.self) { group in
+            for url in sources.compactMap(URL.init(string:)) {
+                group.addTask {
+                    do {
+                        if url.isDirectory {
+                            let files = fileManager.listFiles(atPath: url.path(), withExtension: ".swift")
+                            return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
+                        }
 
-                let content = try String(contentsOfFile: url.path)
-                guard !content.isEmpty, content.contains(Constants.previewMarker) else { continue }
+                        let content = try await readFile(atPath: url.path)
+                        guard content.range(of: Constants.previewMarker) != nil else { return nil }
 
-                if let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled) {
-                    let fileName = url.fileName
-                    previewBodies.enumerated().forEach { index, previewBody in
-                        previewBodyDictionary["\(fileName)_\(index)"] = previewBody
+                        var localPreviewBodyDictionary = [String: String]()
+                        if let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled) {
+                            let fileName = url.fileName
+                            previewBodies.enumerated().forEach { index, previewBody in
+                                localPreviewBodyDictionary["\(fileName)_\(index)"] = previewBody
+                            }
+                        }
+                        return localPreviewBodyDictionary
+                    } catch {
+                        Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
+                        return nil
                     }
                 }
-            } catch {
-                Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
+            }
+
+            for await result in group {
+                guard let bodies = result else { continue }
+                previewBodyDictionary.merge(bodies) { _, new in new }
             }
         }
 
@@ -51,26 +62,31 @@ enum PreviewLoader {
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
     /// - Returns: An array representing the results of the macro preview without the initial `#Preview` and final `}`.
     static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
+        let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
         var previewBodies: [String] = []
 
-        let lines = content.components(separatedBy: .newlines)
-
-        var result = ""
+        var currentBody: String = ""
         var previewWasFound = false
         var viewMustBeLoaded = defaultEnabled
-
-        var openingBraceCount = 0
-        var closingBraceCount = 0
+        var braceBalance = 0
 
         for line in lines {
             if line.hasPrefix(Constants.previewMarker) {
                 previewWasFound = true
+                currentBody = ""
+                braceBalance = 0
             }
 
             guard previewWasFound else { continue }
 
-            openingBraceCount += line.filter { $0 == Constants.openingBrace }.count
-            closingBraceCount += line.filter { $0 == Constants.closingBrace }.count
+            braceBalance += line.reduce(0) { (count, char) in
+                if char == Constants.openingBrace {
+                    return count + 1
+                } else if char == Constants.closingBrace {
+                    return count - 1
+                }
+                return count
+            }
 
             if defaultEnabled {
                 if line.hasSuffix(Constants.prefireDisableMarker) {
@@ -80,21 +96,22 @@ enum PreviewLoader {
                 viewMustBeLoaded = line.hasSuffix(Constants.prefireEnabledMarker)
             }
 
-            result += (line + "\n")
+            currentBody.append(String(line) + "\n")
 
-            if openingBraceCount == closingBraceCount {
-                if !result.isEmpty, viewMustBeLoaded {
-                    previewBodies.append(result)
+            if braceBalance == 0 {
+                if !currentBody.isEmpty, viewMustBeLoaded {
+                    previewBodies.append(currentBody)
                 }
 
-                result = ""
                 previewWasFound = false
                 viewMustBeLoaded = defaultEnabled
-                openingBraceCount = .zero
-                closingBraceCount = .zero
             }
         }
 
         return previewBodies.isEmpty ? nil : previewBodies
+    }
+
+    static private func readFile(atPath path: String) async throws -> String {
+        return try String(contentsOfFile: path)
     }
 }

@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 extension Prefire {
-    struct Tests: ParsableCommand {
+    struct Tests: AsyncParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Generate Snapshot/Accessibility Tests")
 
         @Argument(help: "Paths to a source swift files or directories.")
@@ -34,10 +34,10 @@ extension Prefire {
         @Flag(help: "Display full info")
         var verbose = false
 
-        func run() throws {
+        func run() async throws {
             Logger.verbose = verbose
 
-            try GenerateTestsCommand.run(
+            try await GenerateTestsCommand.run(
                 GeneratedTestsOptions(
                     sourcery: sourcery,
                     target: target,

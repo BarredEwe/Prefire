@@ -3,27 +3,18 @@ import Foundation
 extension FileManager {
     /// This function recursively lists all files with a ".swift" extension within the specified directory path.
     /// - Parameter path:  The directory path to list files from.
-    /// - Returns: An array of file paths with the extension ".swift" within the specified directory path.
-    func listFiles(atPath path: String) -> [String] {
-        do {
-            let contents = try contentsOfDirectory(atPath: path)
-            var paths: [String] = []
+    /// - Parameter extension: File extension
+    /// - Returns: An array of file paths with the extension within the specified directory path.
+    func listFiles(atPath path: String, withExtension extension: String) -> [String] {
+        var files = [String]()
 
-            for item in contents {
-                let itemPath = "\(path)/\(item)"
-                if item.hasSuffix(".swift") {
-                    paths.append(itemPath)
-                }
-
-                if (try? contentsOfDirectory(atPath: itemPath)) != nil {
-                    paths += listFiles(atPath: itemPath)
+        if let enumerator = enumerator(atPath: path) {
+            for case let file as String in enumerator {
+                if file.hasSuffix(`extension`) {
+                    files.append(file)
                 }
             }
-
-            return paths
-        } catch {
-            Logger.print("Error: \(error)")
-            return []
         }
+        return files
     }
 }
