@@ -139,16 +139,20 @@ public struct PlaybookView: View {
                         viewModel.renderTime = loadingTime
                     })
                     .onPreferenceChange(UserStoryPreferenceKey.self) { userStory in
-                        guard viewModel.story != userStory else { return }
-                        viewModel.story = userStory
+                        Task { @MainActor in
+                            guard viewModel.story != userStory else { return }
+                            viewModel.story = userStory
 
-                        if !isComponent {
-                            sectionNames = viewModels.compactMap { $0.story }.uniqued()
+                            if !isComponent {
+                                sectionNames = viewModels.compactMap { $0.story }.uniqued()
+                            }
                         }
                     }
                     .onPreferenceChange(StatePreferenceKey.self) { state in
-                        guard viewModel.state != state else { return }
-                        viewModel.state = state
+                        Task { @MainActor in
+                            guard viewModel.state != state else { return }
+                            viewModel.state = state
+                        }
                     }
 
                     Divider()
