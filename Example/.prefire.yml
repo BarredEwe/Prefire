@@ -1,9 +1,10 @@
 test_configuration:
   - target: PrefireExample
-  - simulator_device: "AppleTV5,3"
+  - simulator_device: "iPhone17,1"
   - required_os: 18
   - snapshot_devices:
-      - Apple TV
+      - iPhone 15
+      - iPad
   - imports:
       - UIKit
       - Foundation
