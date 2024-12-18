@@ -17,7 +17,7 @@
                BlueprintIdentifier = "9735EE2E289C5CF300309267"
                BuildableName = "PrefireExample.app"
                BlueprintName = "PrefireExample"
-               ReferencedContainer = "container:PrefireExample.xcodeproj">
+               ReferencedContainer = "container:PreFireExample.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,7 +35,7 @@
                BlueprintIdentifier = "9779D5E528A3ECBA0083DBD3"
                BuildableName = "PrefireExampleTests.xctest"
                BlueprintName = "PrefireExampleTests"
-               ReferencedContainer = "container:PrefireExample.xcodeproj">
+               ReferencedContainer = "container:PreFireExample.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -57,7 +57,7 @@
             BlueprintIdentifier = "9735EE2E289C5CF300309267"
             BuildableName = "PrefireExample.app"
             BlueprintName = "PrefireExample"
-            ReferencedContainer = "container:PrefireExample.xcodeproj">
+            ReferencedContainer = "container:PreFireExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -74,7 +74,7 @@
             BlueprintIdentifier = "9735EE2E289C5CF300309267"
             BuildableName = "PrefireExample.app"
             BlueprintName = "PrefireExample"
-            ReferencedContainer = "container:PrefireExample.xcodeproj">
+            ReferencedContainer = "container:PreFireExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

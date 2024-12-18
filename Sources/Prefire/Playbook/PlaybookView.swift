@@ -13,6 +13,8 @@ extension CGFloat {
 /// Can display Previews in two types:
 /// - `isComponent: false // Sorted by Flow`
 /// - `isComponent: true  // Sorted by screen or component name`
+#if os(iOS)
+@available(tvOS, unavailable)
 public struct PlaybookView: View {
     @State private var navigationLinkTriggered: Bool = false
     @State private var selectedId: String = ""
@@ -252,3 +254,4 @@ struct ContentView_Previews: PreviewProvider {
         )
     }
 }
+#endif

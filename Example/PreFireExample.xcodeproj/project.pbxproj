@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */; };
 		97078E162AF7F2A50041AFB7 /* PrefireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97078E152AF7F2A50041AFB7 /* PrefireExampleTests.swift */; };
-		971620D128EEC49A001B8EE3 /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */; };
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
@@ -60,7 +60,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */,
-				971620D128EEC49A001B8EE3 /* AccessibilitySnapshot in Frameworks */,
+				6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,7 +174,7 @@
 			name = PrefireExampleTests;
 			packageProductDependencies = (
 				9779D5F328A3F13F0083DBD3 /* SnapshotTesting */,
-				971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */,
+				6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */,
 			);
 			productName = SnapshotAppSwiftUITests;
 			productReference = 9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */;
@@ -200,7 +200,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */;
+			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -211,7 +211,7 @@
 			mainGroup = 9735EE22289C5CF200309267;
 			packageReferences = (
 				9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
-				971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */,
+				6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */,
 			);
 			productRefGroup = 9735EE30289C5CF300309267 /* Products */;
 			projectDirPath = "";
@@ -424,9 +424,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,3";
 			};
 			name = Debug;
 		};
@@ -454,9 +458,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,3";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -480,10 +488,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 			};
 			name = Debug;
@@ -507,9 +519,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -518,7 +534,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */ = {
+		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9735EE3E289C5CF300309267 /* Debug */,
@@ -548,12 +564,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */ = {
+		6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot";
+			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.5.1;
+				minimumVersion = 0.8.0;
 			};
 		};
 		9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
@@ -567,9 +583,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */ = {
+		6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
+			package = 6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
 			productName = AccessibilitySnapshot;
 		};
 		9779D5F328A3F13F0083DBD3 /* SnapshotTesting */ = {

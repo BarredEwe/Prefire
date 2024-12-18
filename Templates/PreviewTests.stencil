@@ -19,11 +19,15 @@ import {{ import }}
 #endif
 
 @MainActor class PreviewTests: XCTestCase, Sendable {
-    private let deviceConfig: ViewImageConfig = .iPhoneX
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
-    
+#if os(iOS)
+    private let deviceConfig: ViewImageConfig = .iPhoneX
+#elseif os(tvOS)
+    private let deviceConfig: ViewImageConfig = .tv
+#endif
+
     
     {% if argument.file %}
 
@@ -188,6 +192,7 @@ import {{ import }}
 private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
+#if os(iOS)
         case "iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 13 Pro Max", "iPhone 12 Pro Max":
             return .iPhone13ProMax
         case "iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro":
@@ -208,6 +213,10 @@ private extension PreviewDevice {
             return .iPadPro11
         case "iPad Pro 12.9":
             return .iPadPro12_9
+#elseif os(tvOS)
+        case "Apple TV":
+            return .tv        
+#endif
         default: return nil
         }
     }
