@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */; };
 		97078E162AF7F2A50041AFB7 /* PrefireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97078E152AF7F2A50041AFB7 /* PrefireExampleTests.swift */; };
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
@@ -59,6 +60,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */,
+				6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,7 +174,7 @@
 			name = PrefireExampleTests;
 			packageProductDependencies = (
 				9779D5F328A3F13F0083DBD3 /* SnapshotTesting */,
-				971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */,
+				6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */,
 			);
 			productName = SnapshotAppSwiftUITests;
 			productReference = 9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */;
@@ -209,7 +211,7 @@
 			mainGroup = 9735EE22289C5CF200309267;
 			packageReferences = (
 				9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
-				971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */,
+				6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */,
 			);
 			productRefGroup = 9735EE30289C5CF300309267 /* Products */;
 			projectDirPath = "";
@@ -562,12 +564,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */ = {
+		6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot";
+			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.5.1;
+				minimumVersion = 0.8.0;
 			};
 		};
 		9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
@@ -581,9 +583,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		971620D028EEC49A001B8EE3 /* AccessibilitySnapshot */ = {
+		6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 971620CF28EEC49A001B8EE3 /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
+			package = 6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
 			productName = AccessibilitySnapshot;
 		};
 		9779D5F328A3F13F0083DBD3 /* SnapshotTesting */ = {
