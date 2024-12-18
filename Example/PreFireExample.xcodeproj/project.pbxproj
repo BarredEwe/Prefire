@@ -200,7 +200,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */;
+			buildConfigurationList = 9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -424,9 +424,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,3";
 			};
 			name = Debug;
 		};
@@ -454,9 +458,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,3";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -480,10 +488,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 			};
 			name = Debug;
@@ -507,9 +519,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -518,7 +534,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PrefireExample" */ = {
+		9735EE26289C5CF200309267 /* Build configuration list for PBXProject "PreFireExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9735EE3E289C5CF300309267 /* Debug */,
