@@ -29,7 +29,6 @@ struct AuthView: View {
                 }
                 .tint(.black.opacity(0.9))
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
                 .disabled(login.isEmpty && password.isEmpty)
 
                 Button {
@@ -40,7 +39,6 @@ struct AuthView: View {
                 }
                 .tint(.accentColor)
                 .buttonStyle(.bordered)
-                .controlSize(.large)
             }
             .padding()
 
