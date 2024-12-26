@@ -21,28 +21,8 @@ enum PreviewLoader {
 
         await withTaskGroup(of: [String: String]?.self) { group in
             for url in sources.compactMap(URL.init(string:)) {
-                group.addTask {
-                    do {
-                        if url.isDirectory {
-                            let files = fileManager.listFiles(atPath: url.path(), withExtension: ".swift")
-                            return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
-                        }
-
-                        let content = try await readFile(atPath: url.path)
-                        guard content.range(of: Constants.previewMarker) != nil else { return nil }
-
-                        var localPreviewBodyDictionary = [String: String]()
-                        if let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled) {
-                            let fileName = url.fileName
-                            previewBodies.enumerated().forEach { index, previewBody in
-                                localPreviewBodyDictionary["\(fileName)_\(index)"] = previewBody
-                            }
-                        }
-                        return localPreviewBodyDictionary
-                    } catch {
-                        Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
-                        return nil
-                    }
+                group.addTask { [url] in
+                    await processURL(url, fileManager: fileManager, defaultEnabled: defaultEnabled)
                 }
             }
 
@@ -55,13 +35,44 @@ enum PreviewLoader {
         return previewBodyDictionary.isEmpty ? nil : previewBodyDictionary
     }
 
-    /// Extract the preview body using the passed content
-    ///
+    // MARK: - Private
+
+    /// Processes a given URL to load raw preview bodies.
     /// - Parameters:
-    ///   - content: File content
+    ///   - url: The URL to process.
+    ///   - fileManager: The file manager instance to use for file operations.
+    ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
+    /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
+    private static func processURL(_ url: URL, fileManager: FileManager, defaultEnabled: Bool) async -> [String: String]? {
+        do {
+            if url.isDirectory {
+                let files = fileManager.listFiles(atPath: url.path, withExtension: ".swift")
+                return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
+            }
+
+            let content = try await readFile(atPath: url.path)
+            guard content.range(of: Constants.previewMarker) != nil else { return nil }
+
+            var localPreviewBodyDictionary = [String: String]()
+            if let previewBodies = previewBodies(from: content, defaultEnabled: defaultEnabled) {
+                let fileName = url.fileName
+                previewBodies.enumerated().forEach { index, previewBody in
+                    localPreviewBodyDictionary["\(fileName)_\(index)"] = previewBody
+                }
+            }
+            return localPreviewBodyDictionary
+        } catch {
+            Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path): \(error)")
+            return nil
+        }
+    }
+
+    /// Extracts preview bodies from the given content.
+    /// - Parameters:
+    ///   - content: The content to extract preview bodies from.
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
     /// - Returns: An array representing the results of the macro preview without the initial `#Preview` and final `}`.
-    static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
+    private static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
         var previewBodies: [String] = []
 
@@ -111,7 +122,13 @@ enum PreviewLoader {
         return previewBodies.isEmpty ? nil : previewBodies
     }
 
-    static private func readFile(atPath path: String) async throws -> String {
-        return try String(contentsOfFile: path)
+    /// Reads the contents of a file at the specified path.
+    /// - Parameter path: The path of the file to read.
+    /// - Returns: The contents of the file as a string.
+    private static func readFile(atPath path: String) async throws -> String {
+        try String(contentsOfFile: path)
+    }
+}
+
     }
 }
