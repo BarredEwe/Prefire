@@ -50,6 +50,13 @@ enum PreviewLoader {
                 return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
             }
 
+            let attributes = try fileManager.attributesOfItem(atPath: url.path)
+            guard let modificationDate = attributes[.modificationDate] as? Date else { return nil }
+
+            if let cachedPreviewBodies = CacheManager.loadCache(for: url, modificationDate: modificationDate) {
+                return cachedPreviewBodies
+            }
+
             let content = try await readFile(atPath: url.path)
             guard content.range(of: Constants.previewMarker) != nil else { return nil }
 
@@ -60,6 +67,9 @@ enum PreviewLoader {
                     localPreviewBodyDictionary["\(fileName)_\(index)"] = previewBody
                 }
             }
+
+            CacheManager.saveCache(localPreviewBodyDictionary, for: url, modificationDate: modificationDate)
+
             return localPreviewBodyDictionary
         } catch {
             Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path): \(error)")
@@ -130,5 +140,52 @@ enum PreviewLoader {
     }
 }
 
+/// CacheManager handles the caching of parsed preview bodies
+enum CacheManager {
+    private static let fileManager = FileManager.default
+
+    /// Loads cached data for the given URL if available and valid.
+    /// - Parameters:
+    ///   - url: The URL of the file.
+    ///   - modificationDate: The last modification date of the file.
+    /// - Returns: The cached parsed preview bodies if available and valid, otherwise nil.
+    static func loadCache(for url: URL, modificationDate: Date) -> [String: String]? {
+        let cacheURL = cacheFileURL(for: url)
+        guard let cacheAttributes = try? fileManager.attributesOfItem(atPath: cacheURL.path),
+              let cacheModificationDate = cacheAttributes[.modificationDate] as? Date,
+              String(format: "%.6f", cacheModificationDate.timeIntervalSince1970) == String(format: "%.6f", modificationDate.timeIntervalSince1970),
+              let cachedData = try? Data(contentsOf: cacheURL),
+              let cachedPreviewBodies = try? JSONDecoder().decode([String: String].self, from: cachedData) else {
+            return nil
+        }
+        return cachedPreviewBodies
+    }
+
+    /// Saves parsed preview bodies to the cache for the given URL.
+    /// - Parameters:
+    ///   - previewBodies: The parsed preview bodies to cache.
+    ///   - url: The URL of the file.
+    ///   - modificationDate: The last modification date of the file.
+    static func saveCache(_ previewBodies: [String: String], for url: URL, modificationDate: Date) {
+        let cacheURL = cacheFileURL(for: url)
+        do {
+            let data = try JSONEncoder().encode(previewBodies)
+            try data.write(to: cacheURL, options: .atomic)
+            try fileManager.setAttributes([.modificationDate: modificationDate], ofItemAtPath: cacheURL.path)
+        } catch {
+            Logger.print("⚠️ Cannot save cache for file at path: \(url.path): \(error)")
+        }
+    }
+
+    /// Returns the cache file URL for the given file URL.
+    /// - Parameter url: The URL of the file.
+    /// - Returns: The URL of the cache file.
+    private static func cacheFileURL(for url: URL) -> URL {
+        let tempDirectory = fileManager.temporaryDirectory.appending(path: "prefire")
+
+        try? fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+
+        let fileName = url.lastPathComponent
+        return tempDirectory.appendingPathComponent(fileName)
     }
 }
