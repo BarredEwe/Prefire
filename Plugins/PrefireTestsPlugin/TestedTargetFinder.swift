@@ -81,9 +81,14 @@ extension TestedTargetFinder {
 
 extension XcodeTarget {
     var isTestKind: Bool {
-        if case .other("com.apple.product-type.bundle.unit-test") = product?.kind {
+        guard let kind = product?.kind
+        else { return false }
+
+        switch kind {
+        case .other("com.apple.product-type.bundle.unit-test"),
+             .other("com.apple.product-type.bundle.ui-testing"):
             return true
-        } else {
+        default:
             return false
         }
     }
