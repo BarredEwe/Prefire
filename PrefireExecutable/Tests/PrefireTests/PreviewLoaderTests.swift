@@ -12,6 +12,7 @@ class PreviewLoaderTests: XCTestCase {
 
     func test_loadRawPreviewBodiesDefaultEnable() async {
         #if swift(>=5.9)
+        CacheManager().clearCache()
         let bodies = await PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: true)
 
         XCTAssertEqual(bodies?.count, 2)
@@ -22,6 +23,7 @@ class PreviewLoaderTests: XCTestCase {
 
     func test_loadRawPreviewBodiesDefaultDisabled() async {
         #if swift(>=5.9)
+        CacheManager().clearCache()
         let bodies = await PreviewLoader.loadRawPreviewBodies(for: [source], defaultEnabled: false)
 
         XCTAssertEqual(bodies?.count, 1)

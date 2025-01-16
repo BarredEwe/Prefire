@@ -1,6 +1,6 @@
 import Foundation
 
-/// Simplify and improve the process of locating and parsing generated preview code for Swift projects.
+// Simplify and improve the process of locating and parsing generated preview code for Swift projects.
 enum PreviewLoader {
     enum Constants {
         static let previewMarker = "#Preview"
@@ -10,7 +10,8 @@ enum PreviewLoader {
         static let closingBrace: Character = "}"
     }
 
-    static let cacheManager = CacheManager()
+    static private let cacheManager = CacheManager()
+    static private let fileManager = FileManager.default
 
     /// Attempts to locate raw preview bodies within the specified sources string and returns them as an array of Strings.
     /// - Parameters:
@@ -19,12 +20,11 @@ enum PreviewLoader {
     /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
     static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) async -> [String: String]? {
         var previewBodyDictionary = [String: String]()
-        let fileManager = FileManager.default
 
         await withTaskGroup(of: [String: String]?.self) { group in
             for url in sources.compactMap(URL.init(string:)) {
-                group.addTask { [url] in
-                    await processURL(url, fileManager: fileManager, defaultEnabled: defaultEnabled)
+                group.addTask {
+                    await processURL(url, defaultEnabled: defaultEnabled)
                 }
             }
 
@@ -45,14 +45,14 @@ enum PreviewLoader {
     ///   - fileManager: The file manager instance to use for file operations.
     ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
     /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
-    private static func processURL(_ url: URL, fileManager: FileManager, defaultEnabled: Bool) async -> [String: String]? {
+    private static func processURL(_ url: URL, defaultEnabled: Bool) async -> [String: String]? {
         do {
             if url.isDirectory {
                 let files = fileManager.listFiles(atPath: url.path, withExtension: ".swift")
                 return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
             }
 
-            let attributes = try fileManager.attributesOfItem(atPath: url.path)
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
             guard let modificationDate = attributes[.modificationDate] as? Date else { return nil }
 
             if let cachedPreviewBodies = cacheManager.loadCache(for: url, modificationDate: modificationDate) {
@@ -79,11 +79,7 @@ enum PreviewLoader {
         }
     }
 
-    /// Extracts preview bodies from the given content.
-    /// - Parameters:
-    ///   - content: The content to extract preview bodies from.
-    ///   - defaultEnabled: Whether automatic view inclusion should be allowed. Default value is true.
-    /// - Returns: An array representing the results of the macro preview without the initial `#Preview` and final `}`.
+    // Extracts preview bodies from the given content.
     private static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
         var previewBodies: [String] = []
@@ -134,23 +130,17 @@ enum PreviewLoader {
         return previewBodies.isEmpty ? nil : previewBodies
     }
 
-    /// Reads the contents of a file at the specified path.
-    /// - Parameter path: The path of the file to read.
-    /// - Returns: The contents of the file as a string.
+    // Reads the contents of a file at the specified path.
     private static func readFile(atPath path: String) async throws -> String {
         try String(contentsOfFile: path)
     }
 }
 
-/// CacheManager handles the caching of parsed preview bodies
+// CacheManager handles the caching of parsed preview bodies
 class CacheManager {
     private let fileManager = FileManager.default
 
-    /// Loads cached data for the given URL if available and valid.
-    /// - Parameters:
-    ///   - url: The URL of the file.
-    ///   - modificationDate: The last modification date of the file.
-    /// - Returns: The cached parsed preview bodies if available and valid, otherwise nil.
+    // Loads cached data for the given URL if available and valid.
     func loadCache(for url: URL, modificationDate: Date) -> [String: String]? {
         let cacheURL = cacheFileURL(for: url)
         guard let cacheAttributes = try? fileManager.attributesOfItem(atPath: cacheURL.path),
@@ -163,11 +153,21 @@ class CacheManager {
         return cachedPreviewBodies
     }
 
-    /// Saves parsed preview bodies to the cache for the given URL.
-    /// - Parameters:
-    ///   - previewBodies: The parsed preview bodies to cache.
-    ///   - url: The URL of the file.
-    ///   - modificationDate: The last modification date of the file.
+    // Clears the cache by removing all cached files.
+    func clearCache() {
+        let tempDirectory = fileManager.temporaryDirectory.appendingPathComponent("prefire")
+        do {
+            let cachedFiles = try fileManager.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil)
+            for file in cachedFiles {
+                try fileManager.removeItem(at: file)
+            }
+            Logger.print("✅ Cache cleared successfully.")
+        } catch {
+            Logger.print("⚠️ Cannot clear cache: \(error)")
+        }
+    }
+
+    // Saves parsed preview bodies to the cache for the given URL.
     func saveCache(_ previewBodies: [String: String], for url: URL, modificationDate: Date) {
         let cacheURL = cacheFileURL(for: url)
         do {
@@ -179,11 +179,9 @@ class CacheManager {
         }
     }
 
-    /// Returns the cache file URL for the given file URL.
-    /// - Parameter url: The URL of the file.
-    /// - Returns: The URL of the cache file.
+    // Returns the cache file URL for the given file URL.
     private func cacheFileURL(for url: URL) -> URL {
-        let tempDirectory = fileManager.temporaryDirectory.appending(path: "prefire")
+        let tempDirectory = fileManager.temporaryDirectory.appending(component: "prefire").appending(component: "")
 
         try? fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
