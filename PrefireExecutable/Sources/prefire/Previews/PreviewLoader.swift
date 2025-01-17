@@ -17,12 +17,12 @@ enum PreviewLoader {
     /// - Returns: A dictionary containing the preview bodies for the sources, with file names as keys and preview bodies as values
     static func loadRawPreviewBodies(for sources: [String], defaultEnabled: Bool) async -> [String: String]? {
         var previewBodyDictionary = [String: String]()
-        let fileManager = FileManager.default
-
+        
         await withTaskGroup(of: [String: String]?.self) { group in
             for url in sources.compactMap(URL.init(string:)) {
                 group.addTask {
                     do {
+                        let fileManager = FileManager.default
                         if fileManager.checkIfDirectoryExists(at: url) {
                             let files = fileManager.listFiles(atURL: url, withExtension: ".swift")
                             return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
@@ -40,7 +40,7 @@ enum PreviewLoader {
                         }
                         return localPreviewBodyDictionary
                     } catch {
-                        Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path)")
+                        Logger.print("⚠️ Cannot load file with Preview macro at path: \(url.path) with error \(error.localizedDescription)")
                         return nil
                     }
                 }

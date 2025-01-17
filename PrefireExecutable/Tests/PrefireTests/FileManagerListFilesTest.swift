@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 class FileManagerListFilesTest: XCTestCase {
-    let sourceDirectoryURL = URL(fileURLWithPath: #file)
+    let sourceDirectoryURL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()

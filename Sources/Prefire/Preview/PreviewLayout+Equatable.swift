@@ -1,6 +1,6 @@
 import SwiftUI
 
-extension PreviewLayout: Equatable {
+extension PreviewLayout: @retroactive Equatable {
     public static func == (lhs: PreviewLayout, rhs: PreviewLayout) -> Bool {
         switch lhs {
         case .sizeThatFits:

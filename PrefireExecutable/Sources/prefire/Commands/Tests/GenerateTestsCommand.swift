@@ -113,11 +113,7 @@ enum GenerateTestsCommand {
         )
 
         // Works with `#Preview` macro
-        #if swift(>=5.9)
-            let previewBodies = await PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
-        #else
-            let previewBodies: String? = nil
-        #endif
+        let previewBodies = await PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
 
         let arguments: [String: Any?] = [
             Keys.output: output,

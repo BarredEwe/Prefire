@@ -68,11 +68,7 @@ enum GeneratePlaybookCommand {
 
     static func makeArguments(for options: GeneratedPlaybookOptions) async -> [String: Any?] {
         // Works with `#Preview` macro
-        #if swift(>=5.9)
-            let previewBodies = await PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
-        #else
-            let previewBodies: String? = nil
-        #endif
+        let previewBodies = await PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
 
         Logger.print(
             """

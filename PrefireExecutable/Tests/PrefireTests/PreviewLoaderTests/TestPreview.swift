@@ -4,7 +4,6 @@ import XCTest
 
 import SwiftUI
 
-#if swift(>=5.9)
 #Preview {
     Text("TestPreview")
 }
@@ -18,4 +17,3 @@ import SwiftUI
     Text("TestPreview_Ignored")
         .prefireIgnored()
 }
-#endif

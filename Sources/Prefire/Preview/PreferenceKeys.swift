@@ -74,6 +74,21 @@ public struct RecordPreferenceKey: PreferenceKey {
     }
 }
 
+/// Wrapper for secure data storage
+public class PreferenceKeys: @unchecked Sendable {
+    public var delay: TimeInterval
+    public var precision: Float
+    public var perceptualPrecision: Float
+    public var record: Bool
+
+    public init(delay: TimeInterval = 0, precision: Float = 1, perceptualPrecision: Float = 1, record: Bool = false) {
+        self.delay = delay
+        self.precision = precision
+        self.perceptualPrecision = perceptualPrecision
+        self.record = record
+    }
+}
+
 public extension View {
     /// Use this modifier when you want to apply snapshot-specific preferences,
     /// like delay and precision, to the view.

@@ -4,40 +4,37 @@ import PackagePlugin
 @main
 struct PrefireTestsPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
-        let executable = try context.tool(named: "PrefireBinary").path
-        let sourcery = try context.tool(named: "PrefireSourcery").path
+        let executable = try context.tool(named: "PrefireBinary").url
+        let sourcery = try context.tool(named: "PrefireSourcery").url
 
-        let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
-        let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-        let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
+        let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
+        let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
+        let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
         guard let testedTarget = TestedTargetFinder.findTestedTarget(for: target) else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
 
-        var arguments: [CustomStringConvertible] = [
+        var arguments: [String] = [
             "tests",
-            "--sourcery", sourcery,
+            "--sourcery", sourcery.path,
             "--target", testedTarget.name,
             "--test-target", target.name,
-            "--output", outputPath,
-            "--test-target-path", target.directory.string,
-            "--config", testedTarget.directory.string,
+            "--output", outputPath.path,
+            "--test-target-path", String(describing: target.directory),
+            "--config", testedTarget.directoryURL.path,
             "--template", templatePath,
-            "--cache-base-path", cachePath,
+            "--cache-base-path", cachePath.path,
             "--verbose",
         ]
 
-        let sources = testedTarget.sourceFiles.filter { $0.type == .source }.map(\.path.string)
+        let sources = testedTarget.sourceFiles.filter { $0.type == .source }.map(\.url.path)
         arguments.append(contentsOf: sources)
 
         var environment = [
-            "TARGET_DIR": target.directory.string,
+            "TARGET_DIR": String(describing: target.directory),
+            "PACKAGE_DIR": context.package.directoryURL.path(),
         ]
-        #if swift(>=6.0)
-        environment["PACKAGE_DIR"] = context.package.directoryURL.path()
-        #endif
-        
 
         return [
             .prebuildCommand(
@@ -56,35 +53,36 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
     extension PrefireTestsPlugin: XcodeBuildToolPlugin {
         func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
-            let executable = try context.tool(named: "PrefireBinary").path
-            let sourcery = try context.tool(named: "PrefireSourcery").path
+            let executable = try context.tool(named: "PrefireBinary").url
+            let sourcery = try context.tool(named: "PrefireSourcery").url
 
-            let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
-            let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-            let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
+            let cacheURL = context.pluginWorkDirectoryURL.appending(path: "Cache")
+            let outputURL = context.pluginWorkDirectoryURL.appending(path: "Generated")
+            let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
+            let testTagetPath = context.xcodeProject.directoryURL.appending(path: target.displayName).path
 
             guard let testedTarget = TestedTargetFinder.findTestedTarget(for: target, project: context.xcodeProject) else {
                 throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
             }
 
-            var arguments: [CustomStringConvertible] = [
+            var arguments: [String] = [
                 "tests",
-                "--sourcery", sourcery,
+                "--sourcery", sourcery.path,
                 "--target", testedTarget.displayName,
                 "--test-target", target.displayName,
-                "--output", outputPath,
-                "--test-target-path", context.xcodeProject.directory.appending(subpath: target.displayName).string,
-                "--config", context.xcodeProject.directory.string,
+                "--output", outputURL.path,
+                "--test-target-path", testTagetPath,
+                "--config", context.xcodeProject.directoryURL.path,
                 "--template", templatePath,
-                "--cache-base-path", cachePath,
+                "--cache-base-path", cacheURL.path,
                 "--verbose",
             ]
 
-            let sources = testedTarget.inputFiles.filter { $0.type == .source }.map(\.path.string)
+            let sources = testedTarget.inputFiles.filter { $0.type == .source }.map(\.url.path)
             arguments.append(contentsOf: sources)
 
             let environment = [
-                "PROJECT_DIR": context.xcodeProject.directory.string,
+                "PROJECT_DIR": context.xcodeProject.directoryURL.path(),
             ]
 
             return [
@@ -93,13 +91,13 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                     executable: executable,
                     arguments: arguments,
                     environment: environment,
-                    outputFilesDirectory: outputPath
+                    outputFilesDirectory: outputURL
                 ),
             ]
         }
     }
 #endif
 
-extension String: LocalizedError {
+extension String: @retroactive LocalizedError {
     public var errorDescription: String? { return self }
 }
