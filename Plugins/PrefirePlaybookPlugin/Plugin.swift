@@ -4,26 +4,27 @@ import PackagePlugin
 @main
 struct PrefirePlaybookPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
-        let executable = try context.tool(named: "PrefireBinary").path
-        let sourcery = try context.tool(named: "PrefireSourcery").path
+        let executable = try context.tool(named: "PrefireBinary").url
+        let sourcery = try context.tool(named: "PrefireSourcery").url
 
-        let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
-        let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-        let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+        let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
+        let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
+        let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+        let targetPath = String(describing: target.directory)
 
-        var arguments: [CustomStringConvertible] = [
+        var arguments: [String] = [
             "playbook",
-            "--sourcery", sourcery,
-            "--output", outputPath,
-            "--target-path", target.directory.string,
-            "--config", target.directory.string,
+            "--sourcery", sourcery.path,
+            "--output", outputPath.path,
+            "--target-path", targetPath,
+            "--config", targetPath,
             "--template", templatePath,
-            "--cache-base-path", cachePath,
+            "--cache-base-path", cachePath.path,
             "--verbose",
         ]
 
-        let sources = (target as? SwiftSourceModuleTarget)?.sourceFiles.filter { $0.type == .source }.map(\.path.string)
-        arguments.append(contentsOf: sources ?? [target.directory.string])
+        let sources = (target as? SwiftSourceModuleTarget)?.sourceFiles.filter { $0.type == .source }.map(\.url.path)
+        arguments.append(contentsOf: sources ?? [targetPath])
 
         return [
             .prebuildCommand(
@@ -41,25 +42,26 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
     extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
         func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
-            let executable = try context.tool(named: "PrefireBinary").path
-            let sourcery = try context.tool(named: "PrefireSourcery").path
+            let executable = try context.tool(named: "PrefireBinary").url
+            let sourcery = try context.tool(named: "PrefireSourcery").url
 
-            let cachePath = context.pluginWorkDirectory.appending(subpath: "Cache")
-            let outputPath = context.pluginWorkDirectory.appending(subpath: "Generated")
-            let templatePath = executable.string.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+            let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
+            let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
+            let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+            let targetPath = context.xcodeProject.directoryURL.appending(path: target.displayName)
 
-            var arguments: [CustomStringConvertible] = [
+            var arguments: [String] = [
                 "playbook",
-                "--sourcery", sourcery,
-                "--output", outputPath,
-                "--target-path", context.xcodeProject.directory.appending(subpath: target.displayName).string,
-                "--config", context.xcodeProject.directory.string,
+                "--sourcery", sourcery.path,
+                "--output", outputPath.path,
+                "--target-path", targetPath.path,
+                "--config", context.xcodeProject.directoryURL.path,
                 "--template", templatePath,
-                "--cache-base-path", cachePath,
+                "--cache-base-path", cachePath.path,
                 "--verbose",
             ]
 
-            let sources = target.inputFiles.filter { $0.type == .source }.map { $0.path.string }
+            let sources = target.inputFiles.filter { $0.type == .source }.map { $0.url.path }
             arguments.append(contentsOf: sources)
 
             return [
