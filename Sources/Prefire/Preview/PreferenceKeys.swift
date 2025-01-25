@@ -66,6 +66,14 @@ public struct PerceptualPrecisionPreferenceKey: PreferenceKey {
     }
 }
 
+public struct RecordPreferenceKey: PreferenceKey {
+    public static let defaultValue: Bool = false
+
+    public static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = nextValue()
+    }
+}
+
 public extension View {
     /// Use this modifier when you want to apply snapshot-specific preferences,
     /// like delay and precision, to the view.
@@ -75,10 +83,12 @@ public extension View {
     ///   - delay: The delay time in seconds that you want to set as a preference to the View.
     ///   - precision: The percentage of pixels that must match.
     ///   - perceptualPrecision: The percentage a pixel must match the source pixel to be considered a match. 98-99% mimics the precision of the human eye.
+    ///   - record: Whether or not to override the existing snapshot and record a new one.
     @inlinable
-    func snapshot(delay: TimeInterval = .zero, precision: Float = 1.0, perceptualPrecision: Float = 1.0) -> some View {
+    func snapshot(delay: TimeInterval = .zero, precision: Float = 1.0, perceptualPrecision: Float = 1.0, record: Bool = false) -> some View {
         preference(key: DelayPreferenceKey.self, value: delay)
             .preference(key: PrecisionPreferenceKey.self, value: precision)
             .preference(key: PerceptualPrecisionPreferenceKey.self, value: perceptualPrecision)
+            .preference(key: RecordPreferenceKey.self, value: record)
     }
 }
