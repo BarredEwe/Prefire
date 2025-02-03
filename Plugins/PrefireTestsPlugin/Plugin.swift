@@ -31,11 +31,16 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         let sources = testedTarget.sourceFiles.filter { $0.type == .source }.map(\.path.string)
         arguments.append(contentsOf: sources)
 
+        let environment = [
+            "TARGET_DIR": target.directory.string,
+        ]
+
         return [
             .prebuildCommand(
                 displayName: "Running Prefire",
                 executable: executable,
                 arguments: arguments,
+                environment: environment,
                 outputFilesDirectory: outputPath
             ),
         ]
@@ -74,11 +79,16 @@ struct PrefireTestsPlugin: BuildToolPlugin {
             let sources = testedTarget.inputFiles.filter { $0.type == .source }.map(\.path.string)
             arguments.append(contentsOf: sources)
 
+            let environment = [
+                "PROJECT_DIR": context.xcodeProject.directory.string,
+            ]
+
             return [
                 .prebuildCommand(
                     displayName: "Running Prefire Tests",
                     executable: executable,
                     arguments: arguments,
+                    environment: environment,
                     outputFilesDirectory: outputPath
                 ),
             ]
