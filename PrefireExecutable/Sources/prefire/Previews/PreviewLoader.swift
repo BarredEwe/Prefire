@@ -23,8 +23,8 @@ enum PreviewLoader {
             for url in sources.compactMap(URL.init(string:)) {
                 group.addTask {
                     do {
-                        if url.isDirectory {
-                            let files = fileManager.listFiles(atPath: url.path(), withExtension: ".swift")
+                        if fileManager.checkIfDirectoryExists(at: url) {
+                            let files = fileManager.listFiles(atURL: url, withExtension: ".swift")
                             return await loadRawPreviewBodies(for: files, defaultEnabled: defaultEnabled)
                         }
 
