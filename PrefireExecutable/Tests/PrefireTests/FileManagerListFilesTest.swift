@@ -10,7 +10,7 @@ class FileManagerListFilesTest: XCTestCase {
         .appendingPathComponent("Binaries")
 
     func testListFiles() {
-        let files = FileManager.default.listFiles(atPath: sourceDirectoryURL.path(), withExtension: "")
+        let files = FileManager.default.listFiles(atURL: sourceDirectoryURL, withExtension: "")
             .filter({ !$0.hasSuffix(".DS_Store") })
 
         XCTAssertEqual(files.count, 5)
