@@ -2,7 +2,7 @@ import Foundation
 
 /// A simple information logger
 struct Logger {
-    static var verbose: Bool = true
+    nonisolated(unsafe) static var verbose: Bool = true
 
     /// Writes the textual representations of the given items into the standard
     /// output.

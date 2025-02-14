@@ -92,16 +92,13 @@ import {{ import }}
     }
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
-        var delay: TimeInterval = 0
-        var precision: Float = 1
-        var perceptualPrecision: Float = 1
-        var record: Bool = false
+        let preferences = PreferenceKeys()
 
         let view = prefireSnapshot.content
-            .onPreferenceChange(DelayPreferenceKey.self) { delay = $0 }
-            .onPreferenceChange(PrecisionPreferenceKey.self) { precision = $0 }
-            .onPreferenceChange(PerceptualPrecisionPreferenceKey.self) { perceptualPrecision = $0 }
-            .onPreferenceChange(RecordPreferenceKey.self) { record = $0 }
+            .onPreferenceChange(DelayPreferenceKey.self) { preferences.delay = $0 }
+            .onPreferenceChange(PrecisionPreferenceKey.self) { preferences.precision = $0 }
+            .onPreferenceChange(PerceptualPrecisionPreferenceKey.self) { preferences.perceptualPrecision = $0 }
+            .onPreferenceChange(RecordPreferenceKey.self) { preferences.record = $0 }
 
         let matchingView = prefireSnapshot.isScreen ? AnyView(view) : AnyView(view
             .frame(width: prefireSnapshot.device.size?.width)
@@ -110,12 +107,12 @@ import {{ import }}
 
         let failure = verifySnapshot(
             of: matchingView,
-            as: .prefireImage(precision: { precision },
-                              perceptualPrecision: { perceptualPrecision },
-                              duration: { delay },
+            as: .prefireImage(precision: { preferences.precision },
+                              perceptualPrecision: { preferences.perceptualPrecision },
+                              duration: { preferences.delay },
                               layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device) : .sizeThatFits,
                               traits: prefireSnapshot.traits){% if argument.file %},
-            record: record,
+            record: preferences.record,
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
@@ -126,8 +123,8 @@ import {{ import }}
 
             SnapshotTesting.assertSnapshot(
                 matching: vc,
-                as: .wait(for: delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
-                record: record,
+                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
+                record: preferences.record,
                 file: file{% endif %},
                 testName: prefireSnapshot.name + ".accessibility"
             )

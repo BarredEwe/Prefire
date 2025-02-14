@@ -20,8 +20,8 @@ jobs:
         include:
           - xcode: "Xcode_16.0"
             runsOn: macos-15
-          - xcode: "Xcode_15.4"
-            runsOn: macos-14
+          - xcode: "Xcode_16.2"
+            runsOn: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode
