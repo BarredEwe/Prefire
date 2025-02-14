@@ -53,8 +53,10 @@ struct PlaybookConfig {
 }
 
 extension Config {
+    static let packagePathKey = "PACKAGE_DIR"
+    
     static func load(from configPath: String?, testTargetPath: String?, env: [String : String]) -> Config? {
-        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: testTargetPath)
+        let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: testTargetPath, packagePath: env[packagePathKey])
 
         for path in possibleConfigPaths {
             let configUrl = URL(filePath: path)

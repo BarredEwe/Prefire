@@ -6,11 +6,12 @@ enum ConfigPathBuilder {
     /// Unifying the format of the config path and creating additional possible paths
     /// - Parameter configPath: The current path to the config, or `nil` if not provided
     /// - Parameter testTargetPath: Path to Snapshot Tests Target
+    /// - Parameter packagePath: Path to SPM package
     /// - Returns: An array of possible paths for the configuration file
-    static func possibleConfigPaths(for configPath: String?, testTargetPath: String?) -> [String] {
+    static func possibleConfigPaths(for configPath: String?, testTargetPath: String?, packagePath: String?) -> [String] {
         var possibleConfigPaths = [String]()
         
-        for path in [testTargetPath, configPath] {
+        for path in [testTargetPath, configPath, packagePath] {
             guard let path else {
                 continue
             }
