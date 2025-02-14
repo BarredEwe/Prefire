@@ -6,7 +6,7 @@ private enum Constants {
 }
 
 struct GeneratedTestsOptions {
-    var sourcery: String
+    var sourcery: String?
     var target: String?
     var testTarget: String?
     var template: String
@@ -22,7 +22,7 @@ struct GeneratedTestsOptions {
     var testableImports: [String]?
 
     init(
-        sourcery: String,
+        sourcery: String?,
         target: String?,
         testTarget: String?,
         template: String,
@@ -79,7 +79,7 @@ enum GenerateTestsCommand {
 
     static func run(_ options: GeneratedTestsOptions) async throws {
         let task = Process()
-        task.executableURL = URL(filePath: options.sourcery)
+        task.executableURL = URL(filePath: options.sourcery ?? "/usr/bin/env")
 
         let rawArguments = await makeArguments(for: options)
         let yamlContent = YAMLParser().string(from: rawArguments)
@@ -88,7 +88,10 @@ enum GenerateTestsCommand {
 
         yamlContent.rewrite(toFile: URL(string: filePath))
 
-        task.arguments =  ["--config", filePath]
+        task.arguments = ["--config", filePath]
+        if options.sourcery == nil {
+            task.arguments?.insert("sourcery", at: 0)
+        }
 
         try task.run()
         task.waitUntilExit()
@@ -104,7 +107,7 @@ enum GenerateTestsCommand {
             Prefire configuration
                 ➜ Target used for tests: \(options.target ?? "nil")
                 ➜ Tests target: \(options.testTarget ?? "nil")
-                ➜ Sourcery path: \(options.sourcery)
+                ➜ Sourcery path: \(options.sourcery ?? "nil")
                 ➜ Template path: \(options.template)
                 ➜ Generated test path: \(output)
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
