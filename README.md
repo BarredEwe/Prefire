@@ -1,6 +1,6 @@
 ![Prefire](https://i.postimg.cc/Y9cbLVY4/temp-Image-P7o5-NQ.jpg)
 
-<p align="center">A library for easily generating automatic <b>Playbook (Demo) view</b> and <b>Tests</b> using <b>SwiftUI Preview</b></p>
+<p align="center">A library for easily generating automatic <b>Playbook (Demo) view</b>, <b>Tests</b> using <b>Preview</b></p>
 <p align="center">Works with: <b>UI-components, screens and flows</b></p>
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
@@ -12,24 +12,64 @@
 
 # Prefire
 
-<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
-
 Do you like **SwiftUI Preview** and use it? Then you must try 🔥**Prefire**!
 
 You can try 🔥**Prefire** starting from example project.
 
-- ✅ Easy to use: Get started with the example project.
-- ✅ Fully automatic generation based on [Sourcery](https://github.com/krzysztofzablocki/Sourcery)
-- ✅ Generation _Playbook (Demo) views_
-- ✅ Generation _Snapshot tests_ based on [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
-- ✅ Generation _Accesability Snapshot_ tests
-- ✅ Support for _Xcode Plugin_
+## 🚀 Features
+
+<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
+
+- ✅ **Zero-Boilerplate Playbook** - Automatically generate interactive component catalogs
+- ✅ **Snapshot Testing** - Catch UI regressions with automatic test generation
+- ✅ **Smart Previews** - Enhance SwiftUI previews with states and user stories
+- ✅ **CI-Ready** - Seamless integration with GitHub Actions and other CI systems
+- ✅ **Xcode & CLI** - Choose your workflow: IDE integration or command line
+
+### Why Prefire? 
+
+- 🔥 **Save Time** - Generate tests and documentation automatically
+- 🔥 **Stay Consistent** - Keep previews and tests always in sync
+- 🔥 **Improve Quality** - Catch visual regressions before users do
+- 🔥 **Boost Collaboration** - Share living documentation with your team
 
 <br clear="all">
 
 ---
+## ⚡ Quick Start
 
-## Installation
+### 1. Add Prefire to Your Project
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "4.0.0")
+],
+.testTarget(
+    plugins: [
+        // For Snapshot Tests
+        .plugin(name: "PrefireTestsPlugin", package: "Prefire")
+    ]
+)
+```
+
+### 2. Write `#Preview`
+```swift
+#Preview {
+    Button("Submit")
+}
+```
+
+### 3. Run tests
+
+Just run generated tests 🚀
+All tests will be generated in the DerivedData folder.
+
+<img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
+
+---
+
+## 📦 Installation
 
 **Prefire** can be installed for an `Xcode Project` or only for one `Package` or `CLI` tool.
 
@@ -59,7 +99,7 @@ a Swift Package with a `Package.swift` manifest.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/BarredEwe/Prefire", from: "1.0.0")
+    .package(url: "https://github.com/BarredEwe/Prefire", from: "4.0.0")
 ]
 ```
 
@@ -116,7 +156,7 @@ prefire playbook
 
 ---
 
-## Usage
+## 🛠 Advanced Usage
 To generate **tests** and **playbook**, simply mark your preview using the `PrefireProvider` protocol:
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
@@ -231,7 +271,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 
 ---
 
-## Config
+## ⚙ Configuration
 
 To further customize **Prefire**, you can create a `.prefire.yml` file in the root directory of your project. Here's an example of its content:
 
@@ -312,3 +352,13 @@ Running Prefire via CI
 Xcode is unable to generate tests in a custom path.
 - To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
 `defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES`
+
+## 🤝 Contributing
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a Pull Request
+
+## 📄 License
+Prefire is released under the MIT License. See LICENSE for details.
