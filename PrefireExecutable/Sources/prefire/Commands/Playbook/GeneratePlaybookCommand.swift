@@ -5,7 +5,7 @@ private enum Constants {
 }
 
 struct GeneratedPlaybookOptions {
-    var sourcery: String
+    var sourcery: String?
     var targetPath: String?
     var sources: [String]
     var output: String
@@ -15,7 +15,7 @@ struct GeneratedPlaybookOptions {
     var imports: [String]?
     var testableImports: [String]?
 
-    init(sourcery: String, targetPath: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
+    init(sourcery: String?, targetPath: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
         self.sourcery = sourcery
         self.targetPath = config?.playbook.targetPath ?? targetPath
         self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
@@ -51,7 +51,7 @@ enum GeneratePlaybookCommand {
 
     static func run(_ options: GeneratedPlaybookOptions) async throws {
         let task = Process()
-        task.executableURL = URL(filePath: options.sourcery)
+        task.executableURL = URL(filePath: options.sourcery ?? "/usr/bin/env")
 
         let rawArguments = await makeArguments(for: options)
         let yamlContent = YAMLParser().string(from: rawArguments)
@@ -60,7 +60,10 @@ enum GeneratePlaybookCommand {
 
         yamlContent.rewrite(toFile: URL(string: filePath))
 
-        task.arguments =  ["--config", filePath]
+        task.arguments = ["--config", filePath]
+        if options.sourcery == nil {
+            task.arguments?.insert("sourcery", at: 0)
+        }
 
         try task.run()
         task.waitUntilExit()
@@ -73,7 +76,7 @@ enum GeneratePlaybookCommand {
         Logger.print(
             """
             Prefire configuration
-                ➜ Sourcery path: \(options.sourcery)
+                ➜ Sourcery path: \(options.sourcery ?? "")
                 ➜ Template path: \(options.template)
                 ➜ Generated test path: \(options.output)
                 ➜ Preview default enabled: \(options.previewDefaultEnabled)

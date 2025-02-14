@@ -6,10 +6,10 @@ extension Prefire {
         static let configuration = CommandConfiguration(abstract: "Generate Playbook")
 
         @Argument(help: "Paths to a source swift files or directories.")
-        var sources: [String]
+        var sources: [String] = [FileManager.default.currentDirectoryPath]
 
         @Option(help: "Path to the sourcery.")
-        var sourcery: String
+        var sourcery: String?
         @Option(help: "Path to your custom template.")
         var template: String
 
@@ -27,6 +27,7 @@ extension Prefire {
 
         func run() async throws {
             Logger.verbose = verbose
+            let config = Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
 
             try await GeneratePlaybookCommand.run(
                 GeneratedPlaybookOptions(
@@ -36,7 +37,7 @@ extension Prefire {
                     output: output,
                     template: template,
                     cacheBasePath: cacheBasePath,
-                    config: Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
+                    config: config
                 )
             )
         }
