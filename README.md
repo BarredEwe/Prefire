@@ -5,7 +5,7 @@
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
 <a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS-green.svg"/></a>
-<a href="https://developer.apple.com/swift"><img alt="Swift5" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
+<a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
 <a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
 <img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
 </p>
@@ -31,9 +31,10 @@ You can try 🔥**Prefire** starting from example project.
 
 ## Installation
 
-**Prefire** can be installed for an `Xcode Project` or only for one `Package`.
+**Prefire** can be installed for an `Xcode Project` or only for one `Package` or `CLI` tool.
 
-### **Xcode Project Plugin**
+<details>
+<summary><h3 style="display:inline-block">Xcode Project Plugin</h3></summary>
 
 You can integrate Prefire as an Xcode Build Tool Plug-in if you're working
 on a project in Xcode.
@@ -47,10 +48,11 @@ Open `Run Build Tool Plug-ins` and select the `+` button.
 From the list, select `PrefirePlaybookPlugin` or `PrefireTestsPlugin`, and add it to the project.
 
 <img src="https://i.postimg.cc/VNnJNrX3/Screenshot-2023-01-19-at-16-43-44.png" width="400">
+</details>
+<details>
+<summary><h3 style="display:inline-block">Swift Package Plugin</h3></summary>
 
-### **Swift Package Plugin**
-
-You can integrate **Prefire** as a Swift Package Manager Plug-in if you're working with
+You can integrate Prefire as a Swift Package Manager Plug-in if you're working with
 a Swift Package with a `Package.swift` manifest.
 
 1. Add **Prefire** as a package dependency to your `Package.swift` file.
@@ -77,6 +79,40 @@ dependencies: [
     ]
 )
 ```
+</details>
+<details>
+<summary><h3 style="display:inline-block">Command line tool (CLI)</h3></summary>
+
+Prefire provides a command-line interface for generating snapshot tests from your previews.
+
+### Installation
+Download Pre-built Binary
+```bash
+curl -L https://github.com/BarredEwe/Prefire/raw/refs/heads/main/Binaries/PrefireBinary.artifactbundle/prefire-3.6.0-macos/bin/prefire -o prefire
+```
+Make executable and move to bin
+```bash
+chmod +x prefire;
+sudo mv prefire /usr/local/bin/
+```
+
+### Basic Commands
+#### Generate Tests
+Generate snapshot tests from your preview providers:
+```bash
+prefire tests
+```
+> Tip: Use `prefire tests --help` for complete documentation
+
+#### Generate Playbook
+Generate a playbook file documenting all your previews:
+
+```bash
+prefire playbook
+```
+> Tip: Use `prefire playbook --help` for complete documentation
+
+</details>
 
 ---
 
