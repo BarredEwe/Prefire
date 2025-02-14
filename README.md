@@ -140,7 +140,7 @@ sudo mv prefire /usr/local/bin/
 #### Generate Tests
 Generate snapshot tests from your preview providers:
 ```bash
-prefire tests
+prefire tests --template /SomeTemplate.stencil
 ```
 > Tip: Use `prefire tests --help` for complete documentation
 
@@ -361,4 +361,4 @@ We welcome contributions! Please follow these steps:
 3. Submit a Pull Request
 
 ## 📄 License
-Prefire is released under the MIT License. See LICENSE for details.
+Prefire is released under the MIT License. See [LICENSE](https://github.com/BarredEwe/Prefire/blob/main/LICENSE) for details.
