@@ -31,9 +31,13 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         let sources = testedTarget.sourceFiles.filter { $0.type == .source }.map(\.path.string)
         arguments.append(contentsOf: sources)
 
-        let environment = [
+        var environment = [
             "TARGET_DIR": target.directory.string,
         ]
+        #if swift(>=6.0)
+        environment["PACKAGE_DIR"] = context.package.directoryURL.path()
+        #endif
+        
 
         return [
             .prebuildCommand(
