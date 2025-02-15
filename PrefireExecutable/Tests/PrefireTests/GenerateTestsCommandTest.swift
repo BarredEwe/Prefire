@@ -7,7 +7,7 @@ class GenerateTestsCommandTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        options = GeneratedTestsOptions(
+        options = try? GeneratedTestsOptions(
             sourcery: "sourcery",
             target: "GenerateTestsCommand",
             testTarget: "GenerateTestsCommandTests",

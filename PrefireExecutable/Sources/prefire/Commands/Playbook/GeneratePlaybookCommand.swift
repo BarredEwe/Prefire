@@ -2,6 +2,8 @@ import Foundation
 
 private enum Constants {
     static let configFileName = "sourcery.yml"
+    static let templatePath = "/opt/homebrew/Cellar/Prefire/\(Prefire.Version.value)/libexec/PreviewModels.stencil"
+    static let defaultOutputName = "/PreviewModels.generated.swift"
 }
 
 struct GeneratedPlaybookOptions {
@@ -15,19 +17,24 @@ struct GeneratedPlaybookOptions {
     var imports: [String]?
     var testableImports: [String]?
 
-    init(sourcery: String?, targetPath: String?, sources: [String], output: String, template: String, cacheBasePath: String?, config: Config?) {
+    init(sourcery: String?, targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
         self.sourcery = sourcery
         self.targetPath = config?.playbook.targetPath ?? targetPath
         self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
-        self.output = output
+        self.output = output ?? FileManager.default.currentDirectoryPath.appending(Constants.defaultOutputName)
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
 
         if let template = config?.playbook.template, let targetPath {
             let targetURL = URL(filePath: targetPath)
             let templateURL = targetURL.appending(path: template)
             self.template = templateURL.absoluteURL.path()
-        } else {
+        } else if let template {
             self.template = template
+        } else {
+            guard FileManager.default.fileExists(atPath: Constants.templatePath) else {
+                throw NSError(domain: "Cannot find template", code: 0)
+            }
+            self.template = Constants.templatePath
         }
 
         self.cacheBasePath = cacheBasePath

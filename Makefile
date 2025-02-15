@@ -23,3 +23,10 @@ update:
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
 	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static var value: String = "$(version)"/g' Version.swift
+
+archive:
+	cp /Users/m.grishutin/Documents/Projects/Prefire/Templates/PreviewTests.stencil Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/
+	cp /Users/m.grishutin/Documents/Projects/Prefire/Templates/PreviewModels.stencil Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/
+	tar -czf prefire.tar.gz -C Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/ prefire PreviewTests.stencil PreviewModels.stencil
+	rm Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/PreviewTests.stencil
+	rm Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/PreviewModels.stencil
