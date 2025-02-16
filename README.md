@@ -126,14 +126,10 @@ dependencies: [
 Prefire provides a command-line interface for generating snapshot tests from your previews.
 
 ### Installation
-Download Pre-built Binary
+Download Prefire from brew:
 ```bash
-curl -L https://github.com/BarredEwe/Prefire/raw/refs/heads/main/Binaries/PrefireBinary.artifactbundle/prefire-3.6.0-macos/bin/prefire -o prefire
-```
-Make executable and move to bin
-```bash
-chmod +x prefire;
-sudo mv prefire /usr/local/bin/
+brew tap barredewe/prefire
+brew install prefire
 ```
 
 ### Basic Commands
