@@ -136,7 +136,7 @@ brew install prefire
 #### Generate Tests
 Generate snapshot tests from your preview providers:
 ```bash
-prefire tests --template /SomeTemplate.stencil
+prefire tests
 ```
 > Tip: Use `prefire tests --help` for complete documentation
 
