@@ -23,9 +23,9 @@ import {{ import }}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
 #if os(iOS)
-    private let deviceConfig: ViewImageConfig = .iPhoneX
+    private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
 #elseif os(tvOS)
-    private let deviceConfig: ViewImageConfig = .tv
+    private let deviceConfig: DeviceConfig = ViewImageConfig.tv.deviceConfig
 #endif
 
     
@@ -46,7 +46,7 @@ import {{ import }}
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: deviceConfig)) {
+            if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: preview.device?.snapshotDevice() ?? deviceConfig)) {
                 XCTFail(failure)
             }
         }
@@ -70,7 +70,7 @@ import {{ import }}
 
         for deviceName in snapshotDevices {
             var snapshot = prefireSnapshot
-            guard let device = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
+            guard let device: DeviceConfig = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
                 fatalError("Unknown device name from configuration file: \(deviceName)")
             }
 
@@ -92,7 +92,7 @@ import {{ import }}
     }
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
-        let preferences = PreferenceKeys()
+        let preferences = prefireSnapshot.settings ?? .init()
 
         let view = prefireSnapshot.content
             .onPreferenceChange(DelayPreferenceKey.self) { preferences.delay = $0 }
@@ -110,7 +110,7 @@ import {{ import }}
             as: .prefireImage(precision: { preferences.precision },
                               perceptualPrecision: { preferences.perceptualPrecision },
                               duration: { preferences.delay },
-                              layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device) : .sizeThatFits,
+                              layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
                               traits: prefireSnapshot.traits){% if argument.file %},
             record: preferences.record,
             file: file{% endif %},
@@ -149,46 +149,15 @@ import {{ import }}
     }
 }
 
-@MainActor struct PrefireSnapshot<Content: SwiftUI.View> {
-    var content: Content
-    var name: String
-    var isScreen: Bool
-    var device: ViewImageConfig
-    var traits: UITraitCollection = .init()
+// MARK: - SnapshotTesting + Extensions
 
-    init(_ preview: _Preview, testName: String = #function, device: ViewImageConfig) where Content == AnyView {
-        content = preview.content
-        name = preview.displayName ?? testName
-        isScreen = preview.layout == .device
-        self.device = preview.device?.snapshotDevice() ?? device
-    }
-
-    init(_ view: Content, name: String, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) {
-        content = view
-        self.name = name
-        self.isScreen = isScreen
-        self.device = device
-        self.traits = traits
-    }
-
-    init(_ view: UIView, name: String, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
-        content = ViewRepresentable(view: view)
-        self.name = name
-        self.isScreen = isScreen
-        self.device = device
-        self.traits = traits
-    }
-
-    init(_ viewController: UIViewController, name: String, isScreen: Bool, device: ViewImageConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
-        content = ViewControllerRepresentable(viewController: viewController)
-        self.name = name
-        self.isScreen = isScreen
-        self.device = device
-        self.traits = traits
-    }
+extension DeviceConfig {
+    var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
 }
 
-// MARK: - SnapshotTesting + Extensions
+extension ViewImageConfig {
+    var deviceConfig: DeviceConfig { DeviceConfig(safeArea: safeArea, size: size, traits: traits) }
+}
 
 private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
@@ -220,6 +189,10 @@ private extension PreviewDevice {
 #endif
         default: return nil
         }
+    }
+
+    func snapshotDevice() -> DeviceConfig? {
+        (self.snapshotDevice())?.deviceConfig
     }
 }
 
