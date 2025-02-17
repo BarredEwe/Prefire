@@ -121,7 +121,7 @@ dependencies: [
 ```
 </details>
 <details>
-<summary><h3 style="display:inline-block">Command line tool (CLI)</h3></summary>
+<summary><h3 style="display:inline-block">Command line interface (CLI)</h3></summary>
 
 Prefire provides a command-line interface for generating snapshot tests from your previews.
 
