@@ -11,12 +11,12 @@ extension Prefire {
         @Option(help: "Path to the sourcery.")
         var sourcery: String?
         @Option(help: "Path to your custom template.")
-        var template: String
+        var template: String?
 
         @Option(help: "Path to a config `.prefire.yml`.")
         var config: String?
         @Option(help: "Path to generated file.")
-        var output: String
+        var output: String?
         @Option(help: "Path to Playbook destination target.")
         var targetPath: String?
         @Option(help: "Base path to the cache directory.")

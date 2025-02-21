@@ -11,7 +11,7 @@ extension Prefire {
         @Option(help: "Path to the sourcery.")
         var sourcery: String?
         @Option(help: "Path to your custom template.")
-        var template: String
+        var template: String?
 
         @Option(help: "Your project Target tested by snapshots.")
         var target: String?

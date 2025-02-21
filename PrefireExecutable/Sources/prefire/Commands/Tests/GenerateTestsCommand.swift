@@ -3,6 +3,7 @@ import Foundation
 private enum Constants {
     static let snapshotFileName = "PreviewTests"
     static let configFileName = "sourcery.yml"
+    static let templatePath = "/opt/homebrew/Cellar/Prefire/\(Prefire.Version.value)/libexec/PreviewTests.stencil"
 }
 
 struct GeneratedTestsOptions {
@@ -25,7 +26,7 @@ struct GeneratedTestsOptions {
         sourcery: String?,
         target: String?,
         testTarget: String?,
-        template: String,
+        template: String?,
         sources: [String],
         output: String?,
         testTargetPath: String?,
@@ -33,7 +34,7 @@ struct GeneratedTestsOptions {
         device: String?,
         osVersion: String?,
         config: Config?
-    ) {
+    ) throws {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
         self.testTarget = testTarget
@@ -42,8 +43,13 @@ struct GeneratedTestsOptions {
             let testTargetURL = URL(filePath: testTargetPath)
             let templateURL = testTargetURL.appending(path: template)
             self.template = templateURL.absoluteURL.path()
-        } else {
+        } else if let template {
             self.template = template
+        } else {
+            guard FileManager.default.fileExists(atPath: Constants.templatePath) else {
+                throw NSError(domain: "Cannot find template", code: 0)
+            }
+            self.template = Constants.templatePath
         }
         
         self.sources = config?.tests.sources ?? sources

@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Ref to build (branch, tag or SHA)'
+        required: false
+        default: 'master'
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: macos-15
+    permissions: write-all
+    steps:
+      - name: Create achrive
+        run: |
+          make achive    
+
+      - name: Upload Release
+        uses: actions/upload-artifact@v3
+        with:
+          name: prefire.tar.gz
+          path: "~/prefire.tar.gz"
+
+  update-homebrew:
+    needs: release
+    runs-on: macos-15
+    permissions: write-all
+    steps:
+      - name: upgrade-brew-tap
+        uses: mislav/bump-homebrew-formula-action@v3
+        with:
+          formula-name: prefire
+          homebrew-tap: barredewe/homebrew-tap
+          tag-name: ${{ github.event.inputs.tag-name }}
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
