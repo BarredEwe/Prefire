@@ -51,6 +51,8 @@ public struct PreviewModel: Identifiable {
     ///
     /// The time from when a view was created (`.init`) to when it was shown (`.onAppear`)
     public var renderTime: String?
+    
+    public var deviceConfig: DeviceConfig?
 
     @MainActor
     public init(
@@ -58,13 +60,15 @@ public struct PreviewModel: Identifiable {
         content: @escaping () -> any View,
         name: String,
         type: LayoutType = .component,
-        device: PreviewDevice?
+        device: PreviewDevice? = nil,
+        deviceConfig: DeviceConfig? = nil
     ) {
         self.id = id ?? name + String(describing: content.self)
         self.content = { AnyView(content()) }
         self.name = name
         self.type = type
         self.device = device
+        self.deviceConfig = deviceConfig
     }
 
     @MainActor
@@ -73,7 +77,7 @@ public struct PreviewModel: Identifiable {
         content: @escaping () -> UIView,
         name: String,
         type: LayoutType = .component,
-        device: PreviewDevice?
+        device: PreviewDevice? = nil
     ) {
         self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device)
     }
@@ -84,7 +88,7 @@ public struct PreviewModel: Identifiable {
         content: @escaping () -> UIViewController,
         name: String,
         type: LayoutType = .component,
-        device: PreviewDevice?
+        device: PreviewDevice? = nil
     ) {
         self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device)
     }

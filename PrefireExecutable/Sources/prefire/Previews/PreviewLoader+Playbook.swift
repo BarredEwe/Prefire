@@ -13,7 +13,7 @@ extension PreviewLoader {
         guard let findedBodies = await loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
 
         let previewModels = findedBodies
-            .map { RawPreviewModel(from: $0.value, filename: $0.key, lineSymbol: previewSpaces).previewModel }
+            .compactMap { RawPreviewModel(from: $0.value, filename: $0.key, lineSymbol: previewSpaces)?.previewModel }
             .joined(separator: "\n")
 
         return yamlSettings +

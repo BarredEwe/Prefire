@@ -10,16 +10,17 @@ extension PreviewLoader {
 
         let result = findedBodies
             .sorted(by: { $0.key > $1.key })
-            .map { makeFunc(fileName: $0.key, body: $0.value) + "\r\n" }
+            .compactMap { makeFunc(fileName: $0.key, body: $0.value)?.appending("\r\n") }
             .joined()
 
         return yamlSettings + result
     }
 
-    private static func makeFunc(fileName: String, body: String) -> String {
-        let rawPreviewModel = RawPreviewModel(from: body, filename: fileName, lineSymbol: previewSpaces)
+    private static func makeFunc(fileName: String, body: String) -> String? {
+        guard let rawPreviewModel = RawPreviewModel(from: body, filename: fileName, lineSymbol: previewSpaces) else { return nil }
         let isScreen = rawPreviewModel.traits == ".device"
         let componentTestName = rawPreviewModel.displayName.components(separatedBy: funcCharacterSet).joined()
+        let snapshotSettings = rawPreviewModel.snapshotSettings?.replacingOccurrences(of: "snapshot", with: "init")
 
         return 
             """
@@ -27,7 +28,7 @@ extension PreviewLoader {
                         let preview = {
             \(rawPreviewModel.body)
                         }
-                        if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig)) {
+                        if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "\(rawPreviewModel.displayName)", isScreen: \(isScreen), device: deviceConfig\(snapshotSettings.flatMap({ ", settings: " + $0 }) ?? ""))) {
                             XCTFail(failure)
                         }
                     }
