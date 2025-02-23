@@ -19,4 +19,12 @@ extension String {
             fatalError(error.localizedDescription)
         }
     }
+    
+    /// Indents the lines in the receiver
+    ///
+    /// - Parameters:
+    ///   - amount: A int specifies the amount of indentString for one level idnentation
+    func ident(_ count: Int) -> String {
+        components(separatedBy: "\n").map({ String(repeating: " ", count: count) + $0 }).joined(separator: "\n")
+    }
 }

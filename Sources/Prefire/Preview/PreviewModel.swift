@@ -57,7 +57,7 @@ public struct PreviewModel: Identifiable {
     @MainActor
     public init(
         id: String? = nil,
-        content: @escaping () -> any View,
+        @ViewBuilder content: @escaping @MainActor () -> any View,
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil,

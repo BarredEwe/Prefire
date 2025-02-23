@@ -2,7 +2,6 @@ import Foundation
 
 extension PreviewLoader {
     private static let yamlSettings = "|-4\n\n"
-    private static let previewSpaces = "                    "
 
     /// Loading and creating lines of code with the `PreviewModel` array
     /// - Parameters:
@@ -13,15 +12,17 @@ extension PreviewLoader {
         guard let findedBodies = await loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
 
         let previewModels = findedBodies
-            .compactMap { RawPreviewModel(from: $0.value, filename: $0.key, lineSymbol: previewSpaces)?.previewModel }
-            .joined(separator: "\n")
+            .sorted { $0.key > $1.key }
+            .compactMap { RawPreviewModel(from: $0.value, filename: $0.key) }
 
         return yamlSettings +
             """
                 @MainActor
                 private struct MacroPreviews {
+                \(previewModels.filter({ $0.properties != nil }).map({ $0.previewWrapper }).joined(separator: "\r\n"))
+
                     static var previews: [PreviewModel] = [
-            \(previewModels)
+            \(previewModels.map(\.previewModel).joined(separator: "\r\n"))
                     ]
                 }
             """

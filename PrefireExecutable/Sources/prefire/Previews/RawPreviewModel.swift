@@ -4,7 +4,12 @@ struct RawPreviewModel {
     var displayName: String
     var traits: String
     var body: String
+    var properties: String?
     var snapshotSettings: String?
+    
+    var isScreen: Bool {
+        traits == Constants.defaultTrait
+    }
 }
 
 extension RawPreviewModel {
@@ -12,6 +17,7 @@ extension RawPreviewModel {
         static let previewMacro = "#Preview"
         static let traits = "traits: "
         static let snasphotSettings = ".snapshot("
+        static let previewable = "@Previewable"
     }
 
     private enum Constants {
@@ -22,10 +28,9 @@ extension RawPreviewModel {
     /// - Parameters:
     ///   - macroBody: Preview View body
     ///   - filename: File name in which the macro was found
-    ///   - lineSymbol: The line separator symbol
-    init?(from macroBody: String, filename: String, lineSymbol: String = "") {
-        let lines = macroBody.split(separator: "\n", omittingEmptySubsequences: false)
-        guard let firstLine = lines.first else { return nil }
+    init?(from macroBody: String, filename: String) {
+        var lines = macroBody.split(separator: "\n", omittingEmptySubsequences: false).dropLast(2)
+        let firstLine = lines.removeFirst()
         
         // Define displayName by splitting the first line by "
         let parts = firstLine.split(separator: "\"")
@@ -45,25 +50,42 @@ extension RawPreviewModel {
         }
         self.traits = previewTrait ?? Constants.defaultTrait
         
-        // Search for the line with snapshot settings
-        if let configLine = lines.first(where: { $0.contains(Markers.snasphotSettings) }) {
-            self.snapshotSettings = configLine.trimmingCharacters(in: .whitespaces)
-        } else {
-            self.snapshotSettings = nil
+        
+        for (index, line) in lines.enumerated() {
+            // Search for the line with snapshot settings
+            if snapshotSettings == nil, line.contains(Markers.snasphotSettings) {
+                self.snapshotSettings = line.trimmingCharacters(in: .whitespaces)
+            } else if line.contains(Markers.previewable) {
+                lines.remove(at: index + 1)
+                if self.properties == nil {
+                    self.properties = String(line.replacing("\(Markers.previewable) ", with: ""))
+                } else {
+                    self.properties! += "\n" + String(line.replacing(Markers.previewable, with: ""))
+                }
+            }
         }
         
-        // Forming the Preview body: remove the first and last two lines
-        let bodyLines = lines.dropFirst().dropLast(2)
-        self.body = bodyLines.map { lineSymbol + $0 }.joined(separator: "\n")
+        self.body = lines.joined(separator: "\n")
     }
 }
 
 extension RawPreviewModel {
+    var previewWrapper: String {
+        """
+            struct PreviewWrapper\(displayName): SwiftUI.View {
+                \(properties ?? "")
+                    var body: some SwiftUI.View {
+        \(body.ident(12))
+                    }
+                }
+        """
+    }
+
     var previewModel: String {
         """
                     PreviewModel(
                         content: {
-        \(body)
+        \(properties == nil ? body.ident(16) : "                    PreviewWrapper\(displayName)()")
                         },
                         name: \"\(displayName)\",
                         type: \(traits == ".device" ? ".screen" : ".component")

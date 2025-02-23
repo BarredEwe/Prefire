@@ -41,7 +41,10 @@ struct PrefireView_Preview: PreviewProvider, PrefireProvider {
 }
 
 #Preview("PrefireViewMacroAnother") {
+    @Previewable @State var title: String = "Prefire"
+
     PrefireView()
+        .navigationTitle(title)
         .previewUserStory(.auth)
         .snapshot(perceptualPrecision: 0.98)
 }
