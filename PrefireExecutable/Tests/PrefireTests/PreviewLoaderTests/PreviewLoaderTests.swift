@@ -5,7 +5,7 @@ import XCTest
 class PreviewLoaderTests: XCTestCase {
     var previewRepresentations = [
         "#Preview {\n    Text(\"TestView\")\n}\n",
-        "#Preview {\n    Text(\"TestView_Prefire\")\n        .prefireEnabled()\n}\n"
+        "#Preview {\n    Text(\"TestView_Prefire\")\n        .prefireEnabled()\n}\n",
     ]
 
     let source = #filePath
@@ -74,7 +74,12 @@ import SwiftUI
 
 #Preview {
     Text("TestView_Ignored")
-        .prefireIgnored()
+        // Some comment
+        .prefireIgnored() // Some comment
+}
+
+#Preview {
+    Text("TestView_Ignored_One_Line").prefireIgnored() // Some comment
 }
 
 extension View {
