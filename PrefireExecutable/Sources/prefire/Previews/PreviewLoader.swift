@@ -89,11 +89,11 @@ enum PreviewLoader {
             }
 
             if defaultEnabled {
-                if line.hasSuffix(Constants.prefireDisableMarker) {
+                if line.contains(Constants.prefireDisableMarker) {
                     viewMustBeLoaded = false
                 }
             } else if !viewMustBeLoaded {
-                viewMustBeLoaded = line.hasSuffix(Constants.prefireEnabledMarker)
+                viewMustBeLoaded = line.contains(Constants.prefireEnabledMarker)
             }
 
             currentBody.append(String(line) + "\n")
