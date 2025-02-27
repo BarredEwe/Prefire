@@ -29,6 +29,8 @@ extension RawPreviewModel {
     ///   - macroBody: Preview View body
     ///   - filename: File name in which the macro was found
     init?(from macroBody: String, filename: String) {
+        guard !macroBody.isEmpty else { return nil }
+        
         var lines = macroBody.split(separator: "\n", omittingEmptySubsequences: false).dropLast(2)
         let firstLine = lines.removeFirst()
         

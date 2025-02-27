@@ -5,11 +5,11 @@ enum TestedTargetFinder {
     /// Search for testedTarget
     /// - Parameter target: Test target
     /// - Returns: Tested Target object
-    static func findTestedTarget(for target: Target) -> SwiftSourceModuleTarget? {
+    static func findTestedTarget(for target: Target) throws -> SwiftSourceModuleTarget? {
         let swiftTarget = target as? SwiftSourceModuleTarget
 
         guard swiftTarget?.kind == .test else {
-            fatalError("`PrefireTestsPlugin` must be connected to the test target. \(target.name) is not a test target.")
+            throw NSError(domain: "`PrefireTestsPlugin` must be connected to the test target. \(target.name) is not a test target.", code: 0)
         }
 
         let targetDependencies = swiftTarget?.dependencies
@@ -65,9 +65,9 @@ extension TestedTargetFinder {
     ///   - target: Test Target
     ///   - project: Current Xcode Project
     /// - Returns: Tested Xcode Target
-    static func findTestedTarget(for target: XcodeTarget, project: XcodeProject) -> XcodeTarget? {
+    static func findTestedTarget(for target: XcodeTarget, project: XcodeProject) throws -> XcodeTarget? {
         guard target.isTestKind else {
-            fatalError("`PrefireTestsPlugin` must be connected to the test target. \(target.displayName) is not a test target.")
+            throw NSError(domain: "`PrefireTestsPlugin` must be connected to the test target. \(target.displayName) is not a test target.", code: 0)
         }
 
         let targetNameFromConfig = loadTargetNameFromConfig(for: project.directoryURL.path, targetName: target.displayName)
