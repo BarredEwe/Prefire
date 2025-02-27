@@ -22,7 +22,7 @@ update:
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '6 s/.*/            "version": "$(version)",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
-	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static var value: String = "$(version)"/g' Version.swift
+	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static let value: String = "$(version)"/g' Version.swift
 
 archive:
 	cp /Users/m.grishutin/Documents/Projects/Prefire/Templates/PreviewTests.stencil Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/
