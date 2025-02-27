@@ -5,7 +5,7 @@ extension Prefire {
     struct Version: ParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Display the current version of Prefire")
 
-        static let value: String = "3.6.0"
+        static var value: String = "4.0.0"
 
         func run() throws {
             print(Self.value)
