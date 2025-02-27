@@ -10,8 +10,6 @@
 <img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
 </p>
 
-# Prefire
-
 Do you like **SwiftUI Preview** and use it? Then you must try 🔥**Prefire**!
 
 You can try 🔥**Prefire** starting from example project.
