@@ -9,7 +9,9 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
         let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
         let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
-        let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+        guard let templatePath = executable.path.components(separatedBy: "Binaries").first.flatMap({ $0 + "Templates/" + "PreviewModels.stencil" }) else {
+            throw NSError(domain: "Invalid template Path", code: 0)
+        }
         let targetPath = String(describing: target.directory)
 
         var arguments: [String] = [
@@ -47,7 +49,9 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
 
             let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
             let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
-            let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewModels.stencil"
+            guard let templatePath = executable.path.components(separatedBy: "Binaries").first.flatMap({ $0 + "Templates/" + "PreviewModels.stencil" }) else {
+                throw NSError(domain: "Invalid template Path", code: 0)
+            }
             let targetPath = context.xcodeProject.directoryURL.appending(path: target.displayName)
 
             var arguments: [String] = [

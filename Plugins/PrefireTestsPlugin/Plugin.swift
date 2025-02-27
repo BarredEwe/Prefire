@@ -11,7 +11,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
         let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
-        guard let testedTarget = TestedTargetFinder.findTestedTarget(for: target) else {
+        guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target) else {
             throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
         }
 
@@ -31,7 +31,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         let sources = testedTarget.sourceFiles.filter { $0.type == .source }.map(\.url.path)
         arguments.append(contentsOf: sources)
 
-        var environment = [
+        let environment = [
             "TARGET_DIR": String(describing: target.directory),
             "PACKAGE_DIR": context.package.directoryURL.path(),
         ]
@@ -61,7 +61,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
             let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
             let testTagetPath = context.xcodeProject.directoryURL.appending(path: target.displayName).path
 
-            guard let testedTarget = TestedTargetFinder.findTestedTarget(for: target, project: context.xcodeProject) else {
+            guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target, project: context.xcodeProject) else {
                 throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
             }
 
