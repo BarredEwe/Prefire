@@ -105,6 +105,16 @@ import {{ import }}
             .fixedSize(horizontal: false, vertical: true)
         )
 
+        // In order to call onPreferenceChange, render the view once
+        let hostingController = UIHostingController(rootView: matchingView)
+        let window = UIWindow(frame: .init())
+        window.isHidden = false
+        window.rootViewController = hostingController
+        hostingController.beginAppearanceTransition(true, animated: false)
+        hostingController.endAppearanceTransition()
+        hostingController.view.setNeedsLayout()
+        hostingController.view.layoutIfNeeded()
+
         let failure = verifySnapshot(
             of: matchingView,
             as: .prefireImage(precision: { preferences.precision },
