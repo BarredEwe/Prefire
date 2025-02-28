@@ -13,28 +13,34 @@ on:
 
 jobs:
   release:
+    name: Create Release
     runs-on: macos-15
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Create achrive
         run: make archive
-      - name: Upload Release
-        uses: actions/upload-artifact@v4
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: prefire.tar.gz
-          path: prefire.tar.gz
+          generate_release_notes: true
+          files: prefire.tar.gz
 
   update-homebrew:
     needs: release
     runs-on: macos-15
-    permissions: write-all
+    permissions:
+      contents: read
     steps:
       - name: upgrade-brew-tap
         uses: mislav/bump-homebrew-formula-action@v3
         with:
-          formula-name: prefire
-          homebrew-tap: barredewe/homebrew-tap
-          tag-name: ${{ github.event.inputs.tag-name }}
+          formula-name: Prefire
+          homebrew-tap: barredewe/homebrew-prefire
+          tag-name: ${{ github.ref_name }}
+          download-url: "https://github.com/barredewe/prefire/releases/download/${{ github.ref_name }}/prefire.tar.gz"
         env:
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
