@@ -16,7 +16,6 @@ class RawPreviewModelTests: XCTestCase {
         XCTAssertEqual(rawPreviewModel?.properties, nil)
         XCTAssertEqual(rawPreviewModel?.displayName, "TestViewName")
         XCTAssertEqual(rawPreviewModel?.traits, ".sizeThatFitsLayout")
-        XCTAssertEqual(rawPreviewModel?.snapshotSettings, nil)
     }
 
     func test_initWithoutName() {
@@ -37,6 +36,5 @@ class RawPreviewModelTests: XCTestCase {
         XCTAssertEqual(rawPreviewModel?.properties, "    @State var name: String = \"TestView\"")
         XCTAssertEqual(rawPreviewModel?.displayName, "TestView")
         XCTAssertEqual(rawPreviewModel?.traits, ".sizeThatFitsLayout")
-        XCTAssertEqual(rawPreviewModel?.snapshotSettings, ".snapshot(delay: 8)")
     }
 }

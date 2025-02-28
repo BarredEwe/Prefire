@@ -5,7 +5,6 @@ struct RawPreviewModel {
     var traits: String
     var body: String
     var properties: String?
-    var snapshotSettings: String?
     
     var isScreen: Bool {
         traits == Constants.defaultTrait
@@ -16,7 +15,6 @@ extension RawPreviewModel {
     private enum Markers {
         static let previewMacro = "#Preview"
         static let traits = "traits: "
-        static let snasphotSettings = ".snapshot("
         static let previewable = "@Previewable"
     }
 
@@ -54,10 +52,8 @@ extension RawPreviewModel {
         
         
         for (index, line) in lines.enumerated() {
-            // Search for the line with snapshot settings
-            if snapshotSettings == nil, line.contains(Markers.snasphotSettings) {
-                self.snapshotSettings = line.trimmingCharacters(in: .whitespaces)
-            } else if line.contains(Markers.previewable) {
+            // Search for the line with `@Previewable` macro
+            if line.contains(Markers.previewable) {
                 lines.remove(at: index + 1)
                 if self.properties == nil {
                     self.properties = String(line.replacing("\(Markers.previewable) ", with: ""))

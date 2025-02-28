@@ -19,7 +19,6 @@ extension PreviewLoader {
         guard let model = RawPreviewModel(from: body, filename: fileName) else { return nil }
         
         let componentTestName = model.displayName.components(separatedBy: funcCharacterSet).joined()
-        let settingsSuffix = (model.snapshotSettings?.replacingOccurrences(of: "snapshot", with: "init")).flatMap { ", settings: \($0)" } ?? ""
         
         let previewCode: String
         let content: String
@@ -31,12 +30,10 @@ extension PreviewLoader {
             content = "PreviewWrapper\(model.displayName)()"
         }
         
-        let prefireSnapshot = "PrefireSnapshot(\(content), name: \"\(model.displayName)\", isScreen: \(model.isScreen), device: deviceConfig\(settingsSuffix))"
-        
         return """
                     func test_\(componentTestName)_Preview() {
                 \(previewCode)
-                        if let failure = assertSnapshots(for: \(prefireSnapshot)) {
+                        if let failure = assertSnapshots(for: PrefireSnapshot(\(content), name: \"\(model.displayName)\", isScreen: \(model.isScreen), device: deviceConfig)) {
                             XCTFail(failure)
                         }
                     }

@@ -13,7 +13,7 @@ import {{ import }}
 {% for import in argument.testableImports %}
 @testable import {{ import }}
 {% endfor %}
-@testable import SnapshotTesting
+import SnapshotTesting
 #if canImport(AccessibilitySnapshot)
     import AccessibilitySnapshot
 #endif
@@ -92,43 +92,26 @@ import {{ import }}
     }
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
-        let preferences = prefireSnapshot.settings ?? .init()
-
-        let view = prefireSnapshot.content
-            .onPreferenceChange(DelayPreferenceKey.self) { preferences.delay = $0 }
-            .onPreferenceChange(PrecisionPreferenceKey.self) { preferences.precision = $0 }
-            .onPreferenceChange(PerceptualPrecisionPreferenceKey.self) { preferences.perceptualPrecision = $0 }
-            .onPreferenceChange(RecordPreferenceKey.self) { preferences.record = $0 }
-
-        let matchingView = prefireSnapshot.isScreen ? AnyView(view) : AnyView(view
-            .frame(width: prefireSnapshot.device.size?.width)
-            .fixedSize(horizontal: false, vertical: true)
-        )
-
-        // In order to call onPreferenceChange, render the view once
-        let hostingController = UIHostingController(rootView: matchingView)
-        let window = UIWindow(frame: .init())
-        window.isHidden = false
-        window.rootViewController = hostingController
-        hostingController.beginAppearanceTransition(true, animated: false)
-        hostingController.endAppearanceTransition()
-        hostingController.view.setNeedsLayout()
-        hostingController.view.layoutIfNeeded()
+        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
 
         let failure = verifySnapshot(
-            of: matchingView,
-            as: .prefireImage(precision: { preferences.precision },
-                              perceptualPrecision: { preferences.perceptualPrecision },
-                              duration: { preferences.delay },
-                              layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
-                              traits: prefireSnapshot.traits){% if argument.file %},
-            record: preferences.record,
+            of: previewView,
+            as: .wait(
+                for: preferences.delay,
+                on: .image(
+                    precision: preferences.precision,
+                    perceptualPrecision: preferences.perceptualPrecision,
+                    layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
+                    traits: prefireSnapshot.traits
+                )
+            ),
+            record: preferences.record,{% if argument.file %}
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
 
         #if canImport(AccessibilitySnapshot)
-            let vc = UIHostingController(rootView: matchingView)
+            let vc = UIHostingController(rootView: previewView)
             vc.view.frame = UIScreen.main.bounds
 
             SnapshotTesting.assertSnapshot(
@@ -203,79 +186,5 @@ private extension PreviewDevice {
 
     func snapshotDevice() -> DeviceConfig? {
         (self.snapshotDevice())?.deviceConfig
-    }
-}
-
-private extension Snapshotting where Value: SwiftUI.View, Format == UIImage {
-    @MainActor
-    static func prefireImage(
-        drawHierarchyInKeyWindow: Bool = false,
-        precision: @escaping () -> Float,
-        perceptualPrecision: @escaping () -> Float,
-        duration: @escaping () -> TimeInterval,
-        layout: SwiftUISnapshotLayout = .sizeThatFits,
-        traits: UITraitCollection = .init()
-    ) -> Snapshotting {
-        let config: ViewImageConfig
-
-        switch layout {
-        #if os(iOS) || os(tvOS)
-        case let .device(config: deviceConfig):
-            config = deviceConfig
-        #endif
-        case .sizeThatFits:
-            config = .init(safeArea: .zero, size: nil, traits: traits)
-        case let .fixed(width: width, height: height):
-            let size = CGSize(width: width, height: height)
-            config = .init(safeArea: .zero, size: size, traits: traits)
-        }
-
-        return SimplySnapshotting<UIImage>(pathExtension: "png", diffing: .prefireImage(precision: precision, perceptualPrecision: perceptualPrecision, scale: traits.displayScale))
-            .asyncPullback { view in
-                var config = config
-                let controller: UIViewController
-
-                if config.size != nil {
-                    controller = UIHostingController(rootView: view)
-                } else {
-                    let hostingController = UIHostingController(rootView: view)
-
-                    let maxSize = CGSize.zero
-                    config.size = hostingController.sizeThatFits(in: maxSize)
-
-                    controller = hostingController
-                }
-
-                return Async<UIImage> { callback in
-                    let strategy = snapshotView(
-                        config: config,
-                        drawHierarchyInKeyWindow: drawHierarchyInKeyWindow,
-                        traits: traits,
-                        view: controller.view,
-                        viewController: controller
-                    )
-
-                    let duration = duration()
-                    if duration != .zero {
-                        let expectation = XCTestExpectation(description: "Wait")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                            expectation.fulfill()
-                        }
-                        _ = XCTWaiter.wait(for: [expectation], timeout: duration + 1)
-                    }
-                    strategy.run(callback)
-                }
-            }
-    }
-}
-
-private extension Diffing where Value == UIImage {
-    static func prefireImage(precision: @escaping () -> Float, perceptualPrecision: @escaping () -> Float, scale: CGFloat?) -> Diffing {
-        lazy var originalDiffing = Diffing.image(precision: precision(), perceptualPrecision: perceptualPrecision(), scale: scale)
-        return Diffing(
-            toData: { originalDiffing.toData($0) },
-            fromData: { originalDiffing.fromData($0) },
-            diff: { originalDiffing.diff($0, $1) }
-        )
     }
 }

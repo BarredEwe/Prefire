@@ -14,32 +14,41 @@ public struct DeviceConfig {
 }
 
 @MainActor public struct PrefireSnapshot<Content: SwiftUI.View> {
-    public var content: Content
+    private var previewContent: Content
     public var name: String
     public var isScreen: Bool
     public var device: DeviceConfig
     public var traits: UITraitCollection = .init()
-    public var settings: PreferenceKeys?
+    
+    private var content: AnyView {
+        if isScreen {
+            AnyView(previewContent)
+        } else {
+            AnyView(
+                previewContent
+                    .frame(width: device.size?.width)
+                    .fixedSize(horizontal: false, vertical: true)
+            )
+        }
+    }
 
-    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig, settings: PreferenceKeys? = nil) where Content == AnyView {
-        content = preview.content
+    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig) where Content == AnyView {
+        previewContent = preview.content
         name = preview.displayName ?? testName
         isScreen = preview.layout == .device
         self.device = device
-        self.settings = settings
     }
 
-    public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init(), settings: PreferenceKeys? = nil) {
-        content = view
+    public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
+        previewContent = view
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
-        self.settings = settings
     }
 
     public init(_ view: UIView, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
-        content = ViewRepresentable(view: view)
+        previewContent = ViewRepresentable(view: view)
         self.name = name
         self.isScreen = isScreen
         self.device = device
@@ -47,11 +56,46 @@ public struct DeviceConfig {
     }
 
     public init(_ viewController: UIViewController, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
-        content = ViewControllerRepresentable(viewController: viewController)
+        previewContent = ViewControllerRepresentable(viewController: viewController)
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
+    }
+    
+    public func loadViewWithPreferences() -> (AnyView, PreferenceKeys) {
+        let preferences = PreferenceKeys()
+        
+        let view = AnyView(
+            content
+                .onPreferenceChange(DelayPreferenceKey.self) {
+                    preferences.delay = $0
+                }
+                .onPreferenceChange(PrecisionPreferenceKey.self) {
+                    preferences.precision = $0
+                }
+                .onPreferenceChange(PerceptualPrecisionPreferenceKey.self) {
+                    preferences.perceptualPrecision = $0
+                }
+                .onPreferenceChange(RecordPreferenceKey.self) {
+                    preferences.record = $0
+                }
+        )
+
+        // In order to call onPreferenceChange, render the view once
+        render(view: view)
+
+        return (view, preferences)
+    }
+    
+    // MARK: - Private functions
+    
+    private func render(view: AnyView) {
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: .init())
+        
+        window.isHidden = false
+        window.rootViewController = hostingController
     }
 }
 #endif
