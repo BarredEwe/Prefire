@@ -96,6 +96,9 @@ public struct DeviceConfig {
         
         window.isHidden = false
         window.rootViewController = hostingController
+        
+        hostingController.view.setNeedsLayout()
+        hostingController.view.layoutIfNeeded()
     }
 }
 #endif
