@@ -10,15 +10,24 @@ class YAMLParserTests: XCTestCase {
                 "key1": "value1"
             ],
             "key1": "value1",
+            "arrayOfDictionariesKey": [
+                ["key1": "value1"],
+                ["key2": "value2"],
+                ["key3": "multline\nstring with \"quotes\" and backslash \\"]
+            ]
         ]
-        let expectation = """
+        let expectation = #"""
         arrayKey:
           - value1
+        arrayOfDictionariesKey:
+          - key1: "value1"
+          - key2: "value2"
+          - key3: "multline\nstring with \"quotes\" and backslash \\"
         dictionaryKey:
-          key1: value1
-        key1: value1
+          key1: "value1"
+        key1: "value1"
 
-        """
+        """#
 
         let result = YAMLParser().string(from: content)
 
