@@ -68,9 +68,15 @@ extension RawPreviewModel {
 }
 
 extension RawPreviewModel {
+    private static let funcCharacterSet = CharacterSet(arrayLiteral: "_").inverted.intersection(.alphanumerics.inverted)
+
+    var componentTestName: String {
+        displayName.components(separatedBy: Self.funcCharacterSet).joined()
+    }
+
     var previewWrapper: String {
         """
-            struct PreviewWrapper\(displayName): SwiftUI.View {
+            struct PreviewWrapper\(componentTestName): SwiftUI.View {
                 \(properties ?? "")
                     var body: some SwiftUI.View {
         \(body.ident(12))
@@ -83,7 +89,7 @@ extension RawPreviewModel {
         """
                     PreviewModel(
                         content: {
-        \(properties == nil ? body.ident(16) : "                    PreviewWrapper\(displayName)()")
+        \(properties == nil ? body.ident(16) : "                    PreviewWrapper\(componentTestName)()")
                         },
                         name: \"\(displayName)\",
                         type: \(traits == ".device" ? ".screen" : ".component")

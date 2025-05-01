@@ -1,25 +1,21 @@
 import Foundation
 
 extension PreviewLoader {
-    private static let funcCharacterSet = CharacterSet(arrayLiteral: "_").inverted.intersection(.alphanumerics.inverted)
-    private static let yamlSettings = "|-4\n\n"
-
-    static func loadPreviewBodies(for sources: [String], defaultEnabled: Bool) async -> String? {
+    static func loadPreviewMacros(for sources: [String], defaultEnabled: Bool) async -> (String, [[String: Any?]])? {
         guard let rawBodies = await loadRawPreviewBodies(for: sources, defaultEnabled: defaultEnabled) else { return nil }
         
-        let functions = rawBodies
+        let models = rawBodies
             .sorted { $0.key > $1.key }
-            .compactMap { makeTestFunc(fileName: $0.key, body: $0.value) }
-            .joined(separator: "\r\n")
+            .compactMap { RawPreviewModel(from: $0.value, filename: $0.key) }
         
-        return yamlSettings + functions
+        return (
+            models.map(makeTestFuncString).joined(separator: "\n"),
+            models.map(makeTestFuncDict)
+        )
     }
 
-    private static func makeTestFunc(fileName: String, body: String) -> String? {
-        guard let model = RawPreviewModel(from: body, filename: fileName) else { return nil }
-        
-        let componentTestName = model.displayName.components(separatedBy: funcCharacterSet).joined()
-        
+    private static func makeTestFuncString(_ model: RawPreviewModel) -> String {
+        let componentTestName = model.componentTestName
         let previewCode: String
         let content: String
         if model.properties == nil {
@@ -27,7 +23,7 @@ extension PreviewLoader {
             content = "preview()"
         } else {
             previewCode = model.previewWrapper.ident(4)
-            content = "PreviewWrapper\(model.displayName)()"
+            content = "PreviewWrapper\(componentTestName)()"
         }
         
         return """
@@ -38,5 +34,15 @@ extension PreviewLoader {
                         }
                     }
             """
+    }
+
+    private static func makeTestFuncDict(_ model: RawPreviewModel) -> [String: Any?] {
+        return [
+            "displayName": model.displayName,
+            "componentTestName": model.componentTestName,
+            "isScreen": model.isScreen,
+            "body": model.body,
+            "properties": model.properties,
+        ]
     }
 }

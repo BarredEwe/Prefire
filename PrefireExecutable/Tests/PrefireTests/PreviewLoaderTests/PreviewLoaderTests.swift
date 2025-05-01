@@ -22,18 +22,20 @@ class PreviewLoaderTests: XCTestCase {
         let directoryURL = URL(fileURLWithPath: source).deletingLastPathComponent()
         let previewRepresentationsInAnotherFile = [
             "#Preview {\n    Text(\"TestPreview\")\n}\n",
-            "#Preview {\n    Text(\"TestPreview_Prefire\")\n        .prefireEnabled()\n}\n"
+            "#Preview {\n    Text(\"TestPreview_Prefire\")\n        .prefireEnabled()\n}\n",
+			"#Preview(\"Preview with properties\") {\n    @Previewable @State var foo: Bool = false\n    Text(\"TestPreview_WithProperties\")\n}\n"
         ]
         let bodies = await PreviewLoader.loadRawPreviewBodies(
             for: [directoryURL.path()],
             defaultEnabled: true
         )
 
-        XCTAssertEqual(bodies?.count, 4)
+        XCTAssertEqual(bodies?.count, 5)
         XCTAssertEqual(bodies?["PreviewLoaderTests_0"], previewRepresentations[0])
         XCTAssertEqual(bodies?["PreviewLoaderTests_1"], previewRepresentations[1])
         XCTAssertEqual(bodies?["TestPreview_0"], previewRepresentationsInAnotherFile[0])
         XCTAssertEqual(bodies?["TestPreview_1"], previewRepresentationsInAnotherFile[1])
+		XCTAssertEqual(bodies?["TestPreview_2"], previewRepresentationsInAnotherFile[2])
     }
 
     func test_loadRawPreviewBodiesDefaultDisabledAndUrlIsDirectory() async {
