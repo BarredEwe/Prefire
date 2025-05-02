@@ -81,6 +81,7 @@ enum GenerateTestsCommand {
         static let imports = "imports"
         static let testableImports = "testableImports"
         static let previewsMacros = "previewsMacros"
+        static let previewsMacrosDict = "previewsMacrosDict"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -122,7 +123,8 @@ enum GenerateTestsCommand {
         )
 
         // Works with `#Preview` macro
-        let previewBodies = await PreviewLoader.loadPreviewBodies(for: sources, defaultEnabled: options.prefireEnabledMarker)
+        let (previewBodies, previewModels) =
+            await PreviewLoader.loadPreviewMacros(for: sources, defaultEnabled: options.prefireEnabledMarker) ?? (nil, nil)
 
         let arguments: [String: Any?] = [
             Keys.output: output,
@@ -134,6 +136,7 @@ enum GenerateTestsCommand {
                 Keys.simulatorDevice: options.device,
                 Keys.snapshotDevices: options.snapshotDevices?.joined(separator: "|"),
                 Keys.previewsMacros: previewBodies,
+                Keys.previewsMacrosDict: previewModels,
                 Keys.imports: options.imports,
                 Keys.testableImports: options.testableImports,
                 Keys.mainTarget: options.target,
