@@ -272,6 +272,7 @@ To further customize **Prefire**, you can create a `.prefire.yml` file in the ro
 ```yaml
 test_configuration:
   - target: PrefireExample 
+  - test_target_path: ${PROJECT_DIR}/Tests
   - test_file_path: PrefireExampleTests/PreviewTests.generated.swift
   - template_file_path: CustomPreviewTests.stencil
   - simulator_device: "iPhone15,2"
@@ -299,8 +300,9 @@ playbook_configuration:
 ```
 ### Configuration keys and their descriptions
 - `target` - Your project Target for Snapshot tests. __Default__: _FirstTarget_
+- `test_target_path` — The path to the test directory. Generates snapshots will be placed into its `__Snapshots__` subdirectory. __Default__: The same as the test target name.
 - `test_file_path` - Filepath to generated file. __Default__: _DerivedData_
-- `template_file_path` - Stencil file for generated file. Optional parameter.\
+- `template_file_path` - Stencil file for generated file, relative to `test_target_path`. Optional parameter.\
    For test plugin __Default__: _Templates/PreviewTests.stencil_ from the package.\
    For playbook plugin __Default__: _Templates/PreviewModels.stencil_ from the package
 - `simulator_device` - Device for Snapshot testing. Optional parameter.

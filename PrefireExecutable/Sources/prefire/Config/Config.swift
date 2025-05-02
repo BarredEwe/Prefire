@@ -12,6 +12,7 @@ struct Config {
 
 struct TestsConfig {
     var target: String?
+    var testTargetPath: String?
     var sources: [String]?
     var testFilePath: String?
     var template: String?
@@ -24,6 +25,7 @@ struct TestsConfig {
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
+        case testTargetPath = "test_target_path"
         case sources = "sources"
         case testFilePath = "test_file_path"
         case template = "template_file_path"

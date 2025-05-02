@@ -38,8 +38,9 @@ struct GeneratedTestsOptions {
         self.sourcery = sourcery
         self.target = config?.tests.target ?? target
         self.testTarget = testTarget
-        
-        if let template = config?.tests.template, let testTargetPath {
+        self.testTargetPath = config?.tests.testTargetPath ?? testTargetPath
+
+        if let template = config?.tests.template, let testTargetPath = self.testTargetPath {
             let testTargetURL = URL(filePath: testTargetPath)
             let templateURL = testTargetURL.appending(path: template)
             self.template = templateURL.absoluteURL.path()
@@ -55,7 +56,6 @@ struct GeneratedTestsOptions {
         self.sources = config?.tests.sources ?? sources
         self.output = config?.tests.testFilePath ?? output
         prefireEnabledMarker = config?.tests.previewDefaultEnabled ?? true
-        self.testTargetPath = testTargetPath
         self.cacheBasePath = cacheBasePath
         self.device = config?.tests.device ?? device
         self.osVersion = config?.tests.osVersion ?? osVersion
