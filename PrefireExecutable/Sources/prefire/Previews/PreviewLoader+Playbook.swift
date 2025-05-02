@@ -1,7 +1,6 @@
 import Foundation
 
 extension PreviewLoader {
-    private static let yamlSettings = "|-4\n\n"
 
     /// Loading and creating lines of code with the `PreviewModel` array
     /// - Parameters:
@@ -15,7 +14,7 @@ extension PreviewLoader {
             .sorted { $0.key > $1.key }
             .compactMap { RawPreviewModel(from: $0.value, filename: $0.key) }
 
-        return yamlSettings +
+        return
             """
                 @MainActor
                 private struct MacroPreviews {
