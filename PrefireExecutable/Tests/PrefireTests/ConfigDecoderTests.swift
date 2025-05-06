@@ -6,6 +6,7 @@ class ConfigDecoderTests: XCTestCase {
     private let prefireConfigString = """
         test_configuration:
           - target: PrefireExample
+          - test_target_path: ${TARGET_DIR}/MyTests
           - test_file_path: ${TARGET_DIR}/PrefireExampleTests/PreviewTests.generated.swift
           - template_file_path: CustomPreviewTests.stencil
           - simulator_device: "iPhone15,2"
@@ -35,6 +36,7 @@ class ConfigDecoderTests: XCTestCase {
         let config = ConfigDecoder().decode(from: prefireConfigString, env: env)
 
         XCTAssertEqual(config.tests.target, "PrefireExample")
+        XCTAssertEqual(config.tests.testTargetPath, "/User/Tests/MyTests")
         XCTAssertEqual(config.tests.testFilePath, "/User/Tests/PrefireExampleTests/PreviewTests.generated.swift")
         XCTAssertEqual(config.tests.template, "CustomPreviewTests.stencil")
         XCTAssertEqual(config.tests.device, "iPhone15,2")

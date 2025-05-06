@@ -42,6 +42,8 @@ final class ConfigDecoder {
         switch key {
             case .target:
                 config.tests.target = getValue(from: components.last, env: env)
+            case .testTargetPath:
+                config.tests.testTargetPath = getValue(from: components.last, env: env)
             case .sources:
                 config.tests.sources = getValues(from: components, lines: lines, env: env)
             case .testFilePath:
