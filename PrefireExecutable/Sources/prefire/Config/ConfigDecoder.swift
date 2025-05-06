@@ -37,13 +37,14 @@ final class ConfigDecoder {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
 
-        guard let key = TestsConfig.CodingKeys(rawValue: keyString) else { return }
+        guard let key = TestsConfig.CodingKeys(rawValue: keyString) else {
+            Logger.print("⚠️ Unknown test config key: '\(keyString)'")
+            return
+        }
 
         switch key {
             case .target:
                 config.tests.target = getValue(from: components.last, env: env)
-            case .testTargetPath:
-                config.tests.testTargetPath = getValue(from: components.last, env: env)
             case .sources:
                 config.tests.sources = getValues(from: components, lines: lines, env: env)
             case .testFilePath:
@@ -69,7 +70,10 @@ final class ConfigDecoder {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
 
-        guard let key = PlaybookConfig.CodingKeys(rawValue: keyString) else { return }
+        guard let key = PlaybookConfig.CodingKeys(rawValue: keyString) else {
+            Logger.print("⚠️ Unknown playbook config key: '\(keyString)'")
+            return
+        }
 
         switch key {
             case .targetPath:
