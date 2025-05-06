@@ -48,7 +48,7 @@ struct GeneratedTestsOptions {
             self.template = template
         } else {
             guard FileManager.default.fileExists(atPath: Constants.templatePath) else {
-                throw NSError(domain: "Cannot find template", code: 0)
+                throw NSError(domain: "❌ Template not found at path: \(Constants.templatePath)", code: 0)
             }
             self.template = Constants.templatePath
         }
@@ -93,7 +93,7 @@ enum GenerateTestsCommand {
         let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
             .appending(Constants.configFileName)
 
-        yamlContent.rewrite(toFile: URL(string: filePath))
+        try yamlContent.rewrite(toFile: URL(string: filePath))
 
         task.arguments = ["--config", filePath]
         if options.sourcery == nil {

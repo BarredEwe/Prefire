@@ -12,7 +12,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
         let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
         guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target) else {
-            throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
+            throw "❌ Prefire error: Cannot find target for testing. Please use `.prefire.yml` and set `target:` field."
         }
 
         var arguments: [String] = [
