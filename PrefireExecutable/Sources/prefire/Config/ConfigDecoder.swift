@@ -19,11 +19,13 @@ final class ConfigDecoder {
                 currentSection = .playbook
             } else if let currentSection {
                 let components = lines[index].components(separatedBy: Constants.separtor)
-                switch currentSection {
+                if components.count > 1 {
+                    switch currentSection {
                     case .tests:
                         handleTestConfig(config: &config, components: components, lines: lines[index..<lines.count], env: env)
                     case .playbook:
                         handlePlaybookConfig(config: &config, components: components, lines: lines[index..<lines.count], env: env)
+                    }
                 }
             }
         }
@@ -36,6 +38,8 @@ final class ConfigDecoder {
     private func handleTestConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String : String]) {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+        
+        guard !keyString.isEmpty else { return }
 
         guard let key = TestsConfig.CodingKeys(rawValue: keyString) else {
             Logger.print("⚠️ Unknown test config key: '\(keyString)'")
@@ -71,6 +75,8 @@ final class ConfigDecoder {
     private func handlePlaybookConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String : String]) {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+        
+        guard !keyString.isEmpty else { return }
 
         guard let key = PlaybookConfig.CodingKeys(rawValue: keyString) else {
             Logger.print("⚠️ Unknown playbook config key: '\(keyString)'")
