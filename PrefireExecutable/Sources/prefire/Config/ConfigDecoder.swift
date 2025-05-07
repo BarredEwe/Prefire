@@ -43,26 +43,28 @@ final class ConfigDecoder {
         }
 
         switch key {
-            case .target:
-                config.tests.target = getValue(from: components.last, env: env)
-            case .sources:
-                config.tests.sources = getValues(from: components, lines: lines, env: env)
-            case .testFilePath:
-                config.tests.testFilePath = getValue(from: components.last, env: env)
-            case .template:
-                config.tests.template = getValue(from: components.last, env: env)
-            case .device:
-                config.tests.device = getValue(from: components.last, env: env)
-            case .osVersion:
-                config.tests.osVersion = getValue(from: components.last, env: env)
-            case .snapshotDevices:
-                config.tests.snapshotDevices = getValues(from: components, lines: lines, env: env)
-            case .previewDefaultEnabled:
-                config.tests.previewDefaultEnabled = getValue(from: components.last, env: env) == "true"
-            case .imports:
-                config.tests.imports = getValues(from: components, lines: lines, env: env)
-            case .testableImports:
-                config.tests.testableImports = getValues(from: components, lines: lines, env: env)
+        case .target:
+            config.tests.target = getValue(from: components.last, env: env)
+        case .sources:
+            config.tests.sources = getValues(from: components, lines: lines, env: env)
+        case .testFilePath:
+            config.tests.testFilePath = getValue(from: components.last, env: env)
+        case .template:
+            config.tests.template = getValue(from: components.last, env: env)
+        case .device:
+            config.tests.device = getValue(from: components.last, env: env)
+        case .osVersion:
+            config.tests.osVersion = getValue(from: components.last, env: env)
+        case .snapshotDevices:
+            config.tests.snapshotDevices = getValues(from: components, lines: lines, env: env)
+        case .previewDefaultEnabled:
+            config.tests.previewDefaultEnabled = getValue(from: components.last, env: env) == "true"
+        case .imports:
+            config.tests.imports = getValues(from: components, lines: lines, env: env)
+        case .testableImports:
+            config.tests.testableImports = getValues(from: components, lines: lines, env: env)
+        case .testTargetPath:
+            config.tests.testTargetPath = getValue(from: components.last, env: env)
         }
     }
 
