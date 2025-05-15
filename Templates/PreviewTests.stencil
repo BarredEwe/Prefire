@@ -131,7 +131,7 @@ import SnapshotTesting
                     traits: prefireSnapshot.traits
                 )
             ),
-            record: preferences.record,{% if argument.file %}
+            record: preferences.record{% if argument.file %},
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
