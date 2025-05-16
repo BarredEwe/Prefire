@@ -3,10 +3,10 @@
     "artifacts": {
         "PrefireBinary": {
             "type": "executable",
-            "version": "4.2.0",
+            "version": "4.2.1",
             "variants": [
                 {
-                    "path": "prefire-4.2.0-macos/bin/prefire",
+                    "path": "prefire-4.2.1-macos/bin/prefire",
                     "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
                 },
             ]
