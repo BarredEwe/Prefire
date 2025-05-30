@@ -2,7 +2,7 @@ import Prefire
 import SwiftUI
 
 struct MainMenu: View {
-#if os(iOS)
+    #if os(iOS)
     var body: some View {
         NavigationView {
             Form {
@@ -23,11 +23,16 @@ struct MainMenu: View {
             .navigationTitle("SwiftUI System")
         }
     }
-#else
+
+    #elseif os(macOS)
+    var body: some View {
+        Text("macOS not yet supported")
+    }
+    #else
     var body: some View {
         Text("tvOS not yet supported")
     }
-#endif
+    #endif
 }
 
 struct MainMenu_Previews: PreviewProvider {
