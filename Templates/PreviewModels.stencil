@@ -4,7 +4,9 @@
 import SwiftUI
 import Prefire
 {% for import in argument.imports %}
+#if canImport({{ import }})
 import {{ import }}
+#endif
 {% endfor %}
 {% for import in argument.testableImports %}
 @testable import {{ import }}
