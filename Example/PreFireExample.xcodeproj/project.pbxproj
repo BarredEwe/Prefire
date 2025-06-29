@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, tvos, ); productRef = 6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */; settings = {ATTRIBUTES = (Weak, ); }; };
+		6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */; };
 		97078E162AF7F2A50041AFB7 /* PrefireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97078E152AF7F2A50041AFB7 /* PrefireExampleTests.swift */; };
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
@@ -420,12 +420,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -455,12 +454,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.prefire.example;
 				PRODUCT_NAME = PrefireExample;
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -486,12 +484,11 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -499,7 +496,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PrefireExample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 			};
 			name = Debug;
 		};
@@ -518,19 +515,18 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = barred.ewe.PreFireExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PrefireExample";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PrefireExample.app/PrefireExample";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
