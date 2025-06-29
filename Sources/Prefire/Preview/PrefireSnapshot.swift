@@ -91,7 +91,6 @@ public struct DeviceConfig {
     // MARK: - Private functions
     
     private func render(view: AnyView) {
-        #if os(iOS)
         let hostingController = UIHostingController(rootView: view)
         let window = UIWindow(frame: .init())
         
@@ -100,18 +99,6 @@ public struct DeviceConfig {
         
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
-        #else
-        let hostingController = NSHostingController(rootView: view)
-        let window = NSWindow(
-            contentRect: .init(),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        
-        window.contentView = hostingController.view
-        window.isReleasedWhenClosed = false        
-        #endif
     }
 }
 #endif

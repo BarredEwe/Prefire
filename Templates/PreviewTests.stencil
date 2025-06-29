@@ -5,9 +5,7 @@ import XCTest
 import SwiftUI
 import Prefire
 {% for import in argument.imports %}
-#if canImport({{ import }})
 import {{ import }}
-#endif
 {% endfor %}
 {% if argument.mainTarget %}
 @testable import {{ argument.mainTarget }}
@@ -26,8 +24,6 @@ import SnapshotTesting
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
 #if os(iOS)
     private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
-#elseif os(macOS)
-    private let deviceConfig: DeviceConfig = .init(safeArea: .zero, size: CGSize(width: 800, height: 600), traits: UITraitCollection())
 #elseif os(tvOS)
     private let deviceConfig: DeviceConfig = ViewImageConfig.tv.deviceConfig
 #endif
@@ -41,10 +37,8 @@ import SnapshotTesting
     @MainActor override func setUp() async throws {
         try await super.setUp()
 
-        #if os(iOS)
-        checkEnvironments() // TODO: Check environment on macOS
+        checkEnvironments()
         UIView.setAnimationsEnabled(false)
-        #endif
     }
 
     // MARK: - PreviewProvider
@@ -102,7 +96,9 @@ import SnapshotTesting
 
         for deviceName in snapshotDevices {
             var snapshot = prefireSnapshot
-            let device: DeviceConfig = PreviewDevice(rawValue: deviceName).snapshotDevice() ?? DeviceConfig(safeArea: .zero, traits: UITraitCollection())
+            guard let device: DeviceConfig = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
+                fatalError("Unknown device name from configuration file: \(deviceName)")
+            }
 
             snapshot.name = "\(prefireSnapshot.name)-\(deviceName)"
             snapshot.device = device
@@ -124,7 +120,6 @@ import SnapshotTesting
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
 
-        #if os(iOS) || os(tvOS)
         let failure = verifySnapshot(
             of: previewView,
             as: .wait(
@@ -140,20 +135,6 @@ import SnapshotTesting
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
-        #else
-        let hostingView = NSHostingView(rootView: previewView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: 800, height: 600) // TODO: Use device config
-        let failure = verifySnapshot(
-            of: hostingView,
-            as: .wait(
-                for: preferences.delay,
-                on: .image
-            ),
-            record: preferences.record{% if argument.file %},
-            file: file{% endif %},
-            testName: prefireSnapshot.name
-        )
-        #endif
 
         #if canImport(AccessibilitySnapshot)
             let vc = UIHostingController(rootView: previewView)
@@ -189,7 +170,6 @@ import SnapshotTesting
 
 // MARK: - SnapshotTesting + Extensions
 
-#if os(iOS) || os(tvOS)
 extension DeviceConfig {
     var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
 }
@@ -197,14 +177,8 @@ extension DeviceConfig {
 extension ViewImageConfig {
     var deviceConfig: DeviceConfig { DeviceConfig(safeArea: safeArea, size: size, traits: traits) }
 }
-#else
-struct ViewImageConfig {
-    var deviceConfig: DeviceConfig? { nil }
-}
-#endif
 
 private extension PreviewDevice {
-
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
 #if os(iOS)
@@ -228,9 +202,6 @@ private extension PreviewDevice {
             return .iPadPro11
         case "iPad Pro 12.9":
             return .iPadPro12_9
-#elseif os(macOS)
-        case "Mac":
-            return nil
 #elseif os(tvOS)
         case "Apple TV":
             return .tv        

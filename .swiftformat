@@ -1,7 +1,0 @@
---disable all
---enable indent
-
---indent spaces
---indent 4
---indentcase true
---indentstrings false

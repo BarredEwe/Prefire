@@ -5,7 +5,6 @@ test_configuration:
   - snapshot_devices:
       - iPhone 15
       - iPad
-      - Mac
   - imports:
       - UIKit
       - Foundation
