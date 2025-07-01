@@ -5,11 +5,9 @@ import PackagePlugin
 struct PrefireTestsPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let executable = try context.tool(named: "PrefireBinary").url
-        let sourcery = try context.tool(named: "PrefireSourcery").url
 
         let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
         let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
-        let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
 
         guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target) else {
             throw "❌ Prefire error: Cannot find target for testing. Please use `.prefire.yml` and set `target:` field."
@@ -17,13 +15,11 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
         var arguments: [String] = [
             "tests",
-            "--sourcery", sourcery.path,
             "--target", testedTarget.name,
             "--test-target", target.name,
             "--output", outputPath.path,
             "--test-target-path", String(describing: target.directory),
             "--config", testedTarget.directoryURL.path,
-            "--template", templatePath,
             "--cache-base-path", cachePath.path,
             "--verbose",
         ]
@@ -54,11 +50,9 @@ struct PrefireTestsPlugin: BuildToolPlugin {
     extension PrefireTestsPlugin: XcodeBuildToolPlugin {
         func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
             let executable = try context.tool(named: "PrefireBinary").url
-            let sourcery = try context.tool(named: "PrefireSourcery").url
 
             let cacheURL = context.pluginWorkDirectoryURL.appending(path: "Cache")
             let outputURL = context.pluginWorkDirectoryURL.appending(path: "Generated")
-            let templatePath = executable.path.components(separatedBy: "Binaries").first! + "Templates/" + "PreviewTests.stencil"
             let testTagetPath = context.xcodeProject.directoryURL.appending(path: target.displayName).path
 
             guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target, project: context.xcodeProject) else {
@@ -67,13 +61,11 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
             var arguments: [String] = [
                 "tests",
-                "--sourcery", sourcery.path,
                 "--target", testedTarget.displayName,
                 "--test-target", target.displayName,
                 "--output", outputURL.path,
                 "--test-target-path", testTagetPath,
                 "--config", context.xcodeProject.directoryURL.path,
-                "--template", templatePath,
                 "--cache-base-path", cacheURL.path,
                 "--verbose",
             ]

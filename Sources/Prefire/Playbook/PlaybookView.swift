@@ -249,7 +249,7 @@ struct ContentView_Previews: PreviewProvider {
             isComponent: true,
             previewModels: [
                 PreviewModel(id: "1", content: { AnyView(Text("Test 1").padding()) }, name: "Test 1", device: nil),
-                PreviewModel(id: "2", content: { AnyView(Text("Test 2").padding()) }, name: "Test 2", device: nil),
+                PreviewModel(id: "2", content: { AnyView(Text("Test 2").padding()) }, name: "Test 2", device: nil)
             ]
         )
     }

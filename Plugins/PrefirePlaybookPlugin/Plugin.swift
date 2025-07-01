@@ -5,22 +5,16 @@ import PackagePlugin
 struct PrefirePlaybookPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let executable = try context.tool(named: "PrefireBinary").url
-        let sourcery = try context.tool(named: "PrefireSourcery").url
 
         let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
         let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
-        guard let templatePath = executable.path.components(separatedBy: "Binaries").first.flatMap({ $0 + "Templates/" + "PreviewModels.stencil" }) else {
-            throw NSError(domain: "Invalid template Path", code: 0)
-        }
         let targetPath = String(describing: target.directory)
 
         var arguments: [String] = [
             "playbook",
-            "--sourcery", sourcery.path,
             "--output", outputPath.path,
             "--target-path", targetPath,
             "--config", targetPath,
-            "--template", templatePath,
             "--cache-base-path", cachePath.path,
             "--verbose",
         ]
@@ -45,22 +39,16 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
     extension PrefirePlaybookPlugin: XcodeBuildToolPlugin {
         func createBuildCommands(context: XcodeProjectPlugin.XcodePluginContext, target: XcodeProjectPlugin.XcodeTarget) throws -> [PackagePlugin.Command] {
             let executable = try context.tool(named: "PrefireBinary").url
-            let sourcery = try context.tool(named: "PrefireSourcery").url
 
             let cachePath = context.pluginWorkDirectoryURL.appending(path: "Cache")
             let outputPath = context.pluginWorkDirectoryURL.appending(path: "Generated")
-            guard let templatePath = executable.path.components(separatedBy: "Binaries").first.flatMap({ $0 + "Templates/" + "PreviewModels.stencil" }) else {
-                throw NSError(domain: "Invalid template Path", code: 0)
-            }
             let targetPath = context.xcodeProject.directoryURL.appending(path: target.displayName)
 
             var arguments: [String] = [
                 "playbook",
-                "--sourcery", sourcery.path,
                 "--output", outputPath.path,
                 "--target-path", targetPath.path,
                 "--config", context.xcodeProject.directoryURL.path,
-                "--template", templatePath,
                 "--cache-base-path", cachePath.path,
                 "--verbose",
             ]

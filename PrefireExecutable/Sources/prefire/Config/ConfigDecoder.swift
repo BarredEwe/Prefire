@@ -1,14 +1,15 @@
 import Foundation
+import PrefireCore
 
 private enum Constants {
     static let separtor = ":"
 }
 
 final class ConfigDecoder {
-    func decode(from configDataString: String, env: [String : String]) -> Config {
+    func decode(from configDataString: String, env: [String: String]) -> Config {
         var config: Config = Config()
 
-        var currentSection: Config.CodingKeys? = nil
+        var currentSection: Config.CodingKeys?
 
         let lines = configDataString.components(separatedBy: .newlines)
 
@@ -35,14 +36,14 @@ final class ConfigDecoder {
 
     // MARK: - Private methods
 
-    private func handleTestConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String : String]) {
+    private func handleTestConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String: String]) {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
-        
+
         guard !keyString.isEmpty else { return }
 
         guard let key = TestsConfig.CodingKeys(rawValue: keyString) else {
-            Logger.print("⚠️ Unknown test config key: '\(keyString)'")
+            Logger.warning("⚠️ Unknown test config key: '\(keyString)'")
             return
         }
 
@@ -72,14 +73,14 @@ final class ConfigDecoder {
         }
     }
 
-    private func handlePlaybookConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String : String]) {
+    private func handlePlaybookConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String: String]) {
         var components = components
         let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
-        
+
         guard !keyString.isEmpty else { return }
 
         guard let key = PlaybookConfig.CodingKeys(rawValue: keyString) else {
-            Logger.print("⚠️ Unknown playbook config key: '\(keyString)'")
+            Logger.warning("⚠️ Unknown playbook config key: '\(keyString)'")
             return
         }
 
@@ -97,7 +98,7 @@ final class ConfigDecoder {
         }
     }
 
-    private func getValues(from components: [String], lines: ArraySlice<String>, env: [String : String]) -> [String]? {
+    private func getValues(from components: [String], lines: ArraySlice<String>, env: [String: String]) -> [String]? {
         guard components.last?.isEmpty == true else { return nil }
 
         var values = [String]()
@@ -123,7 +124,7 @@ final class ConfigDecoder {
         return values
     }
 
-    private func getValue(from component: String?, env: [String : String]) -> String? {
+    private func getValue(from component: String?, env: [String: String]) -> String? {
         var value = component?.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "\"", with: "")
 
         // Check and replace if the value contains a key formatted as "${key}"

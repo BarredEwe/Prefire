@@ -5,7 +5,7 @@ public struct DeviceConfig {
     public var safeArea: UIEdgeInsets
     public var size: CGSize?
     public var traits: UITraitCollection
-    
+
     public init(safeArea: UIEdgeInsets, size: CGSize? = nil, traits: UITraitCollection) {
         self.safeArea = safeArea
         self.size = size
@@ -19,7 +19,7 @@ public struct DeviceConfig {
     public var isScreen: Bool
     public var device: DeviceConfig
     public var traits: UITraitCollection = .init()
-    
+
     private var content: AnyView {
         if isScreen {
             AnyView(previewContent)
@@ -62,10 +62,10 @@ public struct DeviceConfig {
         self.device = device
         self.traits = traits
     }
-    
+
     public func loadViewWithPreferences() -> (AnyView, PreferenceKeys) {
         let preferences = PreferenceKeys()
-        
+
         let view = AnyView(
             content
                 .onPreferenceChange(DelayPreferenceKey.self) {
@@ -87,16 +87,16 @@ public struct DeviceConfig {
 
         return (view, preferences)
     }
-    
+
     // MARK: - Private functions
-    
+
     private func render(view: AnyView) {
         let hostingController = UIHostingController(rootView: view)
         let window = UIWindow(frame: .init())
-        
+
         window.isHidden = false
         window.rootViewController = hostingController
-        
+
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
     }

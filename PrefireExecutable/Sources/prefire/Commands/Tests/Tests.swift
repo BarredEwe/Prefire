@@ -1,5 +1,6 @@
-import ArgumentParser
+@preconcurrency import ArgumentParser
 import Foundation
+import PrefireCore
 
 extension Prefire {
     struct Tests: AsyncParsableCommand {
@@ -8,8 +9,6 @@ extension Prefire {
         @Argument(help: "Paths to a source swift files or directories.")
         var sources: [String] = [FileManager.default.currentDirectoryPath]
 
-        @Option(help: "Path to the sourcery.")
-        var sourcery: String?
         @Option(help: "Path to your custom template.")
         var template: String?
 
@@ -35,12 +34,11 @@ extension Prefire {
         var verbose = false
 
         func run() async throws {
-            Logger.verbose = verbose
+            Logger.level = verbose ? .verbose : .warnings
             let config = Config.load(from: config, testTargetPath: testTargetPath, env: ProcessInfo.processInfo.environment)
 
             try await GenerateTestsCommand.run(
                 GeneratedTestsOptions(
-                    sourcery: sourcery,
                     target: target,
                     testTarget: testTarget,
                     template: template,

@@ -51,7 +51,7 @@ public struct PreviewModel: Identifiable {
     ///
     /// The time from when a view was created (`.init`) to when it was shown (`.onAppear`)
     public var renderTime: String?
-    
+
     public var deviceConfig: DeviceConfig?
 
     @MainActor
