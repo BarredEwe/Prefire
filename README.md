@@ -86,7 +86,7 @@ Supports:
 - ✅ CLI (`brew install prefire`)
 - ✅ GitHub Actions / CI
 
-See detailed setup in the [Installation guide](https://github.com/BarredEwe/Prefire/Installation.md)
+See detailed setup in the [Installation guide](https://github.com/BarredEwe/Prefire/blob/main/Installation.md)
 
 ## 🧠 How It Works
 
@@ -254,7 +254,7 @@ Run `prefire tests --help` or `prefire playbook --help` for more options.
 ---
 ## 🗂 Configuration: `.prefire.yml`
 
-See detailed configuration in the [Configuration guide](https://github.com/BarredEwe/Prefire/Configuration.md)
+See detailed configuration in the [Configuration guide](https://github.com/BarredEwe/Prefire/blob/main/Configuration.md)
 
 ```yaml
 test_configuration:
