@@ -1,43 +1,38 @@
 import Foundation
+import PrefireCore
+import PathKit
 
 private enum Constants {
-    static let configFileName = "sourcery.yml"
-    static let templatePath = "/opt/homebrew/Cellar/Prefire/\(Prefire.Version.value)/libexec/PreviewModels.stencil"
-    static let defaultOutputName = "/PreviewModels.generated.swift"
+    static let defaultOutputName = "PreviewModels.generated.swift"
 }
 
 struct GeneratedPlaybookOptions {
-    var sourcery: String?
     var targetPath: String?
-    var sources: [String]
-    var output: String
+    var sources: [Path]
+    var output: Path
     var previewDefaultEnabled: Bool
-    var template: String
-    var cacheBasePath: String?
+    var template: Path?
+    var cacheBasePath: Path?
     var imports: [String]?
     var testableImports: [String]?
 
-    init(sourcery: String?, targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
-        self.sourcery = sourcery
+    init(targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
         self.targetPath = config?.playbook.targetPath ?? targetPath
-        self.sources = sources.isEmpty ? [FileManager.default.currentDirectoryPath] : sources
-        self.output = output ?? FileManager.default.currentDirectoryPath.appending(Constants.defaultOutputName)
+        self.sources = sources.isEmpty ? [.current] : sources.compactMap({ Path($0) })
+
+        self.output = (output.flatMap({ Path($0) }) ?? .current) + Constants.defaultOutputName
+
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
 
         if let template = config?.playbook.template, let targetPath {
             let targetURL = URL(filePath: targetPath)
             let templateURL = targetURL.appending(path: template)
-            self.template = templateURL.absoluteURL.path()
+            self.template = Path(templateURL.absoluteURL.path())
         } else if let template {
-            self.template = template
-        } else {
-            guard FileManager.default.fileExists(atPath: Constants.templatePath) else {
-                throw NSError(domain: "❌ Template not found at path: \(Constants.templatePath)", code: 0)
-            }
-            self.template = Constants.templatePath
+            self.template = Path(template)
         }
 
-        self.cacheBasePath = cacheBasePath
+        self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
         imports = config?.playbook.imports
         testableImports = config?.playbook.testableImports
     }
@@ -45,63 +40,35 @@ struct GeneratedPlaybookOptions {
 
 enum GeneratePlaybookCommand {
     private enum Keys {
-        static let templates = "templates"
-        static let sources = "sources"
-        static let output = "output"
-        static let cacheBasePath = "cacheBasePath"
-        static let args = "args"
-
         static let imports = "imports"
         static let testableImports = "testableImports"
-        static let macroPreviewBodies = "macroPreviewBodies"
     }
 
     static func run(_ options: GeneratedPlaybookOptions) async throws {
-        let task = Process()
-        task.executableURL = URL(filePath: options.sourcery ?? "/usr/bin/env")
-
-        let rawArguments = await makeArguments(for: options)
-        let yamlContent = YAMLParser().string(from: rawArguments)
-        let filePath = (options.cacheBasePath?.appending("/") ?? FileManager.default.temporaryDirectory.path())
-            .appending(Constants.configFileName)
-
-        try yamlContent.rewrite(toFile: URL(string: filePath))
-
-        task.arguments = ["--config", filePath]
-        if options.sourcery == nil {
-            task.arguments?.insert("sourcery", at: 0)
-        }
-
-        try task.run()
-        task.waitUntilExit()
+        try await PrefireGenerator.generate(
+            version: Prefire.Version.value,
+            sources: options.sources,
+            output: options.output,
+            arguments: await makeArguments(for: options),
+            inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewModels,
+            defaultEnabled: options.previewDefaultEnabled,
+            cacheDir: options.cacheBasePath
+        )
     }
 
-    static func makeArguments(for options: GeneratedPlaybookOptions) async -> [String: Any?] {
-        // Works with `#Preview` macro
-        let previewBodies = await PreviewLoader.loadMacroPreviewBodies(for: options.sources, defaultEnabled: options.previewDefaultEnabled)
-
-        Logger.print(
+    static func makeArguments(for options: GeneratedPlaybookOptions) async -> [String: NSObject] {
+        Logger.info(
             """
             Prefire configuration
-                ➜ Sourcery path: \(options.sourcery ?? "")
-                ➜ Template path: \(options.template)
-                ➜ Generated test path: \(options.output)
+                ➜ Template path: \(options.template ?? "default")
+                ➜ Generated models path: \(options.output)
                 ➜ Preview default enabled: \(options.previewDefaultEnabled)
             """
         )
 
-        let arguments: [String: Any?] = [
-            Keys.templates: [options.template],
-            Keys.output: options.output,
-            Keys.sources: options.sources,
-            Keys.cacheBasePath: options.cacheBasePath,
-            Keys.args: [
-                Keys.imports: options.imports,
-                Keys.testableImports: options.testableImports,
-                Keys.macroPreviewBodies: previewBodies
-            ] as [String: Any?]
-        ]
-
-        return arguments
+        return [
+            Keys.imports: options.imports as? NSArray,
+            Keys.testableImports: options.testableImports as? NSArray
+        ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

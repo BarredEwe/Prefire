@@ -1,13 +1,183 @@
 {
-  "originHash" : "ad1d41c10f2a198cfdba9a621431121a95c49f2db40cd55da1cbe1be67ba806e",
+  "originHash" : "d3a9f6ef43d2674bfa2e43d7bd23c4201c6799c08bc6ba8b880bc487da15a24f",
   "pins" : [
+    {
+      "identity" : "aexml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tadija/AEXML.git",
+      "state" : {
+        "revision" : "38f7d00b23ecd891e1ee656fa6aeebd6ba04ecc3",
+        "version" : "4.6.1"
+      }
+    },
+    {
+      "identity" : "commander",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/Commander.git",
+      "state" : {
+        "revision" : "4b6133c3071d521489a80c38fb92d7983f19d438",
+        "version" : "0.9.1"
+      }
+    },
+    {
+      "identity" : "pathkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/PathKit.git",
+      "state" : {
+        "revision" : "3bfd2737b700b9a36565a8c94f4ad2b050a5e574",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "sourcery",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/BarredEwe/Sourcery.git",
+      "state" : {
+        "revision" : "ee2f3fc2bbcdd733dff0913f9db824372ef37b3d"
+      }
+    },
+    {
+      "identity" : "spectre",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/Spectre.git",
+      "state" : {
+        "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
+        "version" : "0.10.1"
+      }
+    },
+    {
+      "identity" : "stencil",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/Stencil.git",
+      "state" : {
+        "revision" : "03a1dca8923bef5a34c08f5a560fb420326f7244",
+        "version" : "0.15.3"
+      }
+    },
+    {
+      "identity" : "stencilswiftkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/StencilSwiftKit.git",
+      "state" : {
+        "revision" : "6b07f85def6984e7015d65502d41b91f3f8db6d5",
+        "version" : "2.10.4"
+      }
+    },
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
-        "version" : "1.5.0"
+        "revision" : "8f4d2753f0e4778c76d5f05ad16c74f707390531",
+        "version" : "1.2.3"
+      }
+    },
+    {
+      "identity" : "swift-asn1",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-asn1.git",
+      "state" : {
+        "revision" : "f70225981241859eb4aa1a18a75531d26637c8cc",
+        "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "swift-certificates",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-certificates.git",
+      "state" : {
+        "revision" : "01d7664523af5c169f26038f1e5d444ce47ae5ff",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections.git",
+      "state" : {
+        "revision" : "c1805596154bb3a265fd91b8ac0c4433b4348fb0",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto.git",
+      "state" : {
+        "revision" : "629f0b679d0fd0a6ae823d7f750b9ab032c00b80",
+        "version" : "3.0.0"
+      }
+    },
+    {
+      "identity" : "swift-driver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/swift-driver.git",
+      "state" : {
+        "revision" : "1c07ced84c1dfc1f9c3253dcbaa216fc9c76ee25",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "swift-llbuild",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/swift-llbuild.git",
+      "state" : {
+        "revision" : "783aec21649a6c47d1a8314db4144bdceb11df30",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-package-manager",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/swift-package-manager.git",
+      "state" : {
+        "revision" : "7df9321541e544d711dd93f5b97dd4e8bf7e100e",
+        "version" : "1.0.8"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "0687f71944021d616d34d922343dcef086855920",
+        "version" : "600.0.1"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system.git",
+      "state" : {
+        "revision" : "836bc4557b74fe6d2660218d56e3ce96aff76574",
+        "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "swift-tools-support-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/art-divin/swift-tools-support-core.git",
+      "state" : {
+        "revision" : "930e82e5ae2432c71fe05f440b5d778285270bdb",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "xcodeproj",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tuist/XcodeProj.git",
+      "state" : {
+        "revision" : "f6c9cb05835086af13f91317f92693848b43ea47",
+        "version" : "8.24.6"
+      }
+    },
+    {
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams.git",
+      "state" : {
+        "revision" : "0d9ee7ea8c4ebd4a489ad7a73d5c6cad55d6fed3",
+        "version" : "5.0.6"
       }
     }
   ],

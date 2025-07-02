@@ -1,4 +1,5 @@
 import Foundation
+import PrefireCore
 
 struct Config {
     var tests = TestsConfig()
@@ -56,8 +57,8 @@ struct PlaybookConfig {
 
 extension Config {
     static let packagePathKey = "PACKAGE_DIR"
-    
-    static func load(from configPath: String?, testTargetPath: String?, env: [String : String]) -> Config? {
+
+    static func load(from configPath: String?, testTargetPath: String?, env: [String: String]) -> Config? {
         let possibleConfigPaths = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: testTargetPath, packagePath: env[packagePathKey])
 
         for path in possibleConfigPaths {
@@ -65,12 +66,12 @@ extension Config {
             guard FileManager.default.fileExists(atPath: configUrl.path),
                   let configDataString = try? String(contentsOf: configUrl, encoding: .utf8) else { continue }
 
-            Logger.print("🟢 The '.prefire' file is used on the path: \(configUrl.path)")
+            Logger.info("🟢 The '.prefire' file is used on the path: \(configUrl.path)")
 
             return ConfigDecoder().decode(from: configDataString, env: env)
         }
 
-        Logger.print("🟡 The '.prefire' file was not found by paths:" + possibleConfigPaths.map({ "\n  - " + $0 }).joined())
+        Logger.verbose("🟡 The '.prefire' file was not found by paths:" + possibleConfigPaths.map({ "\n  - " + $0 }).joined())
 
         return nil
     }

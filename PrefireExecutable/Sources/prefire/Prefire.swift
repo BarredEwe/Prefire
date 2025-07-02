@@ -1,4 +1,4 @@
-import ArgumentParser
+@preconcurrency import ArgumentParser
 import Foundation
 
 @main
@@ -10,7 +10,7 @@ struct Prefire: AsyncParsableCommand {
         subcommands: [
             Playbook.self,
             Tests.self,
-            Version.self,
+            Version.self
         ]
     )
 }

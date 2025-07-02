@@ -1,5 +1,5 @@
 import Foundation
-@testable import prefire
+@testable import PrefireCore
 import XCTest
 
 class RawPreviewModelTests: XCTestCase {

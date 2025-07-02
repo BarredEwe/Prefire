@@ -30,7 +30,6 @@ let package = Package(
             capability: .buildTool(),
             dependencies: [
                 "PrefireBinary",
-                "PrefireSourcery",
             ]
         ),
         .plugin(
@@ -38,16 +37,11 @@ let package = Package(
             capability: .buildTool(),
             dependencies: [
                 "PrefireBinary",
-                "PrefireSourcery",
             ]
         ),
         .binaryTarget(
             name: "PrefireBinary",
             path: "Binaries/PrefireBinary.artifactbundle"
-        ),
-        .binaryTarget(
-            name: "PrefireSourcery",
-            path: "PrefireExecutable/Binaries/PrefireSourcery.artifactbundle"
         ),
     ]
 )
