@@ -25,8 +25,4 @@ update:
 	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static let value: String = "$(version)"/g' Version.swift
 
 archive:
-	cp Templates/PreviewTests.stencil Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/
-	cp Templates/PreviewModels.stencil Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/
-	tar -czf prefire.tar.gz -C Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/ prefire PreviewTests.stencil PreviewModels.stencil
-	rm Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/PreviewTests.stencil
-	rm Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/PreviewModels.stencil
+	tar -czf prefire.tar.gz -C Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/ prefire
