@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Prefire",
-    platforms: [.iOS(.v14)],
+    platforms: [.iOS(.v14), .macOS(.v13)],
     products: [
         .library(
             name: "Prefire",
@@ -19,11 +19,21 @@ let package = Package(
             name: "PrefireTestsPlugin",
             targets: ["PrefireTestsPlugin"]
         ),
+        .executable(
+            name: "prefire",
+            targets: ["PrefireCLI"]
+        ),
     ],
     targets: [
         .target(
             name: "Prefire",
             dependencies: []
+        ),
+        .executableTarget(
+            name: "PrefireCLI",
+            dependencies: [
+                "PrefireBinary",
+            ]
         ),
         .plugin(
             name: "PrefirePlaybookPlugin",

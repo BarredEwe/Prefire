@@ -84,9 +84,20 @@ Supports:
 - ✅ SPM Plugin (`Package.swift`)
 - ✅ Xcode Build Tool Plugin
 - ✅ CLI (`brew install prefire`)
+- ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
 - ✅ GitHub Actions / CI
 
 See detailed setup in the [Installation guide](https://github.com/BarredEwe/Prefire/blob/main/Installation.md)
+
+### Mint
+
+Install the bundled CLI via [Mint](https://github.com/yonaskolb/Mint):
+
+```sh
+mint install BarredEwe/Prefire
+```
+
+The installed `prefire` command proxies to the packaged `PrefireBinary`, so new releases work the same as the standalone binary. Set `PREFIRE_BINARY_PATH` if you keep the artifact in a custom location.
 
 ## 🧠 How It Works
 
