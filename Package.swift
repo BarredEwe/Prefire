@@ -19,6 +19,10 @@ let package = Package(
             name: "PrefireTestsPlugin",
             targets: ["PrefireTestsPlugin"]
         ),
+        .executable(
+            name: "prefire",
+            targets: ["PrefireBinary"]
+        ),
     ],
     targets: [
         .target(
