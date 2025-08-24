@@ -89,7 +89,11 @@ public enum PrefireGenerator {
             // Generate one file with all previews
             var arguments = arguments
             arguments["previewsMacrosDict"] = previewModels as NSArray
-            try renderAndWrite(parserResult: parserResult, inlineTemplate: inlineTemplate, output: output, arguments: arguments)
+            
+            // For grouped snapshots, replace {PREVIEW_FILE_NAME} with "Preview" to maintain current class name
+            let customizedTemplate = inlineTemplate.replacingOccurrences(of: "{PREVIEW_FILE_NAME}", with: "Preview")
+            
+            try renderAndWrite(parserResult: parserResult, inlineTemplate: customizedTemplate, output: output, arguments: arguments)
         } else {
             // Generate one file per source file containing previews
             try generateUngroupedFiles(

@@ -74,4 +74,56 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("// File: TestPreview"), "Should replace {PREVIEW_FILE_NAME} placeholder")
         XCTAssertTrue(result.contains("TestPreview"), "Should include basic preview")
     }
+    
+    func testGroupedFileGenerationUsesCorrectClassName() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let outputTemplate = Path("/tmp/GroupedTests.generated.swift")
+        let cache = Path("/tmp/cache/")
+        let template = "class {PREVIEW_FILE_NAME}Tests: XCTestCase { }"
+        let args: [String: NSObject] = [:]
+        
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: outputTemplate,
+            arguments: args,
+            inlineTemplate: template,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true // Test grouped generation
+        )
+
+        // Should generate file with Preview as class name for grouped snapshots
+        let expectedOutput = Path("/tmp/GroupedTests.generated.swift")
+        XCTAssertTrue(expectedOutput.exists, "Should generate grouped file")
+        
+        let result = try expectedOutput.read(.utf8)
+        XCTAssertTrue(result.contains("class PreviewTests: XCTestCase"), "Should use 'Preview' as class name for grouped snapshots")
+    }
+    
+    func testUngroupedFileGenerationUsesFileNameInClassName() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let outputTemplate = Path("/tmp/{PREVIEW_FILE_NAME}Tests.generated.swift")
+        let cache = Path("/tmp/cache/")
+        let template = "class {PREVIEW_FILE_NAME}Tests: XCTestCase { }"
+        let args: [String: NSObject] = [:]
+        
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: outputTemplate,
+            arguments: args,
+            inlineTemplate: template,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: false // Test ungrouped generation
+        )
+
+        // Should generate file with source file name as class name for ungrouped snapshots
+        let expectedOutput = Path("/tmp/TestPreviewTests.generated.swift")
+        XCTAssertTrue(expectedOutput.exists, "Should generate ungrouped file with filename")
+        
+        let result = try expectedOutput.read(.utf8)
+        XCTAssertTrue(result.contains("class TestPreviewTests: XCTestCase"), "Should use source file name as class name for ungrouped snapshots")
+    }
 }

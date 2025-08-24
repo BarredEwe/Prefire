@@ -20,7 +20,7 @@ import SnapshotTesting
     import AccessibilitySnapshot
 #endif
 
-@MainActor class PreviewTests: XCTestCase, Sendable {
+@MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase, Sendable {
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
@@ -172,11 +172,11 @@ import SnapshotTesting
 
 // MARK: - SnapshotTesting + Extensions
 
-extension DeviceConfig {
+private extension DeviceConfig {
     var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
 }
 
-extension ViewImageConfig {
+private extension ViewImageConfig {
     var deviceConfig: DeviceConfig { DeviceConfig(safeArea: safeArea, size: size, traits: traits) }
 }
 
