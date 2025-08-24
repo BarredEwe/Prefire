@@ -70,6 +70,8 @@ final class ConfigDecoder {
             config.tests.testableImports = getValues(from: components, lines: lines, env: env)
         case .testTargetPath:
             config.tests.testTargetPath = getValue(from: components.last, env: env)
+        case .useGroupedSnapshots:
+            config.tests.useGroupedSnapshots = getValue(from: components.last, env: env) == "true"
         }
     }
 

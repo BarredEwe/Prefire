@@ -13,6 +13,7 @@ test_configuration:
   simulator_device: "iPhone15,2"
   required_os: 16
   preview_default_enabled: true
+  use_grouped_snapshots: true
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -40,17 +41,19 @@ playbook_configuration:
 
 | Key                       | Description                                                                                                                                      |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `target`                  | Target name used for snapshot generation.Default: *FirstTarget*                                                                                  |
-| `test_target_path`        | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder.Default: target name folder                                 |
-| `test_file_path`          | Output file path for generated tests.Default: DerivedData or resolved via plugin                                                                 |
-| `template_file_path`      | Custom template path relative to target. Optional.Defaults:‣ *PreviewTests.stencil* for test plugin‣ *PreviewModels.stencil* for playbook plugin |
-| `simulator_device`        | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                                |
-| `required_os`             | Minimal iOS version required for preview rendering. Optional                                                                                     |
-| `snapshot_devices`        | List of logical snapshot "targets" (used as trait collections).Each will snapshot separately. Optional                                           |
-| `preview_default_enabled` | Should all detected previews be included by default?Set `false` if you want to require `.prefireEnabled()` manually.Default: `true`              |
-| `sources`                 | List of Swift files or folders to scan for previews.Defaults to inferred from the target                                                         |
-| `imports`                 | Extra imports added to the generated test or playbook file                                                                                       |
-| `testable_imports`        | Extra `@testable` imports added to allow test visibility                                                                                         |
+| `target`                  | Target name used for snapshot generation. Default: *FirstTarget*                                                                                 |
+| `test_target_path`        | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Default: target name folder                                |
+| `test_file_path`          | Output file path for generated tests. Default: DerivedData or resolved via plugin                                                                |
+| `template_file_path`      | Custom template path relative to target. Optional. Defaults:‣ *PreviewTests.stencil* for test plugin‣ *PreviewModels.stencil* for playbook plugin|
+| `simulator_device`        | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                               |
+| `required_os`             | Minimal iOS version required for preview rendering. Optional                                                                                    |
+| `snapshot_devices`        | List of logical snapshot "targets" (used as trait collections). Each will snapshot separately. Optional                                         |
+| `preview_default_enabled` | Should all detected previews be included by default? Set `false` if you want to require `.prefireEnabled()` manually. Default: `true`           |
+| `use_grouped_snapshots`   | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true` |
+| `sources`                 | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                        |
+| `imports`                 | Extra imports added to the generated test or playbook file                                                                                      |
+| `testable_imports`        | Extra `@testable` imports added to allow test visibility                                                                                        |
+| `PREFIRE_CONFIGURATION_DIR` | **Points to the directory containing `.prefire.yml`.** <br> <br> Build tool plugins (such as Xcode and SwiftPM plugins) do **not** inherit shell environment variables set in your shell profile (e.g. `.zshrc`, `.bashrc`). <br> For reliable usage, set this environment variable using Xcode Build Settings, `.xcconfig` files, Scheme Environment Variables, inline with `xcodebuild`, or via Tuist target environment settings. |
 
 ---
 

@@ -38,8 +38,13 @@ enum TestedTargetFinder {
     private static func loadTargetNameFromConfig(for targetDirectory: String, targetName: String) -> String? {
         let possibleConfigPaths = [
             targetDirectory.appending("/\(targetName)"),
-            targetDirectory
-        ]
+            targetDirectory,
+
+            // We shouldn't just considerer the target directory for config file.
+            // When running into complex mudularized projects, you might have a shared settings folder
+            // for all your targets.
+            ProcessInfo.processInfo.environment["PREFIRE_CONFIGURATION_DIR"]
+        ].compactMap { $0 }
 
         for configPath in possibleConfigPaths {
             guard let configUrl = URL(string: "file://\(configPath)/.prefire.yml"),

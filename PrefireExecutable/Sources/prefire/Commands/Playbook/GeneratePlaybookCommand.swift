@@ -52,7 +52,8 @@ enum GeneratePlaybookCommand {
             arguments: await makeArguments(for: options),
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewModels,
             defaultEnabled: options.previewDefaultEnabled,
-            cacheDir: options.cacheBasePath
+            cacheDir: options.cacheBasePath,
+            useGroupedSnapshots: true // Playbooks are always grouped
         )
     }
 

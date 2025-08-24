@@ -2,12 +2,12 @@ import Foundation
 
 struct RawPreviewModel {
     var displayName: String
-    var traits: String
+    var traits: [String]
     var body: String
     var properties: String?
 
     var isScreen: Bool {
-        traits == Constants.defaultTrait
+        traits.contains(Constants.defaultTrait)
     }
 }
 
@@ -44,11 +44,15 @@ extension RawPreviewModel {
         var previewTrait: String?
         if let range = firstLine.range(of: Markers.traits) {
             let substring = firstLine[range.upperBound...]
-            if let endIndex = substring.firstIndex(of: ")") {
+            let endIndex = Self.findTraitsEndIndex(in: substring)
+            if let endIndex = endIndex {
                 previewTrait = String(substring[..<endIndex])
             }
         }
-        self.traits = previewTrait ?? Constants.defaultTrait
+
+        // Traits can be functions like .myTraitt("one", 2), .device
+        // We can have both at the same time separated by comma
+        self.traits = Self.parseTraits(from: previewTrait)
 
         for (index, line) in lines.enumerated() {
             // Search for the line with `@Previewable` macro
@@ -63,6 +67,116 @@ extension RawPreviewModel {
         }
 
         self.body = lines.joined(separator: "\n")
+    }
+    
+    /// Parse traits from the raw trait string
+    /// Handles single traits, comma-separated traits, and function-style traits
+    private static func parseTraits(from rawTraits: String?) -> [String] {
+        guard let rawTraits = rawTraits?.trimmingCharacters(in: .whitespacesAndNewlines), 
+              !rawTraits.isEmpty else {
+            return [Constants.defaultTrait]
+        }
+        
+        // Pre-allocate array with estimated capacity for better performance
+        var traits: [String] = []
+        traits.reserveCapacity(4) // Most common case: 1-3 traits
+
+        let startIndex = rawTraits.startIndex
+        let endIndex = rawTraits.endIndex
+        var currentStart = startIndex
+        var currentIndex = startIndex
+        var parenthesesDepth = 0
+        var insideQuotes = false
+        var quoteChar: Character?
+        
+        while currentIndex < endIndex {
+            let char = rawTraits[currentIndex]
+            
+            switch char {
+            case "\"", "'":
+                if !insideQuotes {
+                    insideQuotes = true
+                    quoteChar = char
+                } else if char == quoteChar {
+                    insideQuotes = false
+                    quoteChar = nil
+                }
+            case "(":
+                if !insideQuotes {
+                    parenthesesDepth += 1
+                }
+            case ")":
+                if !insideQuotes {
+                    parenthesesDepth -= 1
+                }
+            case ",":
+                if !insideQuotes && parenthesesDepth == 0 {
+                    // This comma is a trait separator
+                    let traitSubstring = rawTraits[currentStart..<currentIndex]
+                    let trimmedTrait = traitSubstring.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmedTrait.isEmpty {
+                        traits.append(String(trimmedTrait))
+                    }
+                    currentStart = rawTraits.index(after: currentIndex)
+                }
+            default:
+                break
+            }
+            
+            currentIndex = rawTraits.index(after: currentIndex)
+        }
+        
+        // Add the last trait
+        let lastTraitSubstring = rawTraits[currentStart..<endIndex]
+        let trimmedLastTrait = lastTraitSubstring.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedLastTrait.isEmpty {
+            traits.append(String(trimmedLastTrait))
+        }
+        
+        return traits.isEmpty ? [Constants.defaultTrait] : traits
+    }
+    
+    /// Find the correct end index for traits, respecting parentheses balance
+    private static func findTraitsEndIndex(in substring: Substring) -> String.Index? {
+        var parenthesesDepth = 0
+        var insideQuotes = false
+        var quoteChar: Character?
+        var currentIndex = substring.startIndex
+        let endIndex = substring.endIndex
+        
+        while currentIndex < endIndex {
+            let char = substring[currentIndex]
+            
+            switch char {
+            case "\"", "'":
+                if !insideQuotes {
+                    insideQuotes = true
+                    quoteChar = char
+                } else if char == quoteChar {
+                    insideQuotes = false
+                    quoteChar = nil
+                }
+            case "(":
+                if !insideQuotes {
+                    parenthesesDepth += 1
+                }
+            case ")":
+                if !insideQuotes {
+                    if parenthesesDepth == 0 {
+                        // This is the closing parenthesis of the #Preview call
+                        return currentIndex
+                    }
+                    parenthesesDepth -= 1
+                }
+            default:
+                break
+            }
+            
+            currentIndex = substring.index(after: currentIndex)
+        }
+        
+        // If we didn't find a balanced closing parenthesis, return nil
+        return nil
     }
 }
 
@@ -79,7 +193,8 @@ extension RawPreviewModel {
             "componentTestName": componentTestName,
             "isScreen": isScreen,
             "body": body,
-            "properties": properties
+            "properties": properties,
+            "traits": traits
         ].filter({ $0.value != nil })
     }
 }
