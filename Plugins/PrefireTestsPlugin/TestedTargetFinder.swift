@@ -39,7 +39,7 @@ enum TestedTargetFinder {
         let possibleConfigPaths = [
             targetDirectory.appending("/\(targetName)"),
             targetDirectory
-        ].compactMap { $0 }
+        ]
 
         for configPath in possibleConfigPaths {
             guard let configUrl = URL(string: "file://\(configPath)/.prefire.yml"),

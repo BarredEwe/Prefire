@@ -4,7 +4,7 @@ import PathKit
 
 private enum Constants {
     static let snapshotFileName = "PreviewTests.generated.swift"
-    static let spapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
+    static let snapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
 }
 
 struct GeneratedTestsOptions {
@@ -83,7 +83,7 @@ enum GenerateTestsCommand {
         try await PrefireGenerator.generate(
             version: Prefire.Version.value,
             sources: options.sources,
-            output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.spapshotFileTemplated),
+            output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.snapshotFileTemplated),
             arguments: await GenerateTestsCommand.makeArguments(for: options),
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewTests,
             defaultEnabled: options.prefireEnabledMarker,
