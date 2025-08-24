@@ -53,7 +53,6 @@ playbook_configuration:
 | `sources`                 | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                        |
 | `imports`                 | Extra imports added to the generated test or playbook file                                                                                      |
 | `testable_imports`        | Extra `@testable` imports added to allow test visibility                                                                                        |
-| `PREFIRE_CONFIGURATION_DIR` | **Points to the directory containing `.prefire.yml`.** <br> <br> Build tool plugins (such as Xcode and SwiftPM plugins) do **not** inherit shell environment variables set in your shell profile (e.g. `.zshrc`, `.bashrc`). <br> For reliable usage, set this environment variable using Xcode Build Settings, `.xcconfig` files, Scheme Environment Variables, inline with `xcodebuild`, or via Tuist target environment settings. |
 
 ---
 

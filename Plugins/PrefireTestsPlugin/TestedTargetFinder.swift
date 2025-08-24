@@ -38,12 +38,7 @@ enum TestedTargetFinder {
     private static func loadTargetNameFromConfig(for targetDirectory: String, targetName: String) -> String? {
         let possibleConfigPaths = [
             targetDirectory.appending("/\(targetName)"),
-            targetDirectory,
-
-            // We shouldn't just considerer the target directory for config file.
-            // When running into complex mudularized projects, you might have a shared settings folder
-            // for all your targets.
-            ProcessInfo.processInfo.environment["PREFIRE_CONFIGURATION_DIR"]
+            targetDirectory
         ].compactMap { $0 }
 
         for configPath in possibleConfigPaths {
