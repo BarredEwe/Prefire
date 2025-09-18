@@ -20,13 +20,16 @@ jobs:
         include:
           - xcode: "Xcode_16.0"
             runsOn: macos-15
-          - xcode: "Xcode_16.2"
+          - xcode: "Xcode_26.0"
             runsOn: macos-15
     steps:
       - uses: actions/checkout@v4
+      
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/${{ matrix.xcode }}.app
+        
       - name: Build Prefire
         run: make build
+        
       - name: Run PrefireExecutable Tests
         run: make test

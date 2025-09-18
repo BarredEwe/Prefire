@@ -1,9 +1,19 @@
 MAKEFLAGS += --silent
+
 FOLDER=$(shell cd Binaries/PrefireBinary.artifactbundle/; ls -d */|head -n 1)
 CUR_VERSION=$(shell echo $(FOLDER) | cut -d "-" -f 2)
 
+.PHONY: build binary test update archive
+
 build:
-	set -o pipefail && xcodebuild -scheme Prefire -destination 'generic/platform=iOS'
+	set -o pipefail && xcodebuild \
+		-scheme Prefire \
+		-sdk iphonesimulator \
+		-destination 'generic/platform=iOS Simulator' \
+		-configuration Release \
+		-skipMacroValidation \
+		-skipPackagePluginValidation \
+		build
 
 binary:
 	(cd PrefireExecutable; swift build -c release --arch arm64 --arch x86_64)
