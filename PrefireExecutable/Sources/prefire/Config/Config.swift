@@ -23,6 +23,7 @@ struct TestsConfig {
     var previewDefaultEnabled: Bool?
     var imports: [String]?
     var testableImports: [String]?
+    var useGroupedSnapshots: Bool?
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
@@ -36,6 +37,7 @@ struct TestsConfig {
         case previewDefaultEnabled = "preview_default_enabled"
         case imports = "imports"
         case testableImports = "testable_imports"
+        case useGroupedSnapshots = "use_grouped_snapshots"
     }
 }
 

@@ -4,6 +4,7 @@ import PathKit
 
 private enum Constants {
     static let snapshotFileName = "PreviewTests.generated.swift"
+    static let snapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
 }
 
 struct GeneratedTestsOptions {
@@ -20,6 +21,7 @@ struct GeneratedTestsOptions {
     var snapshotDevices: [String]?
     var imports: [String]?
     var testableImports: [String]?
+    var useGroupedSnapshots: Bool
 
     init(
         target: String?,
@@ -51,6 +53,7 @@ struct GeneratedTestsOptions {
         self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
         self.device = config?.tests.device ?? device
         self.osVersion = config?.tests.osVersion ?? osVersion
+        useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
@@ -80,11 +83,12 @@ enum GenerateTestsCommand {
         try await PrefireGenerator.generate(
             version: Prefire.Version.value,
             sources: options.sources,
-            output: options.output + Constants.snapshotFileName,
+            output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.snapshotFileTemplated),
             arguments: await GenerateTestsCommand.makeArguments(for: options),
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewTests,
             defaultEnabled: options.prefireEnabledMarker,
-            cacheDir: options.cacheBasePath
+            cacheDir: options.cacheBasePath,
+            useGroupedSnapshots: options.useGroupedSnapshots
         )
     }
 
@@ -110,7 +114,7 @@ enum GenerateTestsCommand {
             Keys.imports: options.imports as? NSArray,
             Keys.testableImports: options.testableImports as? NSArray,
             Keys.mainTarget: options.target as? NSString,
-            Keys.file: snapshotOutput?.string as? NSString
+            Keys.file: snapshotOutput?.string as? NSString,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

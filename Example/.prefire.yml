@@ -8,6 +8,7 @@ test_configuration:
   - imports:
       - UIKit
       - Foundation
+  - use_grouped_snapshots: false
 
 playbook_configuration:
   - imports:
