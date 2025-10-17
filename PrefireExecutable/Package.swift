@@ -16,6 +16,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMinor(from: "1.2.3")),
         .package(url: "https://github.com/kylef/PathKit.git", .upToNextMinor(from: "1.0.1")),
         .package(url: "https://github.com/BarredEwe/Sourcery.git", revision: "ee2f3fc2bbcdd733dff0913f9db824372ef37b3d"),
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "600.0.0")
     ],
     targets: [
         .target(
@@ -24,6 +25,7 @@ let package = Package(
                 .product(name: "SourceryFramework", package: "Sourcery"),
                 .product(name: "SourceryRuntime", package: "Sourcery"),
                 .product(name: "SourceryStencil", package: "Sourcery"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
                 "PathKit"
             ]
         ),
