@@ -1,4 +1,5 @@
 import Foundation
+import SwiftParser
 
 struct RawPreviewModel {
     var displayName: String
@@ -15,7 +16,6 @@ extension RawPreviewModel {
     private enum Markers {
         static let previewMacro = "#Preview"
         static let traits = "traits: "
-        static let previewable = "@Previewable"
     }
 
     private enum Constants {
@@ -53,20 +53,23 @@ extension RawPreviewModel {
         // Traits can be functions like .myTraitt("one", 2), .device
         // We can have both at the same time separated by comma
         self.traits = Self.parseTraits(from: previewTrait)
-
-        for (index, line) in lines.enumerated() {
-            // Search for the line with `@Previewable` macro
-            if line.contains(Markers.previewable) {
-                lines.remove(at: index + 1)
-                if self.properties == nil {
-                    self.properties = String(line.replacing("\(Markers.previewable) ", with: ""))
-                } else {
-                    self.properties! += "\n" + String(line.replacing(Markers.previewable, with: ""))
-                }
+        
+        // Parse the macro body using swiftsyntax to retrieve previewable properties and body.
+        let macroBodySyntax = Parser.parse(source: macroBody)
+        let previewParser = PreviewParser()
+        previewParser.walk(macroBodySyntax)
+        
+        self.properties = previewParser.properties.first
+        if let firstProperty = self.properties,
+           previewParser.properties.count >= 2 {
+            self.properties = previewParser.properties.dropFirst().reduce(firstProperty) {
+                var properties = $0
+                properties = properties + "\n" + $1
+                return properties
             }
         }
-
-        self.body = lines.joined(separator: "\n")
+        
+        body = previewParser.body ?? ""
     }
     
     /// Parse traits from the raw trait string
