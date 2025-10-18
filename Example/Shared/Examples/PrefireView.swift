@@ -54,3 +54,29 @@ struct PrefireView_Preview: PreviewProvider, PrefireProvider {
         .previewUserStory(.auth)
         .prefireIgnored()
 }
+
+#Preview("TextView", traits: .sizeThatFitsLayout) {
+    ArgumentedView(["1 -", "2 -", "3 -"]) { text in
+        Text(text)
+//           .previewUserStory(.auth)
+    }
+}
+
+public struct ArgumentedView<Data: RandomAccessCollection, Content: SwiftUI.View> {
+    public var data: Data
+    public var content: (Data.Element) -> Content
+    
+    public init(_ data: Data, @ViewBuilder content: @escaping (Data.Element) -> Content) {
+        self.data = data
+        self.content = content
+    }
+}
+
+extension ArgumentedView: DynamicViewContent where Content : View {
+    public var body: some View {
+        if let first = data.first {
+            content(first)
+        }
+    }
+}
+
