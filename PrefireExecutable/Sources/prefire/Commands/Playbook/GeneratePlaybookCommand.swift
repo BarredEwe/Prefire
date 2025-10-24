@@ -27,7 +27,7 @@ struct GeneratedPlaybookOptions {
         if let template = config?.playbook.template, let targetPath {
             let targetURL = URL(filePath: targetPath)
             let templateURL = targetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path())
+            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
         } else if let template {
             self.template = Path(template)
         }
