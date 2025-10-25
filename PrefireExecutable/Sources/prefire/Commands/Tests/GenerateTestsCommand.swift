@@ -50,7 +50,7 @@ struct GeneratedTestsOptions {
         if let template = config?.tests.template, let testTargetPath = self.testTargetPath {
             let testTargetURL = URL(filePath: testTargetPath.string)
             let templateURL = testTargetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path())
+            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
         } else if let template {
             self.template = Path(template)
         }
