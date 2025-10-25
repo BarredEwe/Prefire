@@ -13,16 +13,34 @@ final class PreviewParser: SyntaxVisitor {
     }
 
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
-        guard node.attributes.contain(matchingName: Constants.previewable) else { return .skipChildren }
+        guard node.attributes.contain(matchingName: Constants.previewable) else {
+            appendItemToBody(node)
+            return .skipChildren
+        }
+        
         var resultVariable = node
         resultVariable.attributes = node.attributes.remove(matchingName: Constants.previewable)
         properties.append("\(resultVariable.trimmed)")
         return .skipChildren
     }
     
-    override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
-        body = "\(node.trimmed)"
+    override func visit(_ node: CodeBlockItemSyntax) -> SyntaxVisitorContinueKind {
+        if node.item.is(VariableDeclSyntax.self) || node.item.is(MacroExpansionExprSyntax.self) {
+            return .visitChildren
+        }
+        
+        appendItemToBody(node)
         return .skipChildren
+    }
+}
+
+private extension PreviewParser {
+    func appendItemToBody(_ node: some SyntaxProtocol) {
+        if let body {
+            self.body = "\(body)\n\(node.trimmed)"
+        } else {
+            body = "\(node.trimmed)"
+        }
     }
 }
 

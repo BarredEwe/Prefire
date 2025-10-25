@@ -179,8 +179,25 @@ class RawPreviewModelTests: XCTestCase {
         """
         let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
 
-        XCTAssertEqual(rawPreviewModel?.body, "ForEach(foo, id: \\.self) {\n        Text($0.formatted())\n    }")
+        XCTAssertEqual(rawPreviewModel?.body, "var hoge = \"Test\"\nForEach(foo, id: \\.self) {\n        Text($0.formatted())\n    }")
         XCTAssertEqual(rawPreviewModel?.properties, "@State var foo = [\n        1, 2, 3\n    ]\n@State var name: String = \"TestView\"")
+        XCTAssertEqual(rawPreviewModel?.displayName, "Test")
+        XCTAssertEqual(rawPreviewModel?.traits, [".device"])
+    }
+    
+    func test_uikitPreview() {
+        let previewBodyWithNestedParentheses = """
+        #Preview {
+            let viewController = UIViewController()
+            viewController.view.backgroundColor = .green
+            return viewController
+        }
+
+        """
+        let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
+
+        XCTAssertEqual(rawPreviewModel?.body, "let viewController = UIViewController()\nviewController.view.backgroundColor = .green\nreturn viewController")
+        XCTAssertEqual(rawPreviewModel?.properties, nil)
         XCTAssertEqual(rawPreviewModel?.displayName, "Test")
         XCTAssertEqual(rawPreviewModel?.traits, [".device"])
     }
