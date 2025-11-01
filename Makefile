@@ -9,7 +9,7 @@ build:
 	set -o pipefail && xcodebuild \
 		-scheme Prefire \
 		-sdk iphonesimulator \
-		-destination 'generic/platform=iOS Simulator' \
+		-destination 'generic/platform=iOS Simulator,OS=latest' \
 		-configuration Release \
 		-skipMacroValidation \
 		-skipPackagePluginValidation \
