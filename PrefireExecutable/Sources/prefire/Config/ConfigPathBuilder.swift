@@ -24,12 +24,12 @@ enum ConfigPathBuilder {
                 configURL.append(component: configFileName)
             }
 
-            possibleConfigPaths.append(configURL.absoluteURL.path())
+            possibleConfigPaths.append(configURL.absoluteURL.path(percentEncoded: false))
         }
 
         // Add the default path
         let configURL = URL(filePath: configFileName) // Relative to the current directory
-        possibleConfigPaths.append(configURL.absoluteURL.path())
+        possibleConfigPaths.append(configURL.absoluteURL.path(percentEncoded: false))
 
         return possibleConfigPaths
     }
