@@ -29,7 +29,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
         let environment = [
             "TARGET_DIR": String(describing: target.directory),
-            "PACKAGE_DIR": context.package.directoryURL.path(),
+            "PACKAGE_DIR": context.package.directoryURL.path(percentEncoded: false),
         ]
 
         return [
@@ -74,7 +74,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
             arguments.append(contentsOf: sources)
 
             let environment = [
-                "PROJECT_DIR": context.xcodeProject.directoryURL.path(),
+                "PROJECT_DIR": context.xcodeProject.directoryURL.path(percentEncoded: false),
             ]
 
             return [
