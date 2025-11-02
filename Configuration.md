@@ -42,7 +42,7 @@ playbook_configuration:
 | Key                       | Description                                                                                                                                      |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `target`                  | Target name used for snapshot generation. Default: *FirstTarget*                                                                                 |
-| `test_target_path`        | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Default: target name folder                                |
+| `test_target_path`        | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Supports template parameters (see below). Default: target name folder |
 | `test_file_path`          | Output file path for generated tests. Default: DerivedData or resolved via plugin                                                                |
 | `template_file_path`      | Custom template path relative to target. Optional. Defaults:‣ *PreviewTests.stencil* for test plugin‣ *PreviewModels.stencil* for playbook plugin|
 | `simulator_device`        | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                               |
@@ -53,6 +53,20 @@ playbook_configuration:
 | `sources`                 | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                        |
 | `imports`                 | Extra imports added to the generated test or playbook file                                                                                      |
 | `testable_imports`        | Extra `@testable` imports added to allow test visibility                                                                                        |
+
+---
+
+### 🎯 Template Parameters
+
+The `test_target_path` configuration supports template placeholders `{{target}}` and `{{testTarget}}` that are dynamically replaced at runtime. Useful for multi-target projects and monorepos.
+
+**Example:**
+```yaml
+test_configuration:
+  target: MyApp
+  test_target_path: "${PROJECT_DIR}/{{target}}/Tests"
+  # Resolves to: ${PROJECT_DIR}/MyApp/Tests
+```
 
 ---
 
