@@ -23,3 +23,11 @@ let fixtureTestPreviewSource = #filePath
     @Previewable @State var foo: Bool = false
     Text("TestPreview_WithProperties")
 }
+
+#Preview
+{
+    VStack
+    {
+        Text("Preview formatted with Allman")
+    }
+}
