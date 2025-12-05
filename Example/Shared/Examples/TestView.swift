@@ -87,8 +87,27 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
 }
 
 #Preview(traits: .sizeThatFitsLayout) {
-    TestView(isLoading: true)
-        .previewUserStory(.testStory)
-        .snapshot(delay: 0.1, precision: 0.9)
-        .previewUserStory(.auth)
+    let userStory: PreviewModel.UserStory = .testStory
+    VStack
+    {
+        TestView(isLoading: true)
+            .previewUserStory(userStory)
+            .snapshot(delay: 0.1, precision: 0.9)
+            .previewUserStory(.auth)
+    }.padding()
+}
+
+#Preview(traits: .sizeThatFitsLayout) {
+        TestView(isLoading: false)
+            .previewUserStory(.testStory)
+            .snapshot(delay: 0.5, precision: 0.7)
+        
+        TestView(isLoading: true)
+            .previewUserStory(.testStory)
+            .previewState(.loading)
+        
+        TestView(isLoading: true)
+            .previewUserStory(.testStory)
+            .previewState(.loading)
+            .snapshot(delay: 0.3, precision: 0.9)
 }

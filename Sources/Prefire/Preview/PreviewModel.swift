@@ -72,9 +72,9 @@ public struct PreviewModel: Identifiable {
     }
 
     @MainActor
-    public init(
+    public init<T: UIView>(
         id: String? = nil,
-        content: @escaping () -> UIView,
+        content: @escaping @MainActor () -> T,
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil
@@ -83,9 +83,9 @@ public struct PreviewModel: Identifiable {
     }
 
     @MainActor
-    public init(
+    public init<T: UIViewController>(
         id: String? = nil,
-        content: @escaping () -> UIViewController,
+        content: @escaping @MainActor () -> T,
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil
