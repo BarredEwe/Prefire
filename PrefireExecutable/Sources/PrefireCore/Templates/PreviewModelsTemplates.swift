@@ -73,7 +73,7 @@ private struct MacroPreviews {
         PreviewModel(content: { PreviewWrapper{{ macroModel.componentTestName }}() }, name: "{{ macroModel.displayName }}"),
         {% else %}
         PreviewModel(content: {
-        {{ macroModel.body|indent:8 }}
+            {{ macroModel.body|indent:12 }}
         }, name: "{{ macroModel.displayName }}"),
         {% endif %}
         {% endfor %}

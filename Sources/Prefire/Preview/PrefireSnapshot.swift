@@ -39,24 +39,26 @@ public struct DeviceConfig {
         self.device = device
     }
 
-    public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
-        previewContent = view
+    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
+        previewContent = view()
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
     }
-
-    public init(_ view: UIView, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
-        previewContent = ViewRepresentable(view: view)
+    
+    @_disfavoredOverload
+    public init<T: UIView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<T> {
+        previewContent = ViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
     }
-
-    public init(_ viewController: UIViewController, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
-        previewContent = ViewControllerRepresentable(viewController: viewController)
+    
+    @_disfavoredOverload
+    public init<T: UIViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<T> {
+        previewContent = ViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
         self.device = device

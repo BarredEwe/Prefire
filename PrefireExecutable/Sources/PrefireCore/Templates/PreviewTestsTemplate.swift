@@ -61,26 +61,29 @@ import SnapshotTesting
     // MARK: - Macros
 
     {% for macroModel in argument.previewsMacrosDict %}
-    func test_{{ macroModel.componentTestName }}_Preview() {
+    func test_{{ macroModel.componentTestName }}_Preview() {        
         {% if macroModel.properties %}
         struct PreviewWrapper{{ macroModel.componentTestName }}: SwiftUI.View {
-        {{ macroModel.properties }}
+            {{ macroModel.properties }}
             var body: some View {
-            {{ macroModel.body|indent:12 }}
+                {{ macroModel.body|indent:12 }}
             }
         }
-        let preview = PreviewWrapper{{ macroModel.componentTestName }}.init
-        {% else %}
-        let preview = {
-        {{ macroModel.body|indent:8 }}
-        }
         {% endif %}
-        {% if macroModel.isScreen == 1 %}
-        let isScreen = true
-        {% else %}
-        let isScreen = false
-        {% endif %}
-        if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "{{ macroModel.displayName }}", isScreen: isScreen, device: deviceConfig)) {
+        let prefireSnapshot = PrefireSnapshot(
+            {
+                {% if macroModel.properties %}
+                PreviewWrapper{{ macroModel.componentTestName }}()
+                {% else %}
+                {{ macroModel.body|indent:12 }}
+                {% endif %}
+            },
+            name: "{{ macroModel.displayName }}",
+            isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+            device: deviceConfig
+        )
+
+        if let failure = assertSnapshots(for: prefireSnapshot) {
             XCTFail(failure)
         }
     }
