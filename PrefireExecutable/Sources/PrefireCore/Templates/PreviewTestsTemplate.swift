@@ -89,6 +89,13 @@ import SnapshotTesting
         if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "{{ macroModel.displayName }}", isScreen: isScreen, device: deviceConfig)) {
             XCTFail(failure)
         }
+
+    {% if argument.recordInDarkMode == "true" %}
+        if let failure = assertSnapshots(for: PrefireSnapshot(preview(), name: "{{ macroModel.displayName }}", isScreen: isScreen, device: deviceConfig, isDark: true)) {
+            XCTFail(failure)
+        }
+    {% endif %}
+
     }
     {%- if not forloop.last %}
 

@@ -41,31 +41,31 @@ public struct DeviceConfig {
         self.isDark = isDark
     }
 
-    public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
+    public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init(), isDark: Bool = false) {
         previewContent = view
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
-        self.isDark = false
+        self.isDark = isDark
     }
 
-    public init(_ view: UIView, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
+    public init(_ view: UIView, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init(), isDark: Bool = false) where Content == ViewRepresentable<UIView> {
         previewContent = ViewRepresentable(view: view)
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
-        self.isDark = false
+        self.isDark = isDark
     }
 
-    public init(_ viewController: UIViewController, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
+    public init(_ viewController: UIViewController, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init(), isDark: Bool = false) where Content == ViewControllerRepresentable<UIViewController> {
         previewContent = ViewControllerRepresentable(viewController: viewController)
         self.name = name
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
-        self.isDark = false
+        self.isDark = isDark
     }
 
     public func loadViewWithPreferences() -> (AnyView, PreferenceKeys) {
@@ -102,6 +102,7 @@ public struct DeviceConfig {
         let window = UIWindow(frame: .init())
 
         window.isHidden = false
+        window.overrideUserInterfaceStyle = isDark ? .dark : .light
         window.rootViewController = hostingController
 
         hostingController.view.setNeedsLayout()
