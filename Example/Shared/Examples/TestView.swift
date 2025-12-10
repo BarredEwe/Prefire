@@ -73,22 +73,24 @@ struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
         TestView(isLoading: true)
             .previewUserStory(.testStory)
             .snapshot(delay: 0.1, precision: 0.9)
-            .previewLayout(.sizeThatFits)
             .preferredColorScheme(.dark)
     }
 }
 
 struct GreenButton_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View {
+
         Button("Apply", action: {})
-            .foregroundColor(.black)
+            .foregroundColor(.dynamicForegroundColor)
             .font(.title)
             .padding()
             .frame(maxWidth: .infinity)
             .frame(height: 68)
-            .background(Capsule().foregroundColor(.green.opacity(0.2)))
+            .background(Capsule().foregroundColor(.dynamicGreen))
             .previewLayout(.sizeThatFits)
             .previewUserStory("Buttons")
+            .preferredColorScheme(.dark)
+
     }
 }
 
@@ -97,4 +99,24 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
         .previewUserStory(.testStory)
         .snapshot(delay: 0.1, precision: 0.9)
         .previewUserStory(.auth)
+}
+
+extension Color {
+    static var dynamicForegroundColor: Color {
+        Color(UIColor(dynamicProvider: { trait in
+            switch trait.userInterfaceStyle {
+                case .dark: return .white
+            default: return .black
+            }
+        }))
+    }
+
+    static var dynamicGreen: Color {
+        Color(UIColor(dynamicProvider: { trait in
+            switch trait.userInterfaceStyle {
+            case .dark: return UIColor.green.withAlphaComponent(0.8)
+            default: return UIColor.green.withAlphaComponent(0.2)
+            }
+        }))
+    }
 }
