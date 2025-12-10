@@ -100,20 +100,30 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
 
 extension Color {
     static var dynamicForegroundColor: Color {
-        Color(UIColor(dynamicProvider: { trait in
+        Color(UIColor.dynamicForegroundColor)
+    }
+
+    static var dynamicGreen: Color {
+        Color(UIColor.dynamicGreen)
+    }
+}
+
+extension UIColor {
+    static var dynamicForegroundColor: UIColor {
+        UIColor(dynamicProvider: { trait in
             switch trait.userInterfaceStyle {
                 case .dark: return .white
             default: return .black
             }
-        }))
+        })
     }
 
-    static var dynamicGreen: Color {
-        Color(UIColor(dynamicProvider: { trait in
+    static var dynamicGreen: UIColor {
+        UIColor(dynamicProvider: { trait in
             switch trait.userInterfaceStyle {
             case .dark: return UIColor.green.withAlphaComponent(0.8)
             default: return UIColor.green.withAlphaComponent(0.2)
             }
-        }))
+        })
     }
 }
