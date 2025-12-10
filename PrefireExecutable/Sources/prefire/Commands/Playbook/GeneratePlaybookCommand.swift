@@ -53,7 +53,8 @@ enum GeneratePlaybookCommand {
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewModels,
             defaultEnabled: options.previewDefaultEnabled,
             cacheDir: options.cacheBasePath,
-            useGroupedSnapshots: true // Playbooks are always grouped
+            useGroupedSnapshots: true, // Playbooks are always grouped
+            recordInDarkMode: false
         )
     }
 

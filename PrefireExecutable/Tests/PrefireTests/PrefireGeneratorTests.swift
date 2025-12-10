@@ -17,7 +17,8 @@ final class PrefireGeneratorTests: XCTestCase {
                 arguments: args,
                 inlineTemplate: template,
                 defaultEnabled: true,
-                useGroupedSnapshots: true
+                useGroupedSnapshots: true,
+                recordInDarkMode: false
             )
         } catch {
             XCTFail("Unexpected error thrown: \(error)")
@@ -39,7 +40,8 @@ final class PrefireGeneratorTests: XCTestCase {
             inlineTemplate: template,
             defaultEnabled: true,
             cacheDir: cache,
-            useGroupedSnapshots: true
+            useGroupedSnapshots: true,
+            recordInDarkMode: false
         )
 
         let result = try output.read(.utf8)
@@ -63,7 +65,8 @@ final class PrefireGeneratorTests: XCTestCase {
             inlineTemplate: template,
             defaultEnabled: true,
             cacheDir: cache,
-            useGroupedSnapshots: false // Test ungrouped generation
+            useGroupedSnapshots: false, // Test ungrouped generation
+            recordInDarkMode: false
         )
 
         // Should generate file with name based on the fixture file
@@ -90,7 +93,8 @@ final class PrefireGeneratorTests: XCTestCase {
             inlineTemplate: template,
             defaultEnabled: true,
             cacheDir: cache,
-            useGroupedSnapshots: true // Test grouped generation
+            useGroupedSnapshots: true, // Test grouped generation
+            recordInDarkMode: false
         )
 
         // Should generate file with Preview as class name for grouped snapshots
@@ -116,7 +120,8 @@ final class PrefireGeneratorTests: XCTestCase {
             inlineTemplate: template,
             defaultEnabled: true,
             cacheDir: cache,
-            useGroupedSnapshots: false // Test ungrouped generation
+            useGroupedSnapshots: false, // Test ungrouped generation
+            recordInDarkMode: false
         )
 
         // Should generate file with source file name as class name for ungrouped snapshots

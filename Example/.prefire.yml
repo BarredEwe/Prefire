@@ -9,6 +9,7 @@ test_configuration:
       - UIKit
       - Foundation
   - use_grouped_snapshots: false
+  - record_in_dark_mode: true
 
 playbook_configuration:
   - imports:

@@ -15,7 +15,8 @@ public enum PrefireGenerator {
         inlineTemplate: String,
         defaultEnabled: Bool,
         cacheDir: Path? = nil,
-        useGroupedSnapshots: Bool
+        useGroupedSnapshots: Bool,
+        recordInDarkMode: Bool
     ) async throws {
         startTime = Date()
 

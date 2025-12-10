@@ -24,6 +24,7 @@ struct TestsConfig {
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool?
+    var recordInDarkMode: Bool?
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
@@ -38,6 +39,7 @@ struct TestsConfig {
         case imports = "imports"
         case testableImports = "testable_imports"
         case useGroupedSnapshots = "use_grouped_snapshots"
+        case recordInDarkMode = "record_in_dark_mode"
     }
 }
 

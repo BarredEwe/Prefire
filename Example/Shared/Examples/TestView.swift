@@ -8,7 +8,10 @@ struct TestView: View {
 
     var body: some View {
         VStack {
-            LinearGradient(gradient: Gradient(colors: [.green, .indigo]), startPoint: .top, endPoint: .bottom)
+            LinearGradient(gradient: Gradient(
+                colors: [Color("gradientStart", bundle: .module),
+                         Color("gradientEnd", bundle: .module)]),
+                           startPoint: .top, endPoint: .bottom)
                 .frame(height: 200)
 
             CircleImage()
@@ -69,11 +72,6 @@ struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
             .previewUserStory(.testStory)
             .snapshot(delay: 0.1, precision: 0.9)
             .previewLayout(.sizeThatFits)
-
-        TestView(isLoading: true)
-            .previewUserStory(.testStory)
-            .snapshot(delay: 0.1, precision: 0.9)
-            .preferredColorScheme(.dark)
     }
 }
 
@@ -89,7 +87,6 @@ struct GreenButton_Previews: PreviewProvider, PrefireProvider {
             .background(Capsule().foregroundColor(.dynamicGreen))
             .previewLayout(.sizeThatFits)
             .previewUserStory("Buttons")
-            .preferredColorScheme(.dark)
 
     }
 }

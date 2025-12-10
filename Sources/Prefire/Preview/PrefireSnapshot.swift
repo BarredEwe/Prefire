@@ -17,32 +17,28 @@ public struct DeviceConfig {
     private var previewContent: Content
     public var name: String
     public var isScreen: Bool
+    public var isDark: Bool
     public var device: DeviceConfig
     public var traits: UITraitCollection = .init()
 
     private var content: AnyView {
         if isScreen {
-            AnyView(
-                previewContent
-                    .preferredColorScheme(.dark)
-                    .colorScheme(.dark)
-            )
+            AnyView(previewContent)
         } else {
             AnyView(
                 previewContent
-                    .preferredColorScheme(.dark)
-                    .colorScheme(.dark)
                     .frame(width: device.size?.width)
                     .fixedSize(horizontal: false, vertical: true)
             )
         }
     }
 
-    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig) where Content == AnyView {
+    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig, isDark: Bool = false) where Content == AnyView {
         previewContent = preview.content
         name = preview.displayName ?? testName
         isScreen = preview.layout == .device
         self.device = device
+        self.isDark = isDark
     }
 
     public init(_ view: Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
@@ -51,6 +47,7 @@ public struct DeviceConfig {
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
+        self.isDark = false
     }
 
     public init(_ view: UIView, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<UIView> {
@@ -59,6 +56,7 @@ public struct DeviceConfig {
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
+        self.isDark = false
     }
 
     public init(_ viewController: UIViewController, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<UIViewController> {
@@ -67,6 +65,7 @@ public struct DeviceConfig {
         self.isScreen = isScreen
         self.device = device
         self.traits = traits
+        self.isDark = false
     }
 
     public func loadViewWithPreferences() -> (AnyView, PreferenceKeys) {
@@ -86,8 +85,7 @@ public struct DeviceConfig {
                 .onPreferenceChange(RecordPreferenceKey.self) {
                     preferences.record = $0
                 }
-                .preferredColorScheme(.dark)
-                .colorScheme(.dark)
+                .preferredColorScheme(isDark ? .dark : .light)
         )
 
         // In order to call onPreferenceChange, render the view once
@@ -103,7 +101,6 @@ public struct DeviceConfig {
         let window = UIWindow(frame: .init())
 
         window.isHidden = false
-        window.overrideUserInterfaceStyle = .dark
         window.rootViewController = hostingController
 
         hostingController.view.setNeedsLayout()

@@ -22,6 +22,7 @@ struct GeneratedTestsOptions {
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
+    var recordInDarkMode: Bool
 
     init(
         target: String?,
@@ -57,6 +58,7 @@ struct GeneratedTestsOptions {
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
+        self.recordInDarkMode = config?.tests.recordInDarkMode ?? false
     }
 }
 
@@ -77,6 +79,7 @@ enum GenerateTestsCommand {
         static let testableImports = "testableImports"
         static let previewsMacros = "previewsMacros"
         static let previewsMacrosDict = "previewsMacrosDict"
+        static let recordInDarkMode = "recordInDarkMode"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -88,7 +91,8 @@ enum GenerateTestsCommand {
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewTests,
             defaultEnabled: options.prefireEnabledMarker,
             cacheDir: options.cacheBasePath,
-            useGroupedSnapshots: options.useGroupedSnapshots
+            useGroupedSnapshots: options.useGroupedSnapshots,
+            recordInDarkMode: options.recordInDarkMode
         )
     }
 
@@ -115,6 +119,7 @@ enum GenerateTestsCommand {
             Keys.testableImports: options.testableImports as? NSArray,
             Keys.mainTarget: options.target as? NSString,
             Keys.file: snapshotOutput?.string as? NSString,
+            Keys.recordInDarkMode: "\(options.recordInDarkMode)" as NSString,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

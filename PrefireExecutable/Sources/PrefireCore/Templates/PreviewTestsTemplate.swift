@@ -51,6 +51,12 @@ import SnapshotTesting
             if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: preview.device?.snapshotDevice() ?? deviceConfig)) {
                 XCTFail(failure)
             }
+
+    {% if argument.recordInDarkMode == "true" %}
+            if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: preview.device?.snapshotDevice() ?? deviceConfig, isDark: true)) {
+                XCTFail(failure)
+            }
+    {% endif %}
         }
     }
     {%- if not forloop.last %}

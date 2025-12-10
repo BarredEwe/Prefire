@@ -72,6 +72,8 @@ final class ConfigDecoder {
             config.tests.testTargetPath = getValue(from: components.last, env: env)
         case .useGroupedSnapshots:
             config.tests.useGroupedSnapshots = getValue(from: components.last, env: env) == "true"
+        case .recordInDarkMode:
+            config.tests.recordInDarkMode = getValue(from: components.last, env: env) == "true"
         }
     }
 
