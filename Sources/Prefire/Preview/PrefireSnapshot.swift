@@ -22,10 +22,14 @@ public struct DeviceConfig {
 
     private var content: AnyView {
         if isScreen {
-            AnyView(previewContent)
+            AnyView(
+                previewContent
+                    .preferredColorScheme(.dark)
+            )
         } else {
             AnyView(
                 previewContent
+                    .preferredColorScheme(.dark)
                     .frame(width: device.size?.width)
                     .fixedSize(horizontal: false, vertical: true)
             )
@@ -95,7 +99,9 @@ public struct DeviceConfig {
         let window = UIWindow(frame: .init())
 
         window.isHidden = false
+        window.overrideUserInterfaceStyle = .dark
         window.rootViewController = hostingController
+
 
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
