@@ -86,6 +86,7 @@ public struct DeviceConfig {
                     preferences.record = $0
                 }
                 .preferredColorScheme(isDark ? .dark : .light)
+                .colorScheme(isDark ? .dark : .light)
         )
 
         // In order to call onPreferenceChange, render the view once
