@@ -58,6 +58,9 @@ struct AuthView_Preview: PreviewProvider, PrefireProvider {
         Group {
             AuthView(login: "", password: "")
 
+            AuthView(login: "", password: "")
+                .preferredColorScheme(.dark)
+
             AuthView(login: "FireUser", password: "FirePassword")
         }
         .previewUserStory(.auth)

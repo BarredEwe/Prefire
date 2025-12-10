@@ -69,6 +69,12 @@ struct TestViewWithoutState_Previews: PreviewProvider, PrefireProvider {
             .previewUserStory(.testStory)
             .snapshot(delay: 0.1, precision: 0.9)
             .previewLayout(.sizeThatFits)
+
+        TestView(isLoading: true)
+            .previewUserStory(.testStory)
+            .snapshot(delay: 0.1, precision: 0.9)
+            .previewLayout(.sizeThatFits)
+            .preferredColorScheme(.dark)
     }
 }
 

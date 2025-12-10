@@ -25,11 +25,13 @@ public struct DeviceConfig {
             AnyView(
                 previewContent
                     .preferredColorScheme(.dark)
+                    .colorScheme(.dark)
             )
         } else {
             AnyView(
                 previewContent
                     .preferredColorScheme(.dark)
+                    .colorScheme(.dark)
                     .frame(width: device.size?.width)
                     .fixedSize(horizontal: false, vertical: true)
             )
@@ -84,6 +86,8 @@ public struct DeviceConfig {
                 .onPreferenceChange(RecordPreferenceKey.self) {
                     preferences.record = $0
                 }
+                .preferredColorScheme(.dark)
+                .colorScheme(.dark)
         )
 
         // In order to call onPreferenceChange, render the view once
@@ -101,7 +105,6 @@ public struct DeviceConfig {
         window.isHidden = false
         window.overrideUserInterfaceStyle = .dark
         window.rootViewController = hostingController
-
 
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
