@@ -130,6 +130,7 @@ import SnapshotTesting
             as: .wait(
                 for: preferences.delay,
                 on: .image(
+                    drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
                     precision: preferences.precision,
                     perceptualPrecision: preferences.perceptualPrecision,
                     layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,

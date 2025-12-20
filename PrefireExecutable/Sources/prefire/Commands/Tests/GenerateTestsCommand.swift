@@ -22,6 +22,7 @@ struct GeneratedTestsOptions {
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
+    var drawHierarchyInKeyWindowDefaultEnabled: Bool
 
     init(
         target: String?,
@@ -57,6 +58,7 @@ struct GeneratedTestsOptions {
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
+        drawHierarchyInKeyWindowDefaultEnabled = config?.tests.drawHierarchyInKeyWindowDefaultEnabled ?? false
     }
 }
 
@@ -77,6 +79,7 @@ enum GenerateTestsCommand {
         static let testableImports = "testableImports"
         static let previewsMacros = "previewsMacros"
         static let previewsMacrosDict = "previewsMacrosDict"
+        static let drawHierarchyInKeyWindowDefaultEnabled = "drawHierarchyInKeyWindowDefaultEnabled"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -104,6 +107,7 @@ enum GenerateTestsCommand {
                 ➜ Generated test path: \(options.output)
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
+                ➜ drawHierarchyInKeyWindow default enabled: \(options.prefireEnabledMarker)
             """
         )
 
@@ -115,6 +119,7 @@ enum GenerateTestsCommand {
             Keys.testableImports: options.testableImports as? NSArray,
             Keys.mainTarget: options.target as? NSString,
             Keys.file: snapshotOutput?.string as? NSString,
+            Keys.drawHierarchyInKeyWindowDefaultEnabled: String(options.drawHierarchyInKeyWindowDefaultEnabled) as NSString,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }
