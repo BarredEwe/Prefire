@@ -23,24 +23,28 @@ enum PreviewLoader {
         var currentBody: String = ""
         var previewWasFound = false
         var viewMustBeLoaded = defaultEnabled
-        var braceBalance = 0
+        var braceBalance: Int? = nil
 
         for line in lines {
             if line.hasPrefix(Constants.previewMarker) {
                 previewWasFound = true
                 currentBody = ""
-                braceBalance = 0
+                braceBalance = nil
             }
 
             guard previewWasFound else { continue }
 
-            braceBalance += line.reduce(0) { (count, char) in
+            let braceChange = line.reduce(0) { (count, char) in
                 if char == Constants.openingBrace {
                     return count + 1
                 } else if char == Constants.closingBrace {
                     return count - 1
                 }
                 return count
+            }
+
+            if braceChange != 0 || braceBalance != nil {
+                braceBalance = (braceBalance ?? 0) + braceChange
             }
 
             if defaultEnabled {

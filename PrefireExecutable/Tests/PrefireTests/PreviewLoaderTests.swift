@@ -8,7 +8,8 @@ class PreviewLoaderTests: XCTestCase {
         "#Preview {\n    Text(\"TestView_Prefire\")\n        .prefireEnabled()\n}\n",
         "#Preview {\n    Text(\"TestPreview\")\n}\n",
         "#Preview {\n    Text(\"TestPreview_Prefire\")\n        .prefireEnabled()\n}\n",
-        "#Preview(\"Preview with properties\") {\n    @Previewable @State var foo: Bool = false\n    Text(\"TestPreview_WithProperties\")\n}\n"
+        "#Preview(\"Preview with properties\") {\n    @Previewable @State var foo: Bool = false\n    Text(\"TestPreview_WithProperties\")\n}\n",
+        "#Preview\n{\n    VStack\n    {\n        Text(\"Preview formatted with Allman\")\n    }\n}\n"
     ]
 
     let source = #filePath
@@ -34,10 +35,11 @@ class PreviewLoaderTests: XCTestCase {
         let content = try String(contentsOf: URL(filePath: fixtureTestPreviewSource), encoding: .utf8)
         let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: true)
 
-        XCTAssertEqual(previews?.count, 3)
+        XCTAssertEqual(previews?.count, 4)
         XCTAssertEqual(previews?[0], previewRepresentations[2])
         XCTAssertEqual(previews?[1], previewRepresentations[3])
 		XCTAssertEqual(previews?[2], previewRepresentations[4])
+        XCTAssertEqual(previews?[3], previewRepresentations[5])
     }
 
     func test_loadRawPreviewBodiesDefaultDisabledAndUrlIsDirectory() async throws {
