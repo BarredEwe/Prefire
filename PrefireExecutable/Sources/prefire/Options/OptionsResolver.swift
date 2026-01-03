@@ -17,7 +17,7 @@ enum OptionsResolver {
         if let configTemplate, let targetPath {
             let targetURL = URL(filePath: targetPath.string)
             let templateURL = targetURL.appending(path: configTemplate)
-            return Path(templateURL.absoluteURL.path())
+            return Path(templateURL.absoluteURL.path(percentEncoded: false))
         }
         return cliTemplate.map { Path($0) }
     }
