@@ -8,55 +8,67 @@ private enum Constants {
 }
 
 struct GeneratedTestsOptions {
-    var target: String?
-    var testTarget: String?
-    var template: Path?
-    var sources: [Path]
-    var output: Path
-    var prefireEnabledMarker: Bool
-    var testTargetPath: Path?
-    var cacheBasePath: Path?
-    var device: String?
-    var osVersion: String?
-    var snapshotDevices: [String]?
-    var imports: [String]?
-    var testableImports: [String]?
-    var useGroupedSnapshots: Bool
+    let target: String?
+    let testTarget: String?
+    let template: Path?
+    let sources: [Path]
+    let output: Path
+    let prefireEnabledMarker: Bool
+    let testTargetPath: Path?
+    let cacheBasePath: Path?
+    let device: String?
+    let osVersion: String?
+    let snapshotDevices: [String]?
+    let imports: [String]?
+    let testableImports: [String]?
+    let useGroupedSnapshots: Bool
+}
 
-    init(
-        target: String?,
-        testTarget: String?,
-        template: String?,
-        sources: [String],
-        output: String?,
-        testTargetPath: String?,
-        cacheBasePath: String?,
-        device: String?,
-        osVersion: String?,
-        config: Config?
-    ) throws {
-        self.target = config?.tests.target ?? target
-        self.testTarget = testTarget
-        self.testTargetPath = (config?.tests.testTargetPath ?? testTargetPath).flatMap({ Path($0) })
+// MARK: - Factory
 
-        if let template = config?.tests.template, let testTargetPath = self.testTargetPath {
-            let testTargetURL = URL(filePath: testTargetPath.string)
-            let templateURL = testTargetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
-        } else if let template {
-            self.template = Path(template)
-        }
+extension GeneratedTestsOptions {
+    /// Creates GeneratedTestsOptions by merging CLI options with Config
+    /// - Parameters:
+    ///   - cli: Raw CLI options
+    ///   - config: Loaded config (optional)
+    /// - Returns: Fully resolved GeneratedTestsOptions
+    static func from(cli: CLITestsOptions, config: Config?) -> GeneratedTestsOptions {
+        let target = config?.tests.target ?? cli.target
+        let testTarget = cli.testTarget
+        let sources = config?.tests.sources ?? cli.sources
+        let output = config?.tests.testFilePath ?? cli.output
+        let device = config?.tests.device ?? cli.device
+        let osVersion = config?.tests.osVersion ?? cli.osVersion
 
-        self.sources = (config?.tests.sources ?? sources).compactMap({ Path($0) })
-        self.output = (config?.tests.testFilePath ?? output).flatMap({ Path($0) }) ?? .current
-        prefireEnabledMarker = config?.tests.previewDefaultEnabled ?? true
-        self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
-        self.device = config?.tests.device ?? device
-        self.osVersion = config?.tests.osVersion ?? osVersion
-        useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
-        snapshotDevices = config?.tests.snapshotDevices
-        imports = config?.tests.imports
-        testableImports = config?.tests.testableImports
+        let rawTestTargetPath = config?.tests.testTargetPath ?? cli.testTargetPath
+        let testTargetPath = OptionsResolver.resolvePath(
+            rawTestTargetPath,
+            target: target,
+            testTarget: testTarget
+        )
+
+        let template = OptionsResolver.resolveTemplate(
+            cliTemplate: cli.template,
+            configTemplate: config?.tests.template,
+            targetPath: testTargetPath
+        )
+
+        return GeneratedTestsOptions(
+            target: target,
+            testTarget: testTarget,
+            template: template,
+            sources: OptionsResolver.resolveSources(sources),
+            output: output.flatMap { Path($0) } ?? .current,
+            prefireEnabledMarker: config?.tests.previewDefaultEnabled ?? true,
+            testTargetPath: testTargetPath,
+            cacheBasePath: cli.cacheBasePath.flatMap { Path($0) },
+            device: device,
+            osVersion: osVersion,
+            snapshotDevices: config?.tests.snapshotDevices,
+            imports: config?.tests.imports,
+            testableImports: config?.tests.testableImports,
+            useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true
+        )
     }
 }
 

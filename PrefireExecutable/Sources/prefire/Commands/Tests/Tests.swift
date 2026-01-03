@@ -35,22 +35,31 @@ extension Prefire {
 
         func run() async throws {
             Logger.level = verbose ? .verbose : .warnings
-            let config = Config.load(from: config, testTargetPath: testTargetPath, env: ProcessInfo.processInfo.environment)
 
-            try await GenerateTestsCommand.run(
-                GeneratedTestsOptions(
-                    target: target,
-                    testTarget: testTarget,
-                    template: template,
-                    sources: sources,
-                    output: output,
-                    testTargetPath: testTargetPath,
-                    cacheBasePath: cacheBasePath,
-                    device: device,
-                    osVersion: osVersion,
-                    config: config
-                )
+            let cliOptions = CLITestsOptions(
+                target: target,
+                testTarget: testTarget,
+                template: template,
+                sources: sources,
+                output: output,
+                testTargetPath: testTargetPath,
+                cacheBasePath: cacheBasePath,
+                device: device,
+                osVersion: osVersion
             )
+
+            let loadedConfig = Config.load(
+                from: config,
+                testTargetPath: testTargetPath,
+                env: ProcessInfo.processInfo.environment
+            )
+
+            let options = GeneratedTestsOptions.from(
+                cli: cliOptions,
+                config: loadedConfig
+            )
+
+            try await GenerateTestsCommand.run(options)
         }
     }
 }

@@ -26,18 +26,27 @@ extension Prefire {
 
         func run() async throws {
             Logger.level = verbose ? .verbose : .warnings
-            let config = Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
 
-            try await GeneratePlaybookCommand.run(
-                GeneratedPlaybookOptions(
-                    targetPath: targetPath,
-                    sources: sources,
-                    output: output,
-                    template: template,
-                    cacheBasePath: cacheBasePath,
-                    config: config
-                )
+            let cliOptions = CLIPlaybookOptions(
+                targetPath: targetPath,
+                template: template,
+                sources: sources,
+                output: output,
+                cacheBasePath: cacheBasePath
             )
+
+            let loadedConfig = Config.load(
+                from: config,
+                testTargetPath: nil,
+                env: ProcessInfo.processInfo.environment
+            )
+
+            let options = GeneratedPlaybookOptions.from(
+                cli: cliOptions,
+                config: loadedConfig
+            )
+
+            try await GeneratePlaybookCommand.run(options)
         }
     }
 }
