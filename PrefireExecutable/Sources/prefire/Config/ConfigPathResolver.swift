@@ -28,11 +28,11 @@ enum ConfigPathResolver {
         var result = path
 
         if let target {
-            result = result.replacingOccurrences(of: "{{target}}", with: target)
+            result = result.replacingOccurrences(of: "${TARGET}", with: target)
         }
 
         if let testTarget {
-            result = result.replacingOccurrences(of: "{{testTarget}}", with: testTarget)
+            result = result.replacingOccurrences(of: "${TEST_TARGET}", with: testTarget)
         }
 
         return result
