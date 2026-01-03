@@ -259,7 +259,7 @@ See detailed configuration in the [Configuration guide](https://github.com/Barre
 ```yaml
 test_configuration:
   target: MyApp
-  test_target_path: "${PROJECT_DIR}/{{target}}/Tests"  # Template parameters supported
+  test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"  # Template parameters supported
 
 playbook_configuration:
   preview_default_enabled: true

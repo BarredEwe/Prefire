@@ -3,12 +3,12 @@ import Foundation
 /// Utility for resolving template placeholders in configuration paths
 ///
 /// Supports the following placeholders:
-/// - `{{target}}` - Replaced with the target name
-/// - `{{testTarget}}` - Replaced with the test target name
+/// - `${TARGET}` - Replaced with the target name
+/// - `${TEST_TARGET}` - Replaced with the test target name
 ///
 /// Example:
 /// ```swift
-/// let path = "${PROJECT_DIR}/{{target}}/Tests"
+/// let path = "${PROJECT_DIR}/${TARGET}/Tests"
 /// let resolved = ConfigPathResolver.resolve(path, target: "MyApp")
 /// // Result: "${PROJECT_DIR}/MyApp/Tests"
 /// ```
@@ -17,8 +17,8 @@ enum ConfigPathResolver {
     ///
     /// - Parameters:
     ///   - path: The path string containing placeholders
-    ///   - target: Optional target name to replace {{target}}
-    ///   - testTarget: Optional test target name to replace {{testTarget}}
+    ///   - target: Optional target name to replace ${TARGET}
+    ///   - testTarget: Optional test target name to replace ${TEST_TARGET}
     /// - Returns: Resolved path with placeholders replaced by their values
     static func resolve(
         _ path: String,

@@ -58,13 +58,13 @@ playbook_configuration:
 
 ### 🎯 Template Parameters
 
-The `test_target_path` configuration supports template placeholders `{{target}}` and `{{testTarget}}` that are dynamically replaced at runtime. Useful for multi-target projects and monorepos.
+The `test_target_path` configuration supports template placeholders `${TARGET}` and `${TEST_TARGET}` that are dynamically replaced at runtime. Useful for multi-target projects and monorepos.
 
 **Example:**
 ```yaml
 test_configuration:
   target: MyApp
-  test_target_path: "${PROJECT_DIR}/{{target}}/Tests"
+  test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"
   # Resolves to: ${PROJECT_DIR}/MyApp/Tests
 ```
 

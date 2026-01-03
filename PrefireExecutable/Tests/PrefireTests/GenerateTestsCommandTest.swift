@@ -55,7 +55,7 @@ class GenerateTestsCommandTests: XCTestCase {
         let configData = """
         test_configuration:
           target: MyAppTarget
-          test_target_path: "${PROJECT_DIR}/{{target}}/Tests"
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"
         """
         let config = ConfigDecoder().decode(from: configData, env: [:])
 
@@ -79,7 +79,7 @@ class GenerateTestsCommandTests: XCTestCase {
         let configData = """
         test_configuration:
           target: MyApp
-          test_target_path: "${PROJECT_DIR}/Tests/{{testTarget}}"
+          test_target_path: "${PROJECT_DIR}/Tests/${TEST_TARGET}"
         """
         let config = ConfigDecoder().decode(from: configData, env: [:])
 
@@ -103,7 +103,7 @@ class GenerateTestsCommandTests: XCTestCase {
         let configData = """
         test_configuration:
           target: FeatureA
-          test_target_path: "${PROJECT_DIR}/{{target}}/Tests/{{testTarget}}"
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests/${TEST_TARGET}"
         """
         let config = ConfigDecoder().decode(from: configData, env: [:])
 
@@ -151,7 +151,7 @@ class GenerateTestsCommandTests: XCTestCase {
         let configData = """
         test_configuration:
           target: My App
-          test_target_path: "${PROJECT_DIR}/My Project/{{target}}/Tests"
+          test_target_path: "${PROJECT_DIR}/My Project/${TARGET}/Tests"
         """
         let config = ConfigDecoder().decode(from: configData, env: [:])
 
