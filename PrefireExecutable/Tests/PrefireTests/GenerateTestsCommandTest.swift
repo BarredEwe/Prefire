@@ -48,4 +48,18 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
+    
+    func test_makeArguments_drawHierarchyInKeyWindowDefaultEnabled() async {
+        options.drawHierarchyInKeyWindowDefaultEnabled = true
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
 }

@@ -39,20 +39,21 @@ playbook_configuration:
 
 ### 🧾 Configuration Keys
 
-| Key                       | Description                                                                                                                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `target`                  | Target name used for snapshot generation. Default: *FirstTarget*                                                                                 |
-| `test_target_path`        | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Default: target name folder                                |
-| `test_file_path`          | Output file path for generated tests. Default: DerivedData or resolved via plugin                                                                |
-| `template_file_path`      | Custom template path relative to target. Optional. Defaults:‣ *PreviewTests.stencil* for test plugin‣ *PreviewModels.stencil* for playbook plugin|
-| `simulator_device`        | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                               |
-| `required_os`             | Minimal iOS version required for preview rendering. Optional                                                                                    |
-| `snapshot_devices`        | List of logical snapshot "targets" (used as trait collections). Each will snapshot separately. Optional                                         |
-| `preview_default_enabled` | Should all detected previews be included by default? Set `false` if you want to require `.prefireEnabled()` manually. Default: `true`           |
-| `use_grouped_snapshots`   | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true` |
-| `sources`                 | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                        |
-| `imports`                 | Extra imports added to the generated test or playbook file                                                                                      |
-| `testable_imports`        | Extra `@testable` imports added to allow test visibility                                                                                        |
+| Key                                            | Description                                                                                                                                                                                                                               |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`                                       | Target name used for snapshot generation. Default: _FirstTarget_                                                                                                                                                                          |
+| `test_target_path`                             | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Default: target name folder                                                                                                                         |
+| `test_file_path`                               | Output file path for generated tests. Default: DerivedData or resolved via plugin                                                                                                                                                         |
+| `template_file_path`                           | Custom template path relative to target. Optional. Defaults:‣ _PreviewTests.stencil_ for test plugin‣ _PreviewModels.stencil_ for playbook plugin                                                                                         |
+| `simulator_device`                             | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                                                                                                                         |
+| `required_os`                                  | Minimal iOS version required for preview rendering. Optional                                                                                                                                                                              |
+| `snapshot_devices`                             | List of logical snapshot "targets" (used as trait collections). Each will snapshot separately. Optional                                                                                                                                   |
+| `preview_default_enabled`                      | Should all detected previews be included by default? Set `false` if you want to require `.prefireEnabled()` manually. Default: `true`                                                                                                     |
+| `use_grouped_snapshots`                        | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true`                                         |
+| `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
+| `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
+| `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
+| `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 
 ---
 
