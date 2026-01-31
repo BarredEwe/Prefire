@@ -107,7 +107,7 @@ enum GenerateTestsCommand {
                 ➜ Generated test path: \(options.output)
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
-                ➜ drawHierarchyInKeyWindow default enabled: \(String(describing: options.drawHierarchyInKeyWindowDefaultEnabled))
+                ➜ drawHierarchyInKeyWindow default enabled: \(options.drawHierarchyInKeyWindowDefaultEnabled?.description ?? "nil")
             """
         )
 
