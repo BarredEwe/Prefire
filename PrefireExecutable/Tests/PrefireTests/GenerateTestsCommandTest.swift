@@ -27,7 +27,6 @@ class GenerateTestsCommandTests: XCTestCase {
         let expectedArguments = [
             "mainTarget": options.target! as NSString,
             "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
-            "drawHierarchyInKeyWindowDefaultEnabled": "false" as NSString,
         ] as [String: NSObject]
 
         let arguments = await GenerateTestsCommand.makeArguments(for: options)
@@ -43,7 +42,6 @@ class GenerateTestsCommandTests: XCTestCase {
             "mainTarget": "\(options.target ?? "")" as NSString,
             "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
             "snapshotDevices": "iPhone 15|iPad" as NSString,
-            "drawHierarchyInKeyWindowDefaultEnabled": "false" as NSString,
         ] as [String: NSObject]
 
         let arguments = await GenerateTestsCommand.makeArguments(for: options)
@@ -57,7 +55,7 @@ class GenerateTestsCommandTests: XCTestCase {
         let expectedArguments = [
             "mainTarget": "\(options.target ?? "")" as NSString,
             "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
-            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
         ] as [String: NSObject]
 
         let arguments = await GenerateTestsCommand.makeArguments(for: options)
