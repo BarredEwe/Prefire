@@ -89,4 +89,16 @@ class ConfigPathBuilderTests: XCTestCase {
 
         XCTAssertEqual(result, expectableResult)
     }
+
+    func test_possibleConfigPathsWithPercentEncodedSpaces() {
+        let configPath = "Test%20Folder/" + configFileName
+        let result = ConfigPathBuilder.possibleConfigPaths(for: configPath, testTargetPath: nil, packagePath: nil)
+
+        let expectableResult = [
+            FileManager.default.currentDirectoryPath + "/Test Folder/" + configFileName,
+            FileManager.default.currentDirectoryPath + "/" + configFileName,
+        ]
+
+        XCTAssertEqual(result, expectableResult)
+    }
 }

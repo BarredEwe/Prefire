@@ -16,8 +16,11 @@ enum ConfigPathBuilder {
                 continue
             }
 
+            // Decode any percent-encoded characters in the input path
+            let decodedPath = path.removingPercentEncoding ?? path
+
             // This will build the absolute path relative to the current directory
-            var configURL = URL(filePath: path)
+            var configURL = URL(filePath: decodedPath)
 
             // Add the config file name if not provided
             if configURL.lastPathComponent != configFileName {
