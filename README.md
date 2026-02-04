@@ -48,11 +48,15 @@
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "4.0.0")
+    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "5.4.0")
+    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
 ],
 .testTarget(
+    dependencies: [
+      .product(name: "Prefire", package: "Prefire"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+    ],
     plugins: [
-        // For Snapshot Tests
         .plugin(name: "PrefireTestsPlugin", package: "Prefire")
     ]
 )
