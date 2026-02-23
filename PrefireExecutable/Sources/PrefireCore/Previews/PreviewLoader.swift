@@ -26,7 +26,7 @@ enum PreviewLoader {
         var braceBalance: Int? = nil
 
         for line in lines {
-            if line.hasPrefix(Constants.previewMarker) {
+            if line.trimmingCharacters(in: .whitespaces).hasPrefix(Constants.previewMarker) {
                 previewWasFound = true
                 currentBody = ""
                 braceBalance = nil
