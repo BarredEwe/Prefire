@@ -103,7 +103,8 @@ final class ConfigDecoder {
     }
 
     private func getValues(from components: [String], lines: ArraySlice<String>, env: [String: String]) -> [String]? {
-        guard components.last?.isEmpty == true else { return nil }
+        guard let lastComponent = components.last?.trimmingCharacters(in: .whitespaces),
+              lastComponent.isEmpty == true else { return nil }
 
         var values = [String]()
 
