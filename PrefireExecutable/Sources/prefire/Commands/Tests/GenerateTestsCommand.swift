@@ -3,7 +3,7 @@ import PrefireCore
 import PathKit
 
 private enum Constants {
-    static let snapshotFileName = "PreviewTests.generated.swift"
+    static let defaultSnapshotFileName = "PreviewTests.generated.swift"
     static let snapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
 }
 
@@ -21,6 +21,7 @@ struct GeneratedTestsOptions {
     var snapshotDevices: [String]?
     var imports: [String]?
     var testableImports: [String]?
+    var snapshotFileName: String
     var useGroupedSnapshots: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
 
@@ -54,6 +55,7 @@ struct GeneratedTestsOptions {
         self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
         self.device = config?.tests.device ?? device
         self.osVersion = config?.tests.osVersion ?? osVersion
+        snapshotFileName = config?.tests.testFileName ?? Constants.defaultSnapshotFileName
         useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
@@ -86,7 +88,7 @@ enum GenerateTestsCommand {
         try await PrefireGenerator.generate(
             version: Prefire.Version.value,
             sources: options.sources,
-            output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.snapshotFileTemplated),
+            output: options.output + (options.useGroupedSnapshots ? options.snapshotFileName : Constants.snapshotFileTemplated),
             arguments: await GenerateTestsCommand.makeArguments(for: options),
             inlineTemplate: try options.template?.read(.utf8) ?? EmbeddedTemplates.previewTests,
             defaultEnabled: options.prefireEnabledMarker,
@@ -96,7 +98,7 @@ enum GenerateTestsCommand {
     }
 
     static func makeArguments(for options: GeneratedTestsOptions) async -> [String: NSObject] {
-        let snapshotOutput = options.testTargetPath.flatMap({ $0 + Constants.snapshotFileName })
+        let snapshotOutput = options.testTargetPath.flatMap({ $0 + options.snapshotFileName })
 
         Logger.info(
             """

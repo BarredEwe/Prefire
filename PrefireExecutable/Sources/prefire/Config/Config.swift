@@ -16,6 +16,7 @@ struct TestsConfig {
     var testTargetPath: String?
     var sources: [String]?
     var testFilePath: String?
+    var testFileName: String?
     var template: String?
     var device: String?
     var osVersion: String?
@@ -31,6 +32,7 @@ struct TestsConfig {
         case testTargetPath = "test_target_path"
         case sources = "sources"
         case testFilePath = "test_file_path"
+        case testFileName = "test_file_name"
         case template = "template_file_path"
         case device = "simulator_device"
         case osVersion = "required_os"

@@ -54,6 +54,8 @@ final class ConfigDecoder {
             config.tests.sources = getValues(from: components, lines: lines, env: env)
         case .testFilePath:
             config.tests.testFilePath = getValue(from: components.last, env: env)
+        case .testFileName:
+            config.tests.testFileName = getValue(from: components.last, env: env)
         case .template:
             config.tests.template = getValue(from: components.last, env: env)
         case .device:
