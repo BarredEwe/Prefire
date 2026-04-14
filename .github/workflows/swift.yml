@@ -20,7 +20,7 @@ jobs:
         include:
           - xcode: "Xcode_16.4"
             runsOn: macos-15
-          - xcode: "Xcode_26.0"
+          - xcode: "Xcode_26.4"
             runsOn: macos-26
     steps:
       - uses: actions/checkout@v4
