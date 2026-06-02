@@ -35,6 +35,10 @@ let package = Package(
                 .copy("../../Binaries/PrefireBinary.artifactbundle"),
             ]
         ),
+        .testTarget(
+            name: "PrefireCLITests",
+            dependencies: ["PrefireCLI"]
+        ),
         .plugin(
             name: "PrefirePlaybookPlugin",
             capability: .buildTool(),

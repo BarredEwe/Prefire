@@ -30,6 +30,24 @@ jobs:
         
       - name: Build Prefire
         run: make build
-        
+
       - name: Run PrefireExecutable Tests
         run: make test
+
+      - name: Build prefire CLI wrapper
+        run: swift build -c release --product prefire
+
+      - name: Smoke test prefire CLI wrapper
+        run: |
+          set -euo pipefail
+          bin=$(pwd)/.build/release/prefire
+          $bin --version
+          $bin --help | grep -q "Generate Playbook"
+          cd /tmp && $bin --version
+          output=$(PREFIRE_BINARY_PATH=/nonexistent $bin --version 2>&1 || true)
+          if echo "$output" | grep -q "failed to launch"; then
+            echo "override error path works"
+          else
+            echo "expected 'failed to launch' error, got: $output" >&2
+            exit 1
+          fi
