@@ -33,6 +33,9 @@ let package = Package(
             name: "PrefireCLI",
             dependencies: [
                 "PrefireBinary",
+            ],
+            resources: [
+                .copy("../../Binaries/PrefireBinary.artifactbundle"),
             ]
         ),
         .plugin(

@@ -3,13 +3,12 @@
 import Foundation
 
 let env = ProcessInfo.processInfo.environment
-let bundleRel = "Binaries/PrefireBinary.artifactbundle"
+let bundleName = "PrefireBinary.artifactbundle"
 
-func firstBinary(in base: URL) -> String? {
-    let bundle = base.appendingPathComponent(bundleRel, isDirectory: true)
-    guard let names = try? FileManager.default.contentsOfDirectory(atPath: bundle.path) else { return nil }
-    for name in names {
-        let bin = bundle.appendingPathComponent(name).appendingPathComponent("bin/prefire")
+func firstBinary(in bundleURL: URL) -> String? {
+    let names = (try? FileManager.default.contentsOfDirectory(atPath: bundleURL.path)) ?? []
+    for name in names.sorted().reversed() {
+        let bin = bundleURL.appendingPathComponent(name).appendingPathComponent("bin/prefire")
         if FileManager.default.isExecutableFile(atPath: bin.path) { return bin.path }
     }
     return nil
@@ -18,11 +17,14 @@ func firstBinary(in base: URL) -> String? {
 func findBinary() -> String? {
     if let override = env["PREFIRE_BINARY_PATH"], !override.isEmpty { return override }
 
-    let exeBase = (0..<4).reduce(URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath()) { url, _ in url.deletingLastPathComponent() }
-    let srcBase = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-    let cwdBase = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    if let resourceURL = Bundle.module.resourceURL {
+        let bundleURL = resourceURL.appendingPathComponent(bundleName, isDirectory: true)
+        if let bin = firstBinary(in: bundleURL) { return bin }
+    }
 
-    return firstBinary(in: exeBase) ?? firstBinary(in: srcBase) ?? firstBinary(in: cwdBase)
+    let cwdBundle = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("Binaries").appendingPathComponent(bundleName, isDirectory: true)
+    return firstBinary(in: cwdBundle)
 }
 
 guard let binaryPath = findBinary() else {
