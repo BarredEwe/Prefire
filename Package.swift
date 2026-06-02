@@ -31,9 +31,6 @@ let package = Package(
         ),
         .executableTarget(
             name: "PrefireCLI",
-            dependencies: [
-                "PrefireBinary",
-            ],
             resources: [
                 .copy("../../Binaries/PrefireBinary.artifactbundle"),
             ]
