@@ -27,7 +27,7 @@
 - 🧩 **UIKit Support** — support for `UIView` and `UIViewController`
 - ⚙️ **SPM + Xcode Plugins** — works in CLI, Xcode build phases, or CI
 - 🧠 **Fast Caching** — fingerprint-based AST and body caching avoids redundant work
-- ✍️ **Stencil Templates** — customize output with your own templates
+- ✍️ **Stencil Templates** — customize output with [your own templates](Documentation/Templates.md)
 
 ### Why Prefire? 
 
