@@ -91,7 +91,7 @@ Supports:
 - ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
 - ✅ GitHub Actions / CI
 
-See detailed setup in the [Installation guide](https://github.com/BarredEwe/Prefire/blob/main/Installation.md)
+See detailed setup in the [Installation guide](Documentation/Installation.md)
 
 ### Mint
 
@@ -269,7 +269,7 @@ Run `prefire tests --help` or `prefire playbook --help` for more options.
 ---
 ## 🗂 Configuration: `.prefire.yml`
 
-See detailed configuration in the [Configuration guide](https://github.com/BarredEwe/Prefire/blob/main/Configuration.md)
+See detailed configuration in the [Configuration guide](Documentation/Configuration.md)
 
 ```yaml
 test_configuration:
