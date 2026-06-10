@@ -49,6 +49,34 @@ class GenerateTestsCommandTests: XCTestCase {
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
     
+    func test_makeArguments_split_snapshot_directories_uses_templated_file_name() async {
+        options.useGroupedSnapshots = false
+        options.splitSnapshotDirectories = true
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "{PREVIEW_FILE_NAME}Tests.generated.swift" })!.string as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
+    func test_makeArguments_ungrouped_without_split_keeps_legacy_file_name() async {
+        options.useGroupedSnapshots = false
+        options.splitSnapshotDirectories = false
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift" })!.string as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
     func test_makeArguments_drawHierarchyInKeyWindowDefaultEnabled() async {
         options.drawHierarchyInKeyWindowDefaultEnabled = true
 
