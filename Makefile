@@ -31,8 +31,13 @@ update:
 	mv Binaries/PrefireBinary.artifactbundle/prefire-$(CUR_VERSION)-macos/ Binaries/PrefireBinary.artifactbundle/prefire-$(version)-macos/
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '6 s/.*/            "version": "$(version)",/g' info.json
 	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
-	cd Binaries/PrefireBinary.artifactbundle; sed -i '' -e '9 s/.*/                    "path": "prefire-$(version)-macos\/bin\/prefire",/g' info.json
 	cd PrefireExecutable/Sources/prefire/Commands/Version/; sed -i '' -e '8 s/.*/        static let value: String = "$(version)"/g' Version.swift
+
+	# Rebuild bundled CLI so the artifactbundle matches the new Version.swift
+	# constant. Without this step the binary committed in the release tag
+	# keeps reporting the previous version (see history: 5.5.0/5.6.0 both
+	# shipped a binary whose `--version` prints 5.4.1).
+	$(MAKE) binary
 
 archive:
 	tar -czf prefire.tar.gz -C Binaries/PrefireBinary.artifactbundle/prefire-${CUR_VERSION}-macos/bin/ prefire
