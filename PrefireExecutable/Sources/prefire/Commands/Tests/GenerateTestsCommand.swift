@@ -22,6 +22,7 @@ struct GeneratedTestsOptions {
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
+    var splitSnapshotDirectories: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
 
     init(
@@ -55,6 +56,7 @@ struct GeneratedTestsOptions {
         self.device = config?.tests.device ?? device
         self.osVersion = config?.tests.osVersion ?? osVersion
         useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
+        splitSnapshotDirectories = config?.tests.splitSnapshotDirectories ?? false
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
@@ -96,7 +98,16 @@ enum GenerateTestsCommand {
     }
 
     static func makeArguments(for options: GeneratedTestsOptions) async -> [String: NSObject] {
-        let snapshotOutput = options.testTargetPath.flatMap({ $0 + Constants.snapshotFileName })
+        // `split_snapshot_directories` works only together with `use_grouped_snapshots: false`,
+        // because each `__Snapshots__/<name>/` folder is derived from a distinct generated `.swift`
+        // file. Warn instead of silently ignoring so the user notices the misconfiguration.
+        if options.splitSnapshotDirectories && options.useGroupedSnapshots {
+            Logger.warning("⚠️ `split_snapshot_directories: true` requires `use_grouped_snapshots: false` and will be ignored otherwise.")
+        }
+
+        let splitDirectories = options.splitSnapshotDirectories && !options.useGroupedSnapshots
+        let snapshotFileName = splitDirectories ? Constants.snapshotFileTemplated : Constants.snapshotFileName
+        let snapshotOutput = options.testTargetPath.flatMap({ $0 + snapshotFileName })
 
         Logger.info(
             """

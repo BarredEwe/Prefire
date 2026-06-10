@@ -101,6 +101,37 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("class PreviewTests: XCTestCase"), "Should use 'Preview' as class name for grouped snapshots")
     }
     
+    func testUngroupedFileGenerationResolvesPlaceholderInArguments() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let outputTemplate = Path("/tmp/{PREVIEW_FILE_NAME}Tests.generated.swift")
+        let cache = Path("/tmp/cache/")
+        let template = "// snapshot file: {{ argument.file }}"
+        let args: [String: NSObject] = [
+            "file": "/Users/dev/Tests/{PREVIEW_FILE_NAME}Tests.generated.swift" as NSString
+        ]
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: outputTemplate,
+            arguments: args,
+            inlineTemplate: template,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: false
+        )
+
+        let expectedOutput = Path("/tmp/TestPreviewTests.generated.swift")
+        XCTAssertTrue(expectedOutput.exists, "Should generate ungrouped file with filename")
+
+        let result = try expectedOutput.read(.utf8)
+        XCTAssertTrue(
+            result.contains("// snapshot file: /Users/dev/Tests/TestPreviewTests.generated.swift"),
+            "Should resolve {PREVIEW_FILE_NAME} in string-valued arguments so the `file` path points at the per-source generated file"
+        )
+        XCTAssertFalse(result.contains("{PREVIEW_FILE_NAME}"), "Placeholder should not leak into the rendered output")
+    }
+
     func testUngroupedFileGenerationUsesFileNameInClassName() async throws {
         let file = Path(fixtureTestPreviewSource)
         let outputTemplate = Path("/tmp/{PREVIEW_FILE_NAME}Tests.generated.swift")

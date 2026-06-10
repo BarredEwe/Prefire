@@ -130,7 +130,17 @@ public enum PrefireGenerator {
             
             var fileArguments = arguments
             fileArguments["previewsMacrosDict"] = models as NSArray
-            
+
+            // Resolve the placeholder in any string-valued arguments so values like the
+            // `file` path (used by SnapshotTesting to derive the per-class `__Snapshots__`
+            // folder) point at the per-source generated file rather than a literal placeholder.
+            for (key, value) in fileArguments {
+                guard let stringValue = value as? NSString,
+                      stringValue.contains("{PREVIEW_FILE_NAME}") else { continue }
+                let resolved = (stringValue as String).replacingOccurrences(of: "{PREVIEW_FILE_NAME}", with: fileName)
+                fileArguments[key] = resolved as NSString
+            }
+
             // Replace the placeholder in the template as well
             let customizedTemplate = inlineTemplate.replacingOccurrences(of: "{PREVIEW_FILE_NAME}", with: fileName)
             
