@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Rebuild bundled binary from current source
+        run: make binary
       - name: Create achrive
         run: make archive
       - name: Release
