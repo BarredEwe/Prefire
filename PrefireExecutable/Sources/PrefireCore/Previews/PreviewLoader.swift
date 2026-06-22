@@ -43,7 +43,12 @@ enum PreviewLoader {
                 return count
             }
 
-            if braceChange != 0 || braceBalance != nil {
+            // Start tracking the brace balance as soon as the closure's opening brace appears,
+            // even when it is balanced on the same line. Relying on `braceChange != 0` here
+            // skipped single-line previews like `#Preview("x") { previewFoo() }`, where the
+            // opening and closing braces cancel out (`braceChange == 0`) so the balance was
+            // never initialised and the body was never collected.
+            if braceBalance != nil || line.contains(Constants.openingBrace) {
                 braceBalance = (braceBalance ?? 0) + braceChange
             }
 

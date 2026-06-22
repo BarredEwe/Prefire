@@ -29,8 +29,14 @@ extension RawPreviewModel {
     init?(from macroBody: String, filename: String) {
         guard !macroBody.isEmpty else { return nil }
 
-        var lines = macroBody.split(separator: "\n", omittingEmptySubsequences: false).dropLast(2)
-        let firstLine = lines.removeFirst()
+        // Only the first line is needed here (for displayName and traits); the body and
+        // properties are parsed from the full `macroBody` via SwiftSyntax below. Taking the
+        // first line directly avoids crashing on single-line previews like
+        // `#Preview("x") { previewFoo() }`, where `dropLast(2)` leaves an empty collection
+        // and `removeFirst()` would trap.
+        guard let firstLine = macroBody.split(separator: "\n", omittingEmptySubsequences: false).first else {
+            return nil
+        }
 
         // Define displayName by splitting the first line by "
         let parts = firstLine.split(separator: "\"")

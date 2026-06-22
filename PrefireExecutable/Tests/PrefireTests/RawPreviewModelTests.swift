@@ -201,4 +201,14 @@ class RawPreviewModelTests: XCTestCase {
         XCTAssertEqual(rawPreviewModel?.displayName, "Test")
         XCTAssertEqual(rawPreviewModel?.traits, [".device"])
     }
+
+    func test_initWithSingleLineBody() {
+        let previewBody = "#Preview(\"SingleLine\", traits: .sizeThatFitsLayout) { Text(\"TestView\") }\n"
+        let rawPreviewModel = RawPreviewModel(from: previewBody, filename: "Test")
+
+        XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
+        XCTAssertEqual(rawPreviewModel?.properties, nil)
+        XCTAssertEqual(rawPreviewModel?.displayName, "SingleLine")
+        XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout"])
+    }
 }
