@@ -79,6 +79,20 @@ class PreviewLoaderTests: XCTestCase {
 
         XCTAssertNil(previews)
     }
+
+    func test_loadPreviewWithBraceInDisplayName() {
+        let content = """
+        #Preview("{braced}")
+        {
+            Text("TestView")
+        }
+
+        """
+        let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: true)
+
+        XCTAssertEqual(previews?.count, 1)
+        XCTAssertEqual(previews?[0], "#Preview(\"{braced}\")\n{\n    Text(\"TestView\")\n}\n")
+    }
 }
 
 // MARK: - Previews
