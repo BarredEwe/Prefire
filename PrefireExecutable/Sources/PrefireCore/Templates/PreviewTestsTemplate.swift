@@ -139,7 +139,7 @@ import SnapshotTesting
                     traits: prefireSnapshot.traits
                 )
             ),
-            record: preferences.record{% if argument.file %},
+            record: preferences.record ? .all : .missing{% if argument.file %},
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
@@ -151,7 +151,7 @@ import SnapshotTesting
             SnapshotTesting.assertSnapshot(
                 matching: vc,
                 as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
-                record: preferences.record,
+                record: preferences.record ? .all : .missing,
                 file: file{% endif %},
                 testName: prefireSnapshot.name + ".accessibility"
             )
