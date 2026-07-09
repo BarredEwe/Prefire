@@ -1,195 +1,26 @@
 import Foundation
-import SwiftParser
 
-struct RawPreviewModel {
+struct RawPreviewModel: Codable, Equatable {
     var displayName: String
     var traits: [String]
     var body: String
     var properties: String?
+    var arguments: String?
+    var argumentPattern: String?
 
     var isScreen: Bool {
         traits.contains(Constants.defaultTrait)
     }
+
+    var hasArguments: Bool {
+        arguments != nil && argumentPattern != nil
+    }
 }
 
 extension RawPreviewModel {
-    private enum Markers {
-        static let previewMacro = "#Preview"
-        static let traits = "traits: "
-    }
-
     private enum Constants {
         static let defaultTrait = ".device"
     }
-
-    /// Initialization from the macro Preview body
-    /// - Parameters:
-    ///   - macroBody: Preview View body
-    ///   - filename: File name in which the macro was found
-    init?(from macroBody: String, filename: String) {
-        guard !macroBody.isEmpty else { return nil }
-
-        // Only the first line is needed here (for displayName and traits); the body and
-        // properties are parsed from the full `macroBody` via SwiftSyntax below. Taking the
-        // first line directly avoids crashing on single-line previews like
-        // `#Preview("x") { previewFoo() }`, where `dropLast(2)` leaves an empty collection
-        // and `removeFirst()` would trap.
-        guard let firstLine = macroBody.split(separator: "\n", omittingEmptySubsequences: false).first else {
-            return nil
-        }
-
-        // Define displayName by splitting the first line by "
-        let parts = firstLine.split(separator: "\"")
-        if let namePart = parts.first(where: { !$0.contains(Markers.previewMacro) }) {
-            self.displayName = String(namePart)
-        } else {
-            self.displayName = filename
-        }
-
-        // Retrieve traits using a range finder
-        var previewTrait: String?
-        if let range = firstLine.range(of: Markers.traits) {
-            let substring = firstLine[range.upperBound...]
-            let endIndex = Self.findTraitsEndIndex(in: substring)
-            if let endIndex = endIndex {
-                previewTrait = String(substring[..<endIndex])
-            }
-        }
-
-        // Traits can be functions like .myTraitt("one", 2), .device
-        // We can have both at the same time separated by comma
-        self.traits = Self.parseTraits(from: previewTrait)
-        
-        // Parse the macro body using swiftsyntax to retrieve previewable properties and body.
-        let macroBodySyntax = Parser.parse(source: macroBody)
-        let previewParser = PreviewParser()
-        previewParser.walk(macroBodySyntax)
-        
-        self.properties = previewParser.properties.first
-        if let firstProperty = self.properties,
-           previewParser.properties.count >= 2 {
-            self.properties = previewParser.properties.dropFirst().reduce(firstProperty) {
-                var properties = $0
-                properties = properties + "\n" + $1
-                return properties
-            }
-        }
-        
-        body = previewParser.body ?? ""
-    }
-    
-    /// Parse traits from the raw trait string
-    /// Handles single traits, comma-separated traits, and function-style traits
-    private static func parseTraits(from rawTraits: String?) -> [String] {
-        guard let rawTraits = rawTraits?.trimmingCharacters(in: .whitespacesAndNewlines), 
-              !rawTraits.isEmpty else {
-            return [Constants.defaultTrait]
-        }
-        
-        // Pre-allocate array with estimated capacity for better performance
-        var traits: [String] = []
-        traits.reserveCapacity(4) // Most common case: 1-3 traits
-
-        let startIndex = rawTraits.startIndex
-        let endIndex = rawTraits.endIndex
-        var currentStart = startIndex
-        var currentIndex = startIndex
-        var parenthesesDepth = 0
-        var insideQuotes = false
-        var quoteChar: Character?
-        
-        while currentIndex < endIndex {
-            let char = rawTraits[currentIndex]
-            
-            switch char {
-            case "\"", "'":
-                if !insideQuotes {
-                    insideQuotes = true
-                    quoteChar = char
-                } else if char == quoteChar {
-                    insideQuotes = false
-                    quoteChar = nil
-                }
-            case "(":
-                if !insideQuotes {
-                    parenthesesDepth += 1
-                }
-            case ")":
-                if !insideQuotes {
-                    parenthesesDepth -= 1
-                }
-            case ",":
-                if !insideQuotes && parenthesesDepth == 0 {
-                    // This comma is a trait separator
-                    let traitSubstring = rawTraits[currentStart..<currentIndex]
-                    let trimmedTrait = traitSubstring.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !trimmedTrait.isEmpty {
-                        traits.append(String(trimmedTrait))
-                    }
-                    currentStart = rawTraits.index(after: currentIndex)
-                }
-            default:
-                break
-            }
-            
-            currentIndex = rawTraits.index(after: currentIndex)
-        }
-        
-        // Add the last trait
-        let lastTraitSubstring = rawTraits[currentStart..<endIndex]
-        let trimmedLastTrait = lastTraitSubstring.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmedLastTrait.isEmpty {
-            traits.append(String(trimmedLastTrait))
-        }
-        
-        return traits.isEmpty ? [Constants.defaultTrait] : traits
-    }
-    
-    /// Find the correct end index for traits, respecting parentheses balance
-    private static func findTraitsEndIndex(in substring: Substring) -> String.Index? {
-        var parenthesesDepth = 0
-        var insideQuotes = false
-        var quoteChar: Character?
-        var currentIndex = substring.startIndex
-        let endIndex = substring.endIndex
-        
-        while currentIndex < endIndex {
-            let char = substring[currentIndex]
-            
-            switch char {
-            case "\"", "'":
-                if !insideQuotes {
-                    insideQuotes = true
-                    quoteChar = char
-                } else if char == quoteChar {
-                    insideQuotes = false
-                    quoteChar = nil
-                }
-            case "(":
-                if !insideQuotes {
-                    parenthesesDepth += 1
-                }
-            case ")":
-                if !insideQuotes {
-                    if parenthesesDepth == 0 {
-                        // This is the closing parenthesis of the #Preview call
-                        return currentIndex
-                    }
-                    parenthesesDepth -= 1
-                }
-            default:
-                break
-            }
-            
-            currentIndex = substring.index(after: currentIndex)
-        }
-        
-        // If we didn't find a balanced closing parenthesis, return nil
-        return nil
-    }
-}
-
-extension RawPreviewModel {
     private static let funcCharacterSet = CharacterSet(arrayLiteral: "_").inverted.intersection(.alphanumerics.inverted)
 
     var componentTestName: String {
@@ -203,6 +34,9 @@ extension RawPreviewModel {
             "isScreen": isScreen,
             "body": body,
             "properties": properties,
+            "arguments": arguments,
+            "argumentPattern": argumentPattern,
+            "hasArguments": hasArguments,
             "traits": traits
         ].filter({ $0.value != nil })
     }

@@ -47,6 +47,71 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("TestPreview"), "Should include basic preview")
         XCTAssertFalse(result.contains("TestPreview_Ignored"), "Should skip explicitly ignored preview")
     }
+
+    func testParameterizedPreviewRendersSnapshotTemplate() async throws {
+        let file = Path("/tmp/ParameterizedPreview.swift")
+        let output = Path("/tmp/ParameterizedPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_parameterized_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B"]) { suffix in
+            Text("1 \\(suffix)")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("for (previewArgumentIndex, previewArgument) in ([\"- A\", \"- B\"]).enumerated()"))
+        XCTAssertTrue(result.contains("let suffix = previewArgument"))
+        XCTAssertTrue(result.contains("name: \"TextView-\\(previewArgumentIndex + 1)-\\(String(describing: previewArgument))\""))
+        XCTAssertTrue(result.contains("Text(\"1 \\(suffix)\")"))
+    }
+
+    func testParameterizedPreviewRendersPlaybookTemplate() async throws {
+        let file = Path("/tmp/ParameterizedPlaybookPreview.swift")
+        let output = Path("/tmp/ParameterizedPreviewModels.generated.swift")
+        let cache = Path("/tmp/cache_parameterized_playbook_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B"]) { suffix in
+            Text("1 \\(suffix)")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewModels,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("for (previewArgumentIndex, previewArgument) in ([\"- A\", \"- B\"]).enumerated()"))
+        XCTAssertTrue(result.contains("let suffix = previewArgument"))
+        XCTAssertTrue(result.contains("id: \"TextView-\\(previewArgumentIndex)\""))
+        XCTAssertTrue(result.contains("name: \"TextView-\\(previewArgumentIndex + 1)-\\(String(describing: previewArgument))\""))
+        XCTAssertTrue(result.contains("Text(\"1 \\(suffix)\")"))
+    }
     
     func testUngroupedFileGeneration() async throws {
         let file = Path(fixtureTestPreviewSource)

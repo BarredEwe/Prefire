@@ -62,6 +62,24 @@ import SnapshotTesting
 
     {% for macroModel in argument.previewsMacrosDict %}
     func test_{{ macroModel.componentTestName }}_Preview() {        
+        {% if macroModel.hasArguments %}
+        for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
+            let {{ macroModel.argumentPattern }} = previewArgument
+
+            let prefireSnapshot = PrefireSnapshot(
+                {
+                    {{ macroModel.body|indent:20 }}
+                },
+                name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
+                isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+                device: deviceConfig
+            )
+
+            if let failure = assertSnapshots(for: prefireSnapshot) {
+                XCTFail(failure)
+            }
+        }
+        {% else %}
         {% if macroModel.properties %}
         struct PreviewWrapper{{ macroModel.componentTestName }}: SwiftUI.View {
             {{ macroModel.properties }}
@@ -86,6 +104,7 @@ import SnapshotTesting
         if let failure = assertSnapshots(for: prefireSnapshot) {
             XCTFail(failure)
         }
+        {% endif %}
     }
     {%- if not forloop.last %}
 

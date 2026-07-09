@@ -240,6 +240,16 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 
     <br clear="all">
 
+- Prefire supports native SwiftUI parameterized previews:
+
+    ```swift
+    #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B", "- C"]) { suffix in
+        Text("1 \(suffix)")
+    }
+    ```
+
+    Prefire expands each argument into its own snapshot and Playbook preview.
+
 ---
 
 ## 🧰 API Summary
@@ -251,6 +261,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Group in a flow | `.previewUserStory(.auth)` |
 | Mark a UI state | `.previewState(.error)` |
 | Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
+| Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---
 

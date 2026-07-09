@@ -34,13 +34,13 @@ final class PrefireCacheManagerTests: XCTestCase {
             },
             parsePreviews: {
                 previewsParsed = true
-                return ["a": "Text(\"Hello\")"]
+                return PreviewLoader.previewModels(from: try file.read(.utf8), filename: "Example", defaultEnabled: true) ?? [:]
             }
         )
 
         XCTAssertTrue(parsed)
         XCTAssertTrue(previewsParsed)
-        XCTAssertEqual(firstPreviews["a"], "Text(\"Hello\")")
+        XCTAssertEqual(firstPreviews["Example_0"]?.body, "Text(\"Hello\")")
 
         parsed = false
         previewsParsed = false
@@ -71,10 +71,14 @@ final class PrefireCacheManagerTests: XCTestCase {
                 Types(types: [])
             },
             parsePreviews: {
-                ["b": "Text(\"Updated\")"]
+                PreviewLoader.previewModels(from: """
+                #Preview {
+                    Text("Updated")
+                }
+                """, filename: "Example", defaultEnabled: true) ?? [:]
             }
         )
 
-        XCTAssertEqual(updatedPreviews["b"], "Text(\"Updated\")")
+        XCTAssertEqual(updatedPreviews["Example_0"]?.body, "Text(\"Updated\")")
     }
 }

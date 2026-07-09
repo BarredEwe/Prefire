@@ -58,6 +58,7 @@ public enum PreviewModels {
 private struct MacroPreviews {
     {% for macroModel in argument.previewsMacrosDict %}
     {% if macroModel.properties %}
+    {% if not macroModel.hasArguments %}
     struct PreviewWrapper{{ macroModel.componentTestName }}: SwiftUI.View {
     {{ macroModel.properties }}
         var body: some View {
@@ -65,19 +66,44 @@ private struct MacroPreviews {
         }
     }
     {% endif %}
+    {% endif %}
     {% endfor %}
 
-    static var previews: [PreviewModel] = [
+    static var previews: [PreviewModel] = {
+        var previews: [PreviewModel] = []
         {% for macroModel in argument.previewsMacrosDict %}
-        {% if macroModel.properties %}
-        PreviewModel(content: { PreviewWrapper{{ macroModel.componentTestName }}() }, name: "{{ macroModel.displayName }}"),
+        {% if macroModel.hasArguments %}
+        for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
+            let {{ macroModel.argumentPattern }} = previewArgument
+            previews.append(
+                PreviewModel(
+                    id: "{{ macroModel.componentTestName }}-\(previewArgumentIndex)",
+                    content: {
+                        {{ macroModel.body|indent:24 }}
+                    },
+                    name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
+                    type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}
+                )
+            )
+        }
         {% else %}
-        PreviewModel(content: {
-            {{ macroModel.body|indent:12 }}
-        }, name: "{{ macroModel.displayName }}"),
+        {% if macroModel.properties %}
+        previews.append(PreviewModel(content: { PreviewWrapper{{ macroModel.componentTestName }}() }, name: "{{ macroModel.displayName }}"))
+        {% else %}
+        previews.append(
+            PreviewModel(
+                content: {
+                    {{ macroModel.body|indent:20 }}
+                },
+                name: "{{ macroModel.displayName }}",
+                type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}
+            )
+        )
+        {% endif %}
         {% endif %}
         {% endfor %}
-    ]
+        return previews
+    }()
 }
 
 {% endif %}
