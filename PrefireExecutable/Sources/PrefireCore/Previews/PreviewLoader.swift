@@ -6,6 +6,7 @@ import SwiftSyntax
 enum PreviewLoader {
     enum Constants {
         static let previewMacro = "Preview"
+        static let defaultTrait = ".device"
         static let prefireDisableMarker = ".prefireIgnored()"
         static let prefireEnabledMarker = ".prefireEnabled()"
     }
@@ -18,6 +19,37 @@ enum PreviewLoader {
     /// - Returns: An array representing the results of the macro preview, each starting with `#Preview`
     ///            and ending with the closing `}` of the preview closure followed by a newline.
     static func previewBodies(from content: String, defaultEnabled: Bool) -> [String]? {
+        let previews = rawPreviews(from: content, defaultEnabled: defaultEnabled)
+        return previews?.map(\.body)
+    }
+
+    static func previewModels(from content: String, filename: String, defaultEnabled: Bool) -> [String: RawPreviewModel]? {
+        guard let previews = rawPreviews(from: content, defaultEnabled: defaultEnabled) else { return nil }
+
+        var models: [String: RawPreviewModel] = [:]
+        for (index, preview) in previews.enumerated() {
+            let key = "\(filename)_\(index)"
+            models[key] = RawPreviewModel(
+                displayName: preview.parser.displayName ?? key,
+                traits: preview.parser.traits ?? [Constants.defaultTrait],
+                body: preview.parser.body ?? "",
+                properties: preview.parser.propertiesSource,
+                arguments: preview.parser.arguments,
+                argumentPattern: preview.parser.argumentPattern
+            )
+        }
+
+        return models.isEmpty ? nil : models
+    }
+}
+
+private extension PreviewLoader {
+    struct RawPreview {
+        let body: String
+        let parser: PreviewParser
+    }
+
+    static func rawPreviews(from content: String, defaultEnabled: Bool) -> [RawPreview]? {
         // Locate `#Preview` macros with SwiftSyntax rather than a line-based brace scanner.
         // The scanner used to miscount braces that appear inside string literals, comments or
         // raw strings (e.g. `#Preview("{braced}")`), truncating the collected body. SwiftSyntax
@@ -27,7 +59,7 @@ enum PreviewLoader {
         collector.walk(sourceFile)
 
         let sourceBytes = Array(content.utf8)
-        var previewBodies: [String] = []
+        var previews: [RawPreview] = []
 
         for preview in collector.previews {
             guard preview.startOffset <= preview.endOffset, preview.endOffset <= sourceBytes.count else { continue }
@@ -41,11 +73,11 @@ enum PreviewLoader {
             }
 
             if viewMustBeLoaded {
-                previewBodies.append(body)
+                previews.append(RawPreview(body: body, parser: preview.parser))
             }
         }
 
-        return previewBodies.isEmpty ? nil : previewBodies
+        return previews.isEmpty ? nil : previews
     }
 }
 
@@ -54,6 +86,7 @@ private final class PreviewMacroCollector: SyntaxVisitor {
     struct PreviewRange {
         let startOffset: Int
         let endOffset: Int
+        let parser: PreviewParser
     }
 
     private(set) var previews: [PreviewRange] = []
@@ -76,10 +109,13 @@ private final class PreviewMacroCollector: SyntaxVisitor {
     /// (e.g. `@available(...)`) are excluded, matching the shape the downstream parser expects.
     private func record(macroName: String, pound: TokenSyntax, node: some SyntaxProtocol) {
         guard macroName == PreviewLoader.Constants.previewMacro else { return }
+        let parser = PreviewParser()
+        parser.walk(node)
         previews.append(
             PreviewRange(
                 startOffset: pound.positionAfterSkippingLeadingTrivia.utf8Offset,
-                endOffset: node.endPositionBeforeTrailingTrivia.utf8Offset
+                endOffset: node.endPositionBeforeTrailingTrivia.utf8Offset,
+                parser: parser
             )
         )
     }

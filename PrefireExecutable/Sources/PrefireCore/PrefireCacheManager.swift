@@ -16,15 +16,15 @@ struct PrefireCacheManager {
         sources: [Path],
         template: String,
         parseTypes: () throws -> Types,
-        parsePreviews: () async throws -> [String: String]
-    ) async throws -> (types: Types, previews: [String: String]) {
-        let key = fingerprint(for: sources, extra: template)
+        parsePreviews: () async throws -> [String: RawPreviewModel]
+    ) async throws -> (types: Types, previews: [String: RawPreviewModel]) {
+        let key = fingerprint(for: sources, extra: template + "\npreview-model-cache-v2")
         let dir = Path.cachesDir(sourcePath: sources.first ?? .current, basePath: cacheBasePath)
         let typesFile = dir + "\(version)-\(key).types"
         let previewsFile = dir + "\(version)-\(key).previews.json"
 
         var types: Types?
-        var previews: [String: String]?
+        var previews: [String: RawPreviewModel]?
 
         if typesFile.exists {
             do {
@@ -38,7 +38,7 @@ struct PrefireCacheManager {
         if previewsFile.exists {
             do {
                 let data = try Data(contentsOf: previewsFile.url)
-                previews = try JSONDecoder().decode([String: String].self, from: data)
+                previews = try JSONDecoder().decode([String: RawPreviewModel].self, from: data)
             } catch {
                 Logger.warning("⚠️ Failed to read Previews cache: \(error)")
             }

@@ -59,14 +59,15 @@ public enum PrefireGenerator {
             },
             parsePreviews: {
                 Logger.info("🔍 Extracting #Preview bodies...")
-                var result: [String: String] = [:]
+                var result: [String: RawPreviewModel] = [:]
                 for (path, content) in fileContents {
                     guard content.contains("#Preview") else { continue }
-                    if let bodies = PreviewLoader.previewBodies(from: content, defaultEnabled: defaultEnabled) {
-                        for (i, body) in bodies.enumerated() {
-                            let key = "\(path.lastComponentWithoutExtension)_\(i)"
-                            result[key] = body
-                        }
+                    if let models = PreviewLoader.previewModels(
+                        from: content,
+                        filename: path.lastComponentWithoutExtension,
+                        defaultEnabled: defaultEnabled
+                    ) {
+                        result.merge(models) { current, _ in current }
                     }
                 }
                 return result
@@ -76,8 +77,7 @@ public enum PrefireGenerator {
         let previewModels = previews
             .sorted { $0.key > $1.key }
             .compactMap { entry -> [String: Any?]? in
-                guard let model = RawPreviewModel(from: entry.value, filename: entry.key) else { return nil }
-                var dict = model.makeStencilDict()
+                var dict = entry.value.makeStencilDict()
                 // Add the source filename for ungrouped generation
                 dict["sourceFileName"] = extractFileNameFromKey(entry.key)
                 return dict

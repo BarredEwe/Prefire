@@ -10,7 +10,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithName, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithName)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -30,12 +30,66 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithoutName, filename: "TestView")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithoutName, filename: "TestView")
         
         XCTAssertEqual(rawPreviewModel?.body, "VStack {\n        Text(name)\n    }\n    .snapshot(delay: 8)")
         XCTAssertEqual(rawPreviewModel?.properties, "@State var name: String = \"TestView\"")
-        XCTAssertEqual(rawPreviewModel?.displayName, "TestView")
+        XCTAssertEqual(rawPreviewModel?.displayName, "TestView_0")
         XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout"])
+    }
+
+    func test_initWithArguments() {
+        let previewBodyWithArguments = """
+        #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B", "- C"]) { suffix in
+            Text("1 \\(suffix)")
+        }
+
+        """
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithArguments)
+
+        XCTAssertEqual(rawPreviewModel?.body, "Text(\"1 \\(suffix)\")")
+        XCTAssertEqual(rawPreviewModel?.properties, nil)
+        XCTAssertEqual(rawPreviewModel?.displayName, "TextView")
+        XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout"])
+        XCTAssertEqual(rawPreviewModel?.arguments, "[\"- A\", \"- B\", \"- C\"]")
+        XCTAssertEqual(rawPreviewModel?.argumentPattern, "suffix")
+        XCTAssertEqual(rawPreviewModel?.hasArguments, true)
+    }
+
+    func test_initWithTupleArguments() {
+        let previewBodyWithArguments = """
+        #Preview("TextView", traits: .sizeThatFitsLayout, arguments: [("1", "- A"), ("2", "- B")]) { prefix, suffix in
+            Text("\\(prefix) \\(suffix)")
+        }
+
+        """
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithArguments)
+
+        XCTAssertEqual(rawPreviewModel?.body, "Text(\"\\(prefix) \\(suffix)\")")
+        XCTAssertEqual(rawPreviewModel?.arguments, "[(\"1\", \"- A\"), (\"2\", \"- B\")]")
+        XCTAssertEqual(rawPreviewModel?.argumentPattern, "(prefix, suffix)")
+        XCTAssertEqual(rawPreviewModel?.hasArguments, true)
+    }
+
+    func test_initWithMultilineArgumentsSignature() {
+        let previewBodyWithArguments = """
+        #Preview(
+            "TextView",
+            traits: .sizeThatFitsLayout,
+            arguments: ["- A", "- B"]
+        ) { suffix in
+            Text("1 \\(suffix)")
+        }
+
+        """
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithArguments)
+
+        XCTAssertEqual(rawPreviewModel?.body, "Text(\"1 \\(suffix)\")")
+        XCTAssertEqual(rawPreviewModel?.displayName, "TextView")
+        XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout"])
+        XCTAssertEqual(rawPreviewModel?.arguments, "[\"- A\", \"- B\"]")
+        XCTAssertEqual(rawPreviewModel?.argumentPattern, "suffix")
+        XCTAssertEqual(rawPreviewModel?.hasArguments, true)
     }
     
     func test_initWithMultipleTraits() {
@@ -45,7 +99,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithMultipleTraits, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithMultipleTraits)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -60,7 +114,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithFunctionTrait, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithFunctionTrait)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -75,7 +129,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithMixedTraits, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithMixedTraits)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -90,7 +144,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithoutTraits, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithoutTraits)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -105,7 +159,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithMultipleFunctionTraits, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithMultipleFunctionTraits)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -120,7 +174,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithComplexTraits, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithComplexTraits)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -135,7 +189,7 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithNestedParentheses)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
@@ -155,11 +209,11 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithNestedParentheses)
 
         XCTAssertEqual(rawPreviewModel?.body, "ForEach(foo, id: \\.self) {\n        Text($0.formatted())\n    }")
         XCTAssertEqual(rawPreviewModel?.properties, "@State var foo = [\n        1, 2, 3\n    ]")
-        XCTAssertEqual(rawPreviewModel?.displayName, "Test")
+        XCTAssertEqual(rawPreviewModel?.displayName, "Test_0")
         XCTAssertEqual(rawPreviewModel?.traits, [".device"])
     }
     
@@ -177,11 +231,11 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithNestedParentheses)
 
         XCTAssertEqual(rawPreviewModel?.body, "var hoge = \"Test\"\nForEach(foo, id: \\.self) {\n        Text($0.formatted())\n    }")
         XCTAssertEqual(rawPreviewModel?.properties, "@State var foo = [\n        1, 2, 3\n    ]\n@State var name: String = \"TestView\"")
-        XCTAssertEqual(rawPreviewModel?.displayName, "Test")
+        XCTAssertEqual(rawPreviewModel?.displayName, "Test_0")
         XCTAssertEqual(rawPreviewModel?.traits, [".device"])
     }
     
@@ -194,21 +248,25 @@ class RawPreviewModelTests: XCTestCase {
         }
 
         """
-        let rawPreviewModel = RawPreviewModel(from: previewBodyWithNestedParentheses, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBodyWithNestedParentheses)
 
         XCTAssertEqual(rawPreviewModel?.body, "let viewController = UIViewController()\nviewController.view.backgroundColor = .green\nreturn viewController")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
-        XCTAssertEqual(rawPreviewModel?.displayName, "Test")
+        XCTAssertEqual(rawPreviewModel?.displayName, "Test_0")
         XCTAssertEqual(rawPreviewModel?.traits, [".device"])
     }
 
     func test_initWithSingleLineBody() {
         let previewBody = "#Preview(\"SingleLine\", traits: .sizeThatFitsLayout) { Text(\"TestView\") }\n"
-        let rawPreviewModel = RawPreviewModel(from: previewBody, filename: "Test")
+        let rawPreviewModel = makePreviewModel(from: previewBody)
 
         XCTAssertEqual(rawPreviewModel?.body, "Text(\"TestView\")")
         XCTAssertEqual(rawPreviewModel?.properties, nil)
         XCTAssertEqual(rawPreviewModel?.displayName, "SingleLine")
         XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout"])
     }
+}
+
+private func makePreviewModel(from source: String, filename: String = "Test") -> RawPreviewModel? {
+    PreviewLoader.previewModels(from: source, filename: filename, defaultEnabled: true)?["\(filename)_0"]
 }
