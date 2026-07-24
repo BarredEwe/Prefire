@@ -22,7 +22,7 @@ public struct DeviceConfig {
         self.traits = traits
     }
     #elseif os(macOS)
-    public init(size: CGSize? = nil) {
+    public init(size: CGSize) {
         self.size = size
     }
     #endif
@@ -32,7 +32,11 @@ public struct DeviceConfig {
     private var previewContent: Content
     public var name: String
     public var isScreen: Bool
+    #if os(iOS) || os(tvOS)
     public var device: DeviceConfig
+    #elseif os(macOS)
+    public var device: DeviceConfig?
+    #endif
 
     #if os(iOS) || os(tvOS)
     public var traits: UITraitCollection = .init()
@@ -54,12 +58,21 @@ public struct DeviceConfig {
         #endif
     }
 
+    #if os(iOS) || os(tvOS)
     public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig) where Content == AnyView {
         previewContent = preview.content
         name = preview.displayName ?? testName
         isScreen = preview.layout == .device
         self.device = device
     }
+    #elseif os(macOS)
+    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig? = nil) where Content == AnyView {
+        previewContent = preview.content
+        name = preview.displayName ?? testName
+        isScreen = false
+        self.device = device
+    }
+    #endif
 
     #if os(iOS) || os(tvOS)
     public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
@@ -88,7 +101,7 @@ public struct DeviceConfig {
         self.traits = traits
     }
     #elseif os(macOS)
-    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool, device: DeviceConfig) {
+    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool = false, device: DeviceConfig? = nil) {
         previewContent = view()
         self.name = name
         self.isScreen = isScreen
@@ -96,7 +109,7 @@ public struct DeviceConfig {
     }
 
     @_disfavoredOverload
-    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig) where Content == PrefireNSViewRepresentable<T> {
+    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig? = nil) where Content == PrefireNSViewRepresentable<T> {
         previewContent = PrefireNSViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
@@ -104,7 +117,7 @@ public struct DeviceConfig {
     }
 
     @_disfavoredOverload
-    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig) where Content == PrefireNSViewControllerRepresentable<T> {
+    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig? = nil) where Content == PrefireNSViewControllerRepresentable<T> {
         previewContent = PrefireNSViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
@@ -148,7 +161,7 @@ public struct DeviceConfig {
         #elseif os(macOS)
         let hostingController = NSHostingController(rootView: view)
         let hostingView = hostingController.view
-        let size = device.size ?? hostingView.fittingSize
+        let size = device?.size ?? hostingView.fittingSize
         hostingView.frame = CGRect(origin: .zero, size: size)
         hostingView.layoutSubtreeIfNeeded()
         return hostingView

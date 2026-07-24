@@ -108,7 +108,8 @@ final class PrefireGeneratorTests: XCTestCase {
 
         XCTAssertTrue(result.contains("device: macroDeviceConfig(width: 640, height: Layout.height)"))
         XCTAssertTrue(result.contains("#if os(macOS)"))
-        XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
+        XCTAssertTrue(result.contains("size: prefireSnapshot.device?.size"))
+        XCTAssertTrue(result.contains("isScreen: isScreenPreview(false)"))
     }
 
     func testParameterizedPreviewRendersPlaybookTemplate() async throws {

@@ -21,6 +21,12 @@ import SnapshotTesting
 #endif
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
+#if os(macOS)
+    private typealias SnapshotDevice = DeviceConfig?
+#else
+    private typealias SnapshotDevice = DeviceConfig
+#endif
+
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
@@ -28,8 +34,6 @@ import SnapshotTesting
     private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
 #elseif os(tvOS)
     private let deviceConfig: DeviceConfig = ViewImageConfig.tv.deviceConfig
-#elseif os(macOS)
-    private let deviceConfig = DeviceConfig()
 #endif
 
 
@@ -53,7 +57,7 @@ import SnapshotTesting
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
             #if os(macOS)
-            let snapshotDevice = preview.deviceConfig ?? deviceConfig
+            let snapshotDevice = preview.deviceConfig
             #else
             let snapshotDevice = preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig
             #endif
@@ -80,7 +84,7 @@ import SnapshotTesting
                     {{ macroModel.body|indent:20 }}
                 },
                 name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
-                isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+                isScreen: isScreenPreview({% if macroModel.isScreen == 1 %}true{% else %}false{% endif %}),
                 device: macroDeviceConfig(width: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %}, height: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %})
             )
 
@@ -106,7 +110,7 @@ import SnapshotTesting
                 {% endif %}
             },
             name: "{{ macroModel.displayName }}",
-            isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+            isScreen: isScreenPreview({% if macroModel.isScreen == 1 %}true{% else %}false{% endif %}),
             device: macroDeviceConfig(width: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %}, height: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %})
         )
 
@@ -165,7 +169,7 @@ import SnapshotTesting
                 on: .image(
                     precision: preferences.precision,
                     perceptualPrecision: preferences.perceptualPrecision,
-                    size: prefireSnapshot.device.size
+                    size: prefireSnapshot.device?.size
                 )
             ),
             record: preferences.record ? .all : .missing{% if argument.file %},
@@ -226,12 +230,20 @@ import SnapshotTesting
         #endif
     }
 
-    private func macroDeviceConfig(width: CGFloat?, height: CGFloat?) -> DeviceConfig {
+    private func macroDeviceConfig(width: CGFloat?, height: CGFloat?) -> SnapshotDevice {
         #if os(macOS)
-        guard let width, let height else { return deviceConfig }
+        guard let width, let height else { return nil }
         return DeviceConfig(size: CGSize(width: width, height: height))
         #else
         deviceConfig
+        #endif
+    }
+
+    private func isScreenPreview(_ isScreen: Bool) -> Bool {
+        #if os(macOS)
+        false
+        #else
+        isScreen
         #endif
     }
 }
