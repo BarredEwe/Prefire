@@ -5,6 +5,8 @@ final class PreviewParser: SyntaxVisitor {
     private(set) var properties: [String] = []
     private(set) var displayName: String?
     private(set) var traits: [String]?
+    private(set) var fixedLayoutWidth: String?
+    private(set) var fixedLayoutHeight: String?
     private(set) var arguments: String?
     private(set) var argumentPattern: String?
     
@@ -81,6 +83,9 @@ private extension PreviewParser {
         }
 
         traits = Self.traits(from: macroArguments)
+        let fixedLayout = Self.fixedLayout(from: macroArguments)
+        fixedLayoutWidth = fixedLayout?.width
+        fixedLayoutHeight = fixedLayout?.height
 
         arguments = macroArguments.first(where: { $0.label?.text == "arguments" }).map {
             "\($0.expression.trimmed)"
@@ -112,6 +117,29 @@ private extension PreviewParser {
         }
 
         return traits
+    }
+
+    static func fixedLayout(from arguments: [LabeledExprSyntax]) -> (width: String, height: String)? {
+        guard let traitsIndex = arguments.firstIndex(where: { $0.label?.text == "traits" }) else { return nil }
+
+        var traitArguments = [arguments[traitsIndex]]
+        var index = arguments.index(after: traitsIndex)
+        while index < arguments.endIndex, arguments[index].label == nil {
+            traitArguments.append(arguments[index])
+            index = arguments.index(after: index)
+        }
+
+        for traitArgument in traitArguments {
+            guard let call = traitArgument.expression.as(FunctionCallExprSyntax.self),
+                  let memberAccess = call.calledExpression.as(MemberAccessExprSyntax.self),
+                  memberAccess.declName.baseName.text == "fixedLayout",
+                  let width = call.arguments.first(where: { $0.label?.text == "width" }),
+                  let height = call.arguments.first(where: { $0.label?.text == "height" }) else { continue }
+
+            return ("\(width.expression.trimmed)", "\(height.expression.trimmed)")
+        }
+
+        return nil
     }
 
     static func argumentPattern(from closure: ClosureExprSyntax) -> String? {

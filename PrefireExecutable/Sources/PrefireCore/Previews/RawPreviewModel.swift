@@ -3,6 +3,8 @@ import Foundation
 struct RawPreviewModel: Codable, Equatable {
     var displayName: String
     var traits: [String]
+    var fixedLayoutWidth: String?
+    var fixedLayoutHeight: String?
     var body: String
     var properties: String?
     var arguments: String?
@@ -32,6 +34,8 @@ extension RawPreviewModel {
             "displayName": displayName,
             "componentTestName": componentTestName,
             "isScreen": isScreen,
+            "fixedLayoutWidth": fixedLayoutWidth,
+            "fixedLayoutHeight": fixedLayoutHeight,
             "body": body,
             "properties": properties,
             "arguments": arguments,

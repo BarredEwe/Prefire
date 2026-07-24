@@ -1,12 +1,14 @@
 import Foundation
 import SwiftUI
 
+#if os(iOS)
 extension CGFloat {
     static let scale: CGFloat = 0.55
     static let infoViewHeight: CGFloat = 42
     @MainActor static let screenHeight = UIScreen.main.bounds.height
     @MainActor static let screenWidth = UIScreen.main.bounds.width
 }
+#endif
 
 /// View to show different states of components and screens
 ///

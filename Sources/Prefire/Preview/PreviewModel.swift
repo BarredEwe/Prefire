@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if os(iOS) || os(tvOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
+
 /// Preview model
 ///
 /// Contains all information about Preview
@@ -71,6 +77,7 @@ public struct PreviewModel: Identifiable {
         self.deviceConfig = deviceConfig
     }
 
+    #if os(iOS) || os(tvOS)
     @MainActor
     public init<T: UIView>(
         id: String? = nil,
@@ -92,4 +99,29 @@ public struct PreviewModel: Identifiable {
     ) {
         self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device)
     }
+    #elseif os(macOS)
+    @MainActor
+    public init<T: NSView>(
+        id: String? = nil,
+        content: @escaping @MainActor () -> T,
+        name: String,
+        type: LayoutType = .component,
+        device: PreviewDevice? = nil,
+        deviceConfig: DeviceConfig? = nil
+    ) {
+        self.init(id: id, content: { AnyView(PrefireNSViewRepresentable(view: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+    }
+
+    @MainActor
+    public init<T: NSViewController>(
+        id: String? = nil,
+        content: @escaping @MainActor () -> T,
+        name: String,
+        type: LayoutType = .component,
+        device: PreviewDevice? = nil,
+        deviceConfig: DeviceConfig? = nil
+    ) {
+        self.init(id: id, content: { AnyView(PrefireNSViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+    }
+    #endif
 }

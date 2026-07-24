@@ -59,6 +59,28 @@ playbook_configuration:
 
 ---
 
+### macOS snapshot tests
+
+macOS targets require no additional configuration. Use `AppKit` instead of `UIKit` in `imports:` and omit the iOS-only `simulator_device`, `required_os`, and `snapshot_devices` keys. SwiftUI component previews are rendered at their fitting size. To pin a preview to a specific canvas, declare it with `fixedLayout`:
+
+```swift
+#Preview("Settings", traits: .fixedLayout(width: 900, height: 600)) {
+    SettingsView()
+}
+```
+
+`NSView` and `NSViewController` previews are supported. For a `PreviewProvider`, provide `DeviceConfig(size:)` through `PreviewModel` when its snapshot needs a fixed size.
+
+```swift
+PreviewModel(
+    content: { PreferencesViewController() },
+    name: "Preferences",
+    deviceConfig: DeviceConfig(size: CGSize(width: 900, height: 600))
+)
+```
+
+---
+
 📌 You can define both `test_configuration` and `playbook_configuration` at once.
 
 Prefire will use these settings when generating files either via:

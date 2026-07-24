@@ -2,7 +2,7 @@
 
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
-<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS-green.svg"/></a>
+<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS-green.svg"/></a>
 <a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
 <a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
 <img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
@@ -24,7 +24,7 @@
 - 📸 **Snapshot Testing** — automatic test generation from previews
 - 📚 **Playbook View** — auto-generated interactive component catalog
 - 🏃 **Flow-aware** — build user stories from multiple preview steps
-- 🧩 **UIKit Support** — support for `UIView` and `UIViewController`
+- 🧩 **UIKit + AppKit Support** — support for `UIView`/`UIViewController` and `NSView`/`NSViewController`
 - ⚙️ **SPM + Xcode Plugins** — works in CLI, Xcode build phases, or CI
 - 🧠 **Fast Caching** — fingerprint-based AST and body caching avoids redundant work
 - ✍️ **Stencil Templates** — customize output with [your own templates](Documentation/Templates.md)
@@ -326,7 +326,7 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 
 - Swift 5.6 or higher
 - Xcode 14.0 or higher
-- iOS 14 or higher
+- iOS 14 or higher; macOS 13 or higher
 
 ## Troubleshooting
 `NavigationView` in Preview not supported for Playbook

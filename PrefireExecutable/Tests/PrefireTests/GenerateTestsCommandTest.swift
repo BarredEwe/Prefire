@@ -1,5 +1,6 @@
 import Foundation
 @testable import prefire
+@testable import PrefireCore
 import XCTest
 import PathKit
 
@@ -89,5 +90,14 @@ class GenerateTestsCommandTests: XCTestCase {
         let arguments = await GenerateTestsCommand.makeArguments(for: options)
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
+    func test_defaultTemplateContainsMacOSSnapshotBranch() {
+        let template = EmbeddedTemplates.previewTests
+
+        XCTAssertTrue(template.contains("#if os(macOS)"))
+        XCTAssertTrue(template.contains("size: prefireSnapshot.device.size"))
+        XCTAssertTrue(template.contains("macroDeviceConfig"))
+        XCTAssertTrue(template.contains("preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig"))
     }
 }

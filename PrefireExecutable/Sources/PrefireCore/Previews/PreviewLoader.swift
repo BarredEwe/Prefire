@@ -32,6 +32,8 @@ enum PreviewLoader {
             models[key] = RawPreviewModel(
                 displayName: preview.parser.displayName ?? key,
                 traits: preview.parser.traits ?? [Constants.defaultTrait],
+                fixedLayoutWidth: preview.parser.fixedLayoutWidth,
+                fixedLayoutHeight: preview.parser.fixedLayoutHeight,
                 body: preview.parser.body ?? "",
                 properties: preview.parser.propertiesSource,
                 arguments: preview.parser.arguments,

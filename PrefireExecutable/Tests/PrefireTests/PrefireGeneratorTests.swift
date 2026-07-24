@@ -80,6 +80,37 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("Text(\"1 \\(suffix)\")"))
     }
 
+    func testFixedLayoutPreviewRendersMacOSDeviceConfig() async throws {
+        let file = Path("/tmp/FixedLayoutPreview.swift")
+        let output = Path("/tmp/FixedLayoutPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_fixed_layout_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("Panel", traits: .fixedLayout(width: 640, height: Layout.height)) {
+            Text("Panel")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("device: macroDeviceConfig(width: 640, height: Layout.height)"))
+        XCTAssertTrue(result.contains("#if os(macOS)"))
+        XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
+    }
+
     func testParameterizedPreviewRendersPlaybookTemplate() async throws {
         let file = Path("/tmp/ParameterizedPlaybookPreview.swift")
         let output = Path("/tmp/ParameterizedPreviewModels.generated.swift")

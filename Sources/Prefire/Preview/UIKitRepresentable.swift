@@ -1,4 +1,6 @@
 import SwiftUI
+
+#if os(iOS) || os(tvOS)
 import UIKit
 
 public struct ViewRepresentable<WrappedView: UIView>: UIViewRepresentable {
@@ -30,3 +32,34 @@ public struct ViewControllerRepresentable<WrappedViewController: UIViewControlle
 
     public func updateUIViewController(_ uiViewController: WrappedViewController, context: Context) { }
 }
+#elseif os(macOS)
+import AppKit
+
+public struct PrefireNSViewRepresentable<WrappedView: NSView>: SwiftUI.NSViewRepresentable {
+    let view: WrappedView
+
+    public init(view: WrappedView) {
+        self.view = view
+    }
+
+    public func makeNSView(context: Context) -> WrappedView {
+        view
+    }
+
+    public func updateNSView(_ nsView: WrappedView, context: Context) { }
+}
+
+public struct PrefireNSViewControllerRepresentable<WrappedViewController: NSViewController>: SwiftUI.NSViewControllerRepresentable {
+    let viewController: WrappedViewController
+
+    public init(viewController: WrappedViewController) {
+        self.viewController = viewController
+    }
+
+    public func makeNSViewController(context: Context) -> WrappedViewController {
+        viewController
+    }
+
+    public func updateNSViewController(_ nsViewController: WrappedViewController, context: Context) { }
+}
+#endif
