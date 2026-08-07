@@ -19,7 +19,7 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertEqual(view.frame.size, CGSize(width: 320, height: 180))
     }
 
-    func testSwiftUISnapshotWithoutDeviceUsesFittingSize() {
+    func testSwiftUISnapshotWithoutSizeUsesFittingSize() {
         let snapshot = PrefireSnapshot(
             { Text("Prefire") },
             name: "SwiftUI"
@@ -27,7 +27,7 @@ final class MacOSSnapshotTests: XCTestCase {
 
         let (view, _) = snapshot.loadViewWithPreferences()
 
-        XCTAssertNil(snapshot.device)
+        XCTAssertNil(snapshot.device.size)
         XCTAssertGreaterThan(view.frame.width, 0)
         XCTAssertGreaterThan(view.frame.height, 0)
         XCTAssertFalse(snapshot.isScreen)

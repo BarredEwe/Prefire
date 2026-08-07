@@ -109,7 +109,7 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("fixedWidth: 640,"))
         XCTAssertTrue(result.contains("fixedHeight: Layout.height"))
         XCTAssertTrue(result.contains("#if os(macOS)"))
-        XCTAssertTrue(result.contains("size: prefireSnapshot.device?.size"))
+        XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
         XCTAssertTrue(result.contains("isScreen: false,"))
     }
 

@@ -28,6 +28,8 @@ import SnapshotTesting
     private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
 #elseif os(tvOS)
     private let deviceConfig: DeviceConfig = ViewImageConfig.tv.deviceConfig
+#elseif os(macOS)
+    private let deviceConfig = DeviceConfig()
 #endif
 
 
@@ -116,7 +118,7 @@ import SnapshotTesting
 
     private func makeSnapshot(for preview: _Preview) -> PrefireSnapshot<AnyView> {
         #if os(macOS)
-        PrefireSnapshot(preview, device: preview.deviceConfig)
+        PrefireSnapshot(preview, device: preview.deviceConfig ?? deviceConfig)
         #else
         PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig)
         #endif
@@ -130,17 +132,15 @@ import SnapshotTesting
         fixedHeight: CGFloat?
     ) -> PrefireSnapshot<Content> {
         #if os(macOS)
-        guard let fixedWidth, let fixedHeight else {
-            return PrefireSnapshot(view, name: name)
-        }
-        return PrefireSnapshot(
-            view,
-            name: name,
-            device: DeviceConfig(size: CGSize(width: fixedWidth, height: fixedHeight))
-        )
+        PrefireSnapshot(view, name: name, device: DeviceConfig(size: fixedSize(width: fixedWidth, height: fixedHeight)))
         #else
         PrefireSnapshot(view, name: name, isScreen: isScreen, device: deviceConfig)
         #endif
+    }
+
+    private func fixedSize(width: CGFloat?, height: CGFloat?) -> CGSize? {
+        guard let width, let height else { return nil }
+        return CGSize(width: width, height: height)
     }
 
     private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
@@ -186,7 +186,7 @@ import SnapshotTesting
                 on: .image(
                     precision: preferences.precision,
                     perceptualPrecision: preferences.perceptualPrecision,
-                    size: prefireSnapshot.device?.size
+                    size: prefireSnapshot.device.size
                 )
             ),
             record: preferences.record ? .all : .missing{% if argument.file %},
