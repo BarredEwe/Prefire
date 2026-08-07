@@ -6,6 +6,29 @@ public typealias PrefireSnapshotView = AnyView
 #elseif os(macOS)
 import AppKit
 public typealias PrefireSnapshotView = NSView
+
+private final class SnapshotHostingContainer: NSView {
+    private let hostingController: NSHostingController<AnyView>
+
+    var fittingContentSize: CGSize {
+        hostingController.view.fittingSize
+    }
+
+    init(rootView: AnyView) {
+        hostingController = NSHostingController(rootView: rootView)
+        super.init(frame: .zero)
+        addSubview(hostingController.view)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layout() {
+        super.layout()
+        hostingController.view.frame = bounds
+    }
+}
 #endif
 
 #if canImport(XCTest)
@@ -159,9 +182,8 @@ public struct DeviceConfig {
         hostingController.view.layoutIfNeeded()
         return view
         #elseif os(macOS)
-        let hostingController = NSHostingController(rootView: view)
-        let hostingView = hostingController.view
-        let size = device?.size ?? hostingView.fittingSize
+        let hostingView = SnapshotHostingContainer(rootView: view)
+        let size = device?.size ?? hostingView.fittingContentSize
         hostingView.frame = CGRect(origin: .zero, size: size)
         hostingView.layoutSubtreeIfNeeded()
         return hostingView

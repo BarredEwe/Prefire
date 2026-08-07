@@ -79,6 +79,8 @@ PreviewModel(
 )
 ```
 
+Snapshot images are pixel-based and can differ between macOS or Xcode releases. Record and compare a baseline on the same macOS/Xcode version; pin the CI runner when snapshot stability matters.
+
 ---
 
 📌 You can define both `test_configuration` and `playbook_configuration` at once.
