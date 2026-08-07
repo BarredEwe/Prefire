@@ -49,6 +49,17 @@ public struct DeviceConfig {
         self.size = size
     }
     #endif
+
+    /// Applies a fixed preview layout where the platform supports it.
+    public func withFixedLayout(size: CGSize?) -> Self {
+        #if os(macOS)
+        var config = self
+        config.size = size
+        return config
+        #else
+        self
+        #endif
+    }
 }
 
 @MainActor public struct PrefireSnapshot<Content: SwiftUI.View> {

@@ -117,11 +117,7 @@ import SnapshotTesting
     // MARK: Private
 
     private func makeSnapshot(for preview: _Preview) -> PrefireSnapshot<AnyView> {
-        #if os(macOS)
-        PrefireSnapshot(preview, device: preview.deviceConfig ?? deviceConfig)
-        #else
-        PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig)
-        #endif
+        PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDeviceConfig() ?? deviceConfig)
     }
 
     private func makeSnapshot<Content: SwiftUI.View>(
@@ -131,11 +127,12 @@ import SnapshotTesting
         fixedWidth: CGFloat?,
         fixedHeight: CGFloat?
     ) -> PrefireSnapshot<Content> {
-        #if os(macOS)
-        PrefireSnapshot(view, name: name, device: DeviceConfig(size: fixedSize(width: fixedWidth, height: fixedHeight)))
-        #else
-        PrefireSnapshot(view, name: name, isScreen: isScreen, device: deviceConfig)
-        #endif
+        PrefireSnapshot(
+            view,
+            name: name,
+            isScreen: isScreen,
+            device: deviceConfig.withFixedLayout(size: fixedSize(width: fixedWidth, height: fixedHeight))
+        )
     }
 
     private func fixedSize(width: CGFloat?, height: CGFloat?) -> CGSize? {
@@ -292,9 +289,15 @@ private extension PreviewDevice {
         }
     }
 
-    func snapshotDevice() -> DeviceConfig? {
-        (self.snapshotDevice())?.deviceConfig
+    func snapshotDeviceConfig() -> DeviceConfig? {
+        snapshotDevice()?.deviceConfig
     }
+}
+#endif
+
+#if os(macOS)
+private extension PreviewDevice {
+    func snapshotDeviceConfig() -> DeviceConfig? { nil }
 }
 #endif
 """#

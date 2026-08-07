@@ -33,6 +33,12 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertFalse(snapshot.isScreen)
     }
 
+    func testDeviceConfigAppliesFixedLayoutSize() {
+        let config = DeviceConfig().withFixedLayout(size: CGSize(width: 320, height: 180))
+
+        XCTAssertEqual(config.size, CGSize(width: 320, height: 180))
+    }
+
     func testAppKitViewAndControllerOverloadsAreAvailable() {
         let viewSnapshot = PrefireSnapshot(
             { NSView(frame: CGRect(x: 0, y: 0, width: 40, height: 30)) },
