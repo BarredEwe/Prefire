@@ -97,9 +97,9 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertTrue(template.contains("#if os(macOS)"))
         XCTAssertTrue(template.contains("size: prefireSnapshot.device?.size"))
-        XCTAssertTrue(template.contains("macroDeviceConfig"))
-        XCTAssertTrue(template.contains("guard let width, let height else { return nil }"))
-        XCTAssertTrue(template.contains("isScreenPreview"))
+        XCTAssertTrue(template.contains("private func makeSnapshot(for preview: _Preview)"))
+        XCTAssertTrue(template.contains("guard let fixedWidth, let fixedHeight else"))
+        XCTAssertTrue(template.contains("DeviceConfig(size: CGSize(width: fixedWidth, height: fixedHeight))"))
         XCTAssertTrue(template.contains("preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig"))
     }
 }

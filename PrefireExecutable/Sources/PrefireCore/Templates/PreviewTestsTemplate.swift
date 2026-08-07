@@ -21,12 +21,6 @@ import SnapshotTesting
 #endif
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
-#if os(macOS)
-    private typealias SnapshotDevice = DeviceConfig?
-#else
-    private typealias SnapshotDevice = DeviceConfig
-#endif
-
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
@@ -45,10 +39,7 @@ import SnapshotTesting
     @MainActor override func setUp() async throws {
         try await super.setUp()
 
-        checkEnvironments()
-        #if os(iOS) || os(tvOS)
-        UIView.setAnimationsEnabled(false)
-        #endif
+        prepareEnvironment()
     }
 
     // MARK: - PreviewProvider
@@ -56,12 +47,7 @@ import SnapshotTesting
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            #if os(macOS)
-            let snapshotDevice = preview.deviceConfig
-            #else
-            let snapshotDevice = preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig
-            #endif
-            if let failure = assertSnapshots(for: PrefireSnapshot(preview, device: snapshotDevice)) {
+            if let failure = assertSnapshots(for: makeSnapshot(for: preview)) {
                 XCTFail(failure)
             }
         }
@@ -79,13 +65,14 @@ import SnapshotTesting
         for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
             let {{ macroModel.argumentPattern }} = previewArgument
 
-            let prefireSnapshot = PrefireSnapshot(
+            let prefireSnapshot = makeSnapshot(
                 {
                     {{ macroModel.body|indent:20 }}
                 },
                 name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
-                isScreen: isScreenPreview({% if macroModel.isScreen == 1 %}true{% else %}false{% endif %}),
-                device: macroDeviceConfig(width: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %}, height: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %})
+                isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+                fixedWidth: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %},
+                fixedHeight: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %}
             )
 
             if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -101,7 +88,7 @@ import SnapshotTesting
             }
         }
         {% endif %}
-        let prefireSnapshot = PrefireSnapshot(
+        let prefireSnapshot = makeSnapshot(
             {
                 {% if macroModel.properties %}
                 PreviewWrapper{{ macroModel.componentTestName }}()
@@ -110,8 +97,9 @@ import SnapshotTesting
                 {% endif %}
             },
             name: "{{ macroModel.displayName }}",
-            isScreen: isScreenPreview({% if macroModel.isScreen == 1 %}true{% else %}false{% endif %}),
-            device: macroDeviceConfig(width: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %}, height: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %})
+            isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+            fixedWidth: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %},
+            fixedHeight: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %}
         )
 
         if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -125,6 +113,35 @@ import SnapshotTesting
     {% endfor %}
     {% endif %}
     // MARK: Private
+
+    private func makeSnapshot(for preview: _Preview) -> PrefireSnapshot<AnyView> {
+        #if os(macOS)
+        PrefireSnapshot(preview, device: preview.deviceConfig)
+        #else
+        PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDevice() ?? deviceConfig)
+        #endif
+    }
+
+    private func makeSnapshot<Content: SwiftUI.View>(
+        @ViewBuilder _ view: @escaping @MainActor () -> Content,
+        name: String,
+        isScreen: Bool,
+        fixedWidth: CGFloat?,
+        fixedHeight: CGFloat?
+    ) -> PrefireSnapshot<Content> {
+        #if os(macOS)
+        guard let fixedWidth, let fixedHeight else {
+            return PrefireSnapshot(view, name: name)
+        }
+        return PrefireSnapshot(
+            view,
+            name: name,
+            device: DeviceConfig(size: CGSize(width: fixedWidth, height: fixedHeight))
+        )
+        #else
+        PrefireSnapshot(view, name: name, isScreen: isScreen, device: deviceConfig)
+        #endif
+    }
 
     private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         #if os(macOS)
@@ -212,8 +229,7 @@ import SnapshotTesting
         return failure
     }
 
-    /// Check environments to avoid problems with snapshots on different devices or OS.
-    private func checkEnvironments() {
+    private func prepareEnvironment() {
         #if os(iOS) || os(tvOS)
         if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
             guard deviceModel.contains(simulatorDevice) else {
@@ -227,23 +243,8 @@ import SnapshotTesting
                 fatalError("Switch to iOS \(requiredOSVersion) for these tests. (You are using \(osVersion))")
             }
         }
-        #endif
-    }
 
-    private func macroDeviceConfig(width: CGFloat?, height: CGFloat?) -> SnapshotDevice {
-        #if os(macOS)
-        guard let width, let height else { return nil }
-        return DeviceConfig(size: CGSize(width: width, height: height))
-        #else
-        deviceConfig
-        #endif
-    }
-
-    private func isScreenPreview(_ isScreen: Bool) -> Bool {
-        #if os(macOS)
-        false
-        #else
-        isScreen
+        UIView.setAnimationsEnabled(false)
         #endif
     }
 }
