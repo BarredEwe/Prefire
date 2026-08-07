@@ -17,6 +17,11 @@ struct RawPreviewModel: Codable, Equatable {
     var hasArguments: Bool {
         arguments != nil && argumentPattern != nil
     }
+
+    var fixedLayoutSize: String? {
+        guard let fixedLayoutWidth, let fixedLayoutHeight else { return nil }
+        return "CGSize(width: \(fixedLayoutWidth), height: \(fixedLayoutHeight))"
+    }
 }
 
 extension RawPreviewModel {
@@ -36,6 +41,7 @@ extension RawPreviewModel {
             "isScreen": isScreen,
             "fixedLayoutWidth": fixedLayoutWidth,
             "fixedLayoutHeight": fixedLayoutHeight,
+            "fixedLayoutSize": fixedLayoutSize,
             "body": body,
             "properties": properties,
             "arguments": arguments,

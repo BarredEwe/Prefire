@@ -49,7 +49,8 @@ import SnapshotTesting
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            if let failure = assertSnapshots(for: makeSnapshot(for: preview)) {
+            let prefireSnapshot = PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDeviceConfig() ?? deviceConfig)
+            if let failure = assertSnapshots(for: prefireSnapshot) {
                 XCTFail(failure)
             }
         }
@@ -67,14 +68,14 @@ import SnapshotTesting
         for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
             let {{ macroModel.argumentPattern }} = previewArgument
 
-            let prefireSnapshot = makeSnapshot(
+            let prefireSnapshot = PrefireSnapshot(
                 {
                     {{ macroModel.body|indent:20 }}
                 },
                 name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
                 isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
-                fixedWidth: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %},
-                fixedHeight: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %}
+                device: deviceConfig,
+                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
             )
 
             if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -90,7 +91,7 @@ import SnapshotTesting
             }
         }
         {% endif %}
-        let prefireSnapshot = makeSnapshot(
+        let prefireSnapshot = PrefireSnapshot(
             {
                 {% if macroModel.properties %}
                 PreviewWrapper{{ macroModel.componentTestName }}()
@@ -100,8 +101,8 @@ import SnapshotTesting
             },
             name: "{{ macroModel.displayName }}",
             isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
-            fixedWidth: {% if macroModel.fixedLayoutWidth %}{{ macroModel.fixedLayoutWidth }}{% else %}nil{% endif %},
-            fixedHeight: {% if macroModel.fixedLayoutHeight %}{{ macroModel.fixedLayoutHeight }}{% else %}nil{% endif %}
+            device: deviceConfig,
+            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
         )
 
         if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -115,30 +116,6 @@ import SnapshotTesting
     {% endfor %}
     {% endif %}
     // MARK: Private
-
-    private func makeSnapshot(for preview: _Preview) -> PrefireSnapshot<AnyView> {
-        PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDeviceConfig() ?? deviceConfig)
-    }
-
-    private func makeSnapshot<Content: SwiftUI.View>(
-        @ViewBuilder _ view: @escaping @MainActor () -> Content,
-        name: String,
-        isScreen: Bool,
-        fixedWidth: CGFloat?,
-        fixedHeight: CGFloat?
-    ) -> PrefireSnapshot<Content> {
-        PrefireSnapshot(
-            view,
-            name: name,
-            isScreen: isScreen,
-            device: deviceConfig.withFixedLayout(size: fixedSize(width: fixedWidth, height: fixedHeight))
-        )
-    }
-
-    private func fixedSize(width: CGFloat?, height: CGFloat?) -> CGSize? {
-        guard let width, let height else { return nil }
-        return CGSize(width: width, height: height)
-    }
 
     private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         #if os(macOS)

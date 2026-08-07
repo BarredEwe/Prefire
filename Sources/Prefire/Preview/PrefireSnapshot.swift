@@ -50,16 +50,6 @@ public struct DeviceConfig {
     }
     #endif
 
-    /// Applies a fixed preview layout where the platform supports it.
-    public func withFixedLayout(size: CGSize?) -> Self {
-        #if os(macOS)
-        var config = self
-        config.size = size
-        return config
-        #else
-        self
-        #endif
-    }
 }
 
 @MainActor public struct PrefireSnapshot<Content: SwiftUI.View> {
@@ -105,53 +95,53 @@ public struct DeviceConfig {
     #endif
 
     #if os(iOS) || os(tvOS)
-    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) {
+    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool, device: DeviceConfig, fixedLayoutSize: CGSize? = nil, traits: UITraitCollection = .init()) {
         previewContent = view()
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
         self.traits = traits
     }
 
     @_disfavoredOverload
-    public init<T: UIView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewRepresentable<T> {
+    public init<T: UIView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, fixedLayoutSize: CGSize? = nil, traits: UITraitCollection = .init()) where Content == ViewRepresentable<T> {
         previewContent = ViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
         self.traits = traits
     }
 
     @_disfavoredOverload
-    public init<T: UIViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<T> {
+    public init<T: UIViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool, device: DeviceConfig, fixedLayoutSize: CGSize? = nil, traits: UITraitCollection = .init()) where Content == ViewControllerRepresentable<T> {
         previewContent = ViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
         self.traits = traits
     }
     #elseif os(macOS)
-    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool = false, device: DeviceConfig = .init()) {
+    public init(@ViewBuilder _ view: @escaping @MainActor () -> Content, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) {
         previewContent = view()
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
     }
 
     @_disfavoredOverload
-    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init()) where Content == PrefireNSViewRepresentable<T> {
-        previewContent = PrefireNSViewRepresentable(view: view())
+    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == NSViewRepresentable<T> {
+        previewContent = NSViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
     }
 
     @_disfavoredOverload
-    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init()) where Content == PrefireNSViewControllerRepresentable<T> {
-        previewContent = PrefireNSViewControllerRepresentable(viewController: viewController())
+    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == NSViewControllerRepresentable<T> {
+        previewContent = NSViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
-        self.device = device
+        self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
     }
     #endif
 
@@ -194,6 +184,17 @@ public struct DeviceConfig {
         hostingView.frame = CGRect(origin: .zero, size: size)
         hostingView.layoutSubtreeIfNeeded()
         return hostingView
+        #endif
+    }
+
+    private static func deviceConfig(_ device: DeviceConfig, fixedLayoutSize: CGSize?) -> DeviceConfig {
+        #if os(macOS)
+        guard let fixedLayoutSize else { return device }
+        var config = device
+        config.size = fixedLayoutSize
+        return config
+        #else
+        device
         #endif
     }
 }

@@ -24,6 +24,9 @@ let package = Package(
             targets: ["PrefireCLI"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.18.0"),
+    ],
     targets: [
         .target(
             name: "Prefire",
@@ -37,7 +40,11 @@ let package = Package(
         ),
         .testTarget(
             name: "PrefireCLITests",
-            dependencies: ["PrefireCLI", "Prefire"]
+            dependencies: [
+                "PrefireCLI",
+                "Prefire",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+            ]
         ),
         .plugin(
             name: "PrefirePlaybookPlugin",

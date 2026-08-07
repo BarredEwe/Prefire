@@ -69,7 +69,7 @@ macOS targets require no additional configuration. Use `AppKit` instead of `UIKi
 }
 ```
 
-`NSView` and `NSViewController` previews are supported. For a `PreviewProvider`, provide `DeviceConfig(size:)` through `PreviewModel` when its snapshot needs a fixed size.
+`NSView` and `NSViewController` previews are supported through the public `Prefire.NSViewRepresentable` and `Prefire.NSViewControllerRepresentable` wrappers. For a `PreviewProvider`, provide `DeviceConfig(size:)` through `PreviewModel` when its snapshot needs a fixed size.
 
 ```swift
 PreviewModel(

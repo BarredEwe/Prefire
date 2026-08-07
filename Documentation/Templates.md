@@ -111,6 +111,7 @@ Each element of `previewsMacrosDict` has the following keys (see `RawPreviewMode
 | `isScreen`            | `Bool`    | `true` if the preview contains the `.device` trait, `false` otherwise.                                            |
 | `fixedLayoutWidth`    | `String?` | Width expression from `.fixedLayout(width:height:)`, or absent when the trait is not set.                         |
 | `fixedLayoutHeight`   | `String?` | Height expression from `.fixedLayout(width:height:)`, or absent when the trait is not set.                        |
+| `fixedLayoutSize`     | `String?` | `CGSize` expression composed from fixed-layout width and height, or absent when the trait is not set.              |
 | `body`                | `String`  | The Swift body of the preview, as a raw string. Use `\|indent:N` to align it inside a generated closure.         |
 | `properties`          | `String?` | Captured `@Previewable` property declarations (joined with newlines), or `nil` if there are none.                 |
 | `traits`              | `[String]`| Raw trait tokens, e.g. `["device"]`, `[".myTrait(\"x\")"]`.                                                       |

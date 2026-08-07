@@ -277,6 +277,7 @@ class RawPreviewModelTests: XCTestCase {
 
         XCTAssertEqual(rawPreviewModel?.fixedLayoutWidth, "Layout.width")
         XCTAssertEqual(rawPreviewModel?.fixedLayoutHeight, "320 + padding")
+        XCTAssertEqual(rawPreviewModel?.fixedLayoutSize, "CGSize(width: Layout.width, height: 320 + padding)")
     }
 
     func test_hasNoFixedLayoutWhenTraitIsAbsent() {

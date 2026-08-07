@@ -33,10 +33,14 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertFalse(snapshot.isScreen)
     }
 
-    func testDeviceConfigAppliesFixedLayoutSize() {
-        let config = DeviceConfig().withFixedLayout(size: CGSize(width: 320, height: 180))
+    func testSnapshotAppliesFixedLayoutSize() {
+        let snapshot = PrefireSnapshot(
+            { Text("Prefire") },
+            name: "SwiftUI",
+            fixedLayoutSize: CGSize(width: 320, height: 180)
+        )
 
-        XCTAssertEqual(config.size, CGSize(width: 320, height: 180))
+        XCTAssertEqual(snapshot.device.size, CGSize(width: 320, height: 180))
     }
 
     func testAppKitViewAndControllerOverloadsAreAvailable() {
@@ -54,6 +58,8 @@ final class MacOSSnapshotTests: XCTestCase {
 
         XCTAssertEqual(viewSnapshot.loadViewWithPreferences().0.frame.size, CGSize(width: 40, height: 30))
         XCTAssertNotNil(controllerSnapshot.loadViewWithPreferences().0)
+        XCTAssertNotNil(Prefire.NSViewRepresentable(view: NSView()))
+        XCTAssertNotNil(Prefire.NSViewControllerRepresentable(viewController: NSViewController()))
         XCTAssertNotNil(PreviewModel(content: { NSView() }, name: "View"))
         XCTAssertNotNil(PreviewModel(content: { NSViewController() }, name: "Controller"))
     }

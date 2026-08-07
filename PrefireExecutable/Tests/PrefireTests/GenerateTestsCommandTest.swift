@@ -97,14 +97,10 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertTrue(template.contains("#if os(macOS)"))
         XCTAssertTrue(template.contains("size: prefireSnapshot.device.size"))
-        XCTAssertTrue(template.contains("private func makeSnapshot(for preview: _Preview)"))
         XCTAssertTrue(template.contains("private let deviceConfig = DeviceConfig()"))
-        XCTAssertTrue(template.contains("deviceConfig.withFixedLayout(size: fixedSize(width: fixedWidth, height: fixedHeight))"))
         XCTAssertTrue(template.contains("preview.deviceConfig ?? preview.device?.snapshotDeviceConfig() ?? deviceConfig"))
-
-        let factoryStart = template.range(of: "private func makeSnapshot(for preview: _Preview)")!.lowerBound
-        let factoryEnd = template.range(of: "private func assertSnapshots")!.lowerBound
-        let factories = String(template[factoryStart..<factoryEnd])
-        XCTAssertFalse(factories.contains("#if os(macOS)"))
+        XCTAssertTrue(template.contains("fixedLayoutSize:"))
+        XCTAssertFalse(template.contains("private func makeSnapshot"))
+        XCTAssertFalse(template.contains("private func fixedSize"))
     }
 }
