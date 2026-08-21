@@ -20,7 +20,7 @@ import SnapshotTesting
     import AccessibilitySnapshot
 #endif
 
-@MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase, Sendable {
+@MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}

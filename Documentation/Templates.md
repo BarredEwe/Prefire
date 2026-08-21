@@ -142,7 +142,7 @@ Key blocks worth studying:
 
 - **Class-name placeholder** — the tests template references `{PREVIEW_FILE_NAME}` so the same file works for both `use_grouped_snapshots: true` and `use_grouped_snapshots: false` modes:
   ```stencil
-  @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase, Sendable {
+  @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
   ```
   When `use_grouped_snapshots: false`, Prefire replaces `{PREVIEW_FILE_NAME}` in **both** the output path and the template body with the source-file name before rendering. The same placeholder is also valid in `test_file_path`.
 - **`snapshotDevices` array** — the config stores a pipe-joined string; the template splits it back into a Swift array:
