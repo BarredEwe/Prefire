@@ -1,11 +1,5 @@
 import SwiftUI
 
-#if os(iOS) || os(tvOS)
-import UIKit
-#elseif os(macOS)
-import AppKit
-#endif
-
 /// Preview model
 ///
 /// Contains all information about Preview
@@ -77,31 +71,8 @@ public struct PreviewModel: Identifiable {
         self.deviceConfig = deviceConfig
     }
 
-    #if os(iOS) || os(tvOS)
     @MainActor
-    public init<T: UIView>(
-        id: String? = nil,
-        content: @escaping @MainActor () -> T,
-        name: String,
-        type: LayoutType = .component,
-        device: PreviewDevice? = nil
-    ) {
-        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device)
-    }
-
-    @MainActor
-    public init<T: UIViewController>(
-        id: String? = nil,
-        content: @escaping @MainActor () -> T,
-        name: String,
-        type: LayoutType = .component,
-        device: PreviewDevice? = nil
-    ) {
-        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device)
-    }
-    #elseif os(macOS)
-    @MainActor
-    public init<T: NSView>(
+    public init<T: PrefireNativeView>(
         id: String? = nil,
         content: @escaping @MainActor () -> T,
         name: String,
@@ -113,7 +84,7 @@ public struct PreviewModel: Identifiable {
     }
 
     @MainActor
-    public init<T: NSViewController>(
+    public init<T: PrefireNativeViewController>(
         id: String? = nil,
         content: @escaping @MainActor () -> T,
         name: String,
@@ -123,5 +94,4 @@ public struct PreviewModel: Identifiable {
     ) {
         self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
-    #endif
 }
