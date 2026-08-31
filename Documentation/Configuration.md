@@ -61,7 +61,13 @@ playbook_configuration:
 
 ### macOS snapshot tests
 
-macOS targets require no additional configuration. Use `AppKit` instead of `UIKit` in `imports:` and omit the iOS-only `simulator_device`, `required_os`, and `snapshot_devices` keys. SwiftUI component previews are rendered at their fitting size. To pin a preview to a specific canvas, declare it with `fixedLayout`:
+macOS targets require no additional configuration. Use `AppKit` instead of `UIKit` in `imports:` and omit the iOS-only `simulator_device`, `required_os`, and `snapshot_devices` keys — the generated file ignores them on macOS.
+
+**Only snapshot tests are supported on macOS.** `PlaybookView` is iOS-only, so `PrefirePlaybookPlugin` output cannot be displayed on macOS yet.
+
+#### Canvas size
+
+Every macOS preview is rendered at its fitting size, including a plain `#Preview` (macOS has no device canvas to fall back to). For anything larger than a small component this is rarely what you want, so pin the canvas explicitly with `fixedLayout`:
 
 ```swift
 #Preview("Settings", traits: .fixedLayout(width: 900, height: 600)) {
@@ -69,7 +75,7 @@ macOS targets require no additional configuration. Use `AppKit` instead of `UIKi
 }
 ```
 
-`NSView` and `NSViewController` previews are supported through the public `ViewRepresentable` and `ViewControllerRepresentable` wrappers (the same names as on iOS). For a `PreviewProvider`, pin the canvas with `.previewLayout(.fixed(width:height:))`:
+For a `PreviewProvider`, use `.previewLayout(.fixed(width:height:))`:
 
 ```swift
 struct Preferences_Previews: PreviewProvider, PrefireProvider {
@@ -80,11 +86,25 @@ struct Preferences_Previews: PreviewProvider, PrefireProvider {
 }
 ```
 
-Snapshot images are pixel-based and can differ between macOS or Xcode releases. Record and compare a baseline on the same macOS/Xcode version; pin the CI runner when snapshot stability matters.
+Both apply on macOS only. On iOS/tvOS the layout is derived from the preview type.
 
-Prefire hosts SwiftUI in an `NSWindow` and then uses SnapshotTesting’s `NSView.image` strategy. Effects that need a real window (including `.rotation3DEffect`) no longer crash at host time. Pixel-accurate 3D compositing still depends on SnapshotTesting’s `cacheDisplay` path — it is weaker than iOS `drawHierarchyInKeyWindow`.
+A canvas larger than 4096 pt in either dimension is clamped to 4096 pt.
 
-macOS snapshot tests need window-server access. Run them with:
+#### AppKit previews
+
+`NSView` and `NSViewController` previews are supported through the public `ViewRepresentable` and `ViewControllerRepresentable` wrappers (the same names as on iOS).
+
+#### Rendering and stability
+
+Prefire hosts SwiftUI in an off-screen `NSWindow` and then uses SnapshotTesting’s `NSView.image` strategy. Effects that need a real window (including `.rotation3DEffect`) do not crash at host time. Pixel-accurate 3D compositing still depends on SnapshotTesting’s `cacheDisplay` path — it is weaker than iOS `drawHierarchyInKeyWindow`.
+
+The backing scale factor is pinned to `2` rather than inherited from the current display, so a snapshot recorded on a Retina Mac matches one verified on a CI runner. Override it per snapshot with `DeviceConfig(size:scale:)` in a [custom template](Templates.md).
+
+Snapshot images are still pixel-based and can differ between macOS or Xcode releases. Record and compare a baseline on the same macOS/Xcode version.
+
+#### Running from SwiftPM
+
+Verifying snapshots works with a plain `swift test`. **Recording** new references writes into `__Snapshots__` next to your sources, which SwiftPM’s build sandbox denies — pass `--disable-sandbox` for the recording run only:
 
 ```bash
 swift test --disable-sandbox

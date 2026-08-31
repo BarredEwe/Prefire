@@ -21,8 +21,8 @@
 <img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
 
 - 🧠 **Smart Preview Parsing** — including `#Preview`, `@Previewable`
-- 📸 **Snapshot Testing** — automatic test generation from previews
-- 📚 **Playbook View** — auto-generated interactive component catalog
+- 📸 **Snapshot Testing** — automatic test generation from previews (iOS, tvOS, macOS)
+- 📚 **Playbook View** — auto-generated interactive component catalog (iOS)
 - 🏃 **Flow-aware** — build user stories from multiple preview steps
 - 🧩 **UIKit + AppKit Support** — support for `UIView`/`UIViewController` and `NSView`/`NSViewController`
 - ⚙️ **SPM + Xcode Plugins** — works in CLI, Xcode build phases, or CI
@@ -324,9 +324,9 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 
 ## Requirements
 
-- Swift 5.6 or higher
-- Xcode 14.0 or higher
-- iOS 14 or higher; macOS 13 or higher
+- Swift 6.0 or higher
+- Xcode 16.0 or higher
+- iOS 14 or higher; macOS 13 or higher (macOS: snapshot tests only, see [Configuration](Documentation/Configuration.md#macos-snapshot-tests))
 
 ## Troubleshooting
 `NavigationView` in Preview not supported for Playbook

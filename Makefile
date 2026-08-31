@@ -12,6 +12,11 @@ CUR_VERSION = $(shell sed -n 's/.*static let value: String = "\([^"]*\)".*/\1/p'
 BUNDLE_DIR = $(ARTIFACT_BUNDLE)/prefire-$(CUR_VERSION)-macos
 BUNDLE_BIN = $(BUNDLE_DIR)/bin
 
+# Build destination. Unversioned, so the build uses whichever iOS Simulator SDK the selected
+# Xcode provides; `OS=` resolves against the SDK version and fails when it is not installed.
+# Override for other platforms: make build DESTINATION='generic/platform=iOS'
+DESTINATION ?= generic/platform=iOS Simulator
+
 .PHONY: help build binary cli test test-cli update archive clean
 
 ##@ General
@@ -33,12 +38,23 @@ clean: ## Remove local SwiftPM build products and prefire.tar.gz
 build: ## Build Prefire (iOS Simulator, Release)
 	xcodebuild \
 		-scheme Prefire \
-		-sdk iphonesimulator \
-		-destination 'generic/platform=iOS Simulator,OS=latest' \
+		-destination '$(DESTINATION)' \
 		-configuration Release \
 		-skipMacroValidation \
 		-skipPackagePluginValidation \
-		build
+		build \
+	|| { \
+		status=$$?; \
+		echo ""; \
+		echo "make build failed."; \
+		echo "If the log above says an iOS platform is not installed, the selected Xcode"; \
+		echo "($$(xcode-select -p)) is missing the iOS platform component."; \
+		echo "Note that 'xcodebuild -showsdks' still lists an iOS SDK in that case: it is a stub."; \
+		echo "Install the platform with:"; \
+		echo "    xcodebuild -downloadPlatform iOS"; \
+		echo "or point xcode-select at an Xcode that already has it."; \
+		exit $$status; \
+	}
 
 binary: ## Build a universal CLI binary and copy it into the artifact bundle
 	$(call require-version)

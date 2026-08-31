@@ -32,7 +32,7 @@ jobs:
         run: make build
 
       - name: Run Prefire macOS Tests
-        run: swift test --disable-sandbox
+        run: swift test
 
       - name: Run PrefireExecutable Tests
         run: make test
