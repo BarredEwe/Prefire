@@ -32,12 +32,15 @@ private final class SnapshotHostingContainer: NSView {
         _ = NSApplication.shared
         hostingController = NSHostingController(rootView: rootView)
         windowHost = NSWindow(
-            contentRect: NSRect(origin: .zero, size: NSSize(width: 1, height: 1)),
+            contentRect: NSRect(x: -10_000, y: -10_000, width: 1, height: 1),
             styleMask: [.borderless],
             backing: .buffered,
-            defer: false
+            defer: true
         )
         windowHost.isReleasedWhenClosed = false
+        windowHost.hasShadow = false
+        windowHost.animationBehavior = .none
+        windowHost.collectionBehavior = [.ignoresCycle, .stationary, .transient]
         super.init(frame: .zero)
         wantsLayer = true
         hostingController.view.wantsLayer = true
@@ -58,7 +61,7 @@ private final class SnapshotHostingContainer: NSView {
         frame = CGRect(origin: .zero, size: canvas)
         hostingController.view.frame = bounds
         windowHost.setContentSize(canvas)
-        windowHost.orderFrontRegardless()
+        windowHost.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
         layoutSubtreeIfNeeded()
     }
 
