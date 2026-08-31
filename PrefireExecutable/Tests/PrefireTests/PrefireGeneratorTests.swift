@@ -107,10 +107,11 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("fixedLayoutSize: CGSize(width: 640, height: Layout.height)"))
-        XCTAssertTrue(result.contains("#if os(macOS)"))
+        XCTAssertTrue(result.contains("let strategy: Snapshotting<NSView, NSImage>"))
         XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
         XCTAssertTrue(result.contains("isScreen: false,"))
-        XCTAssertTrue(result.contains("snapshotLayout(for: prefireSnapshot)"))
+        // On iOS/tvOS the layout follows `isScreen` only.
+        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits"))
     }
 
     func testPrefireProviderTemplateUsesPreviewDeviceNotPreviewModel() async throws {

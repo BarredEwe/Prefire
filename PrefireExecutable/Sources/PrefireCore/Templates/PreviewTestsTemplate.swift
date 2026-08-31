@@ -153,40 +153,36 @@ import SnapshotTesting
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
 
         #if os(macOS)
-        let failure = verifySnapshot(
-            of: previewView,
-            as: .wait(
-                for: preferences.delay,
-                on: .image(
-                    precision: preferences.precision,
-                    perceptualPrecision: preferences.perceptualPrecision,
-                    size: prefireSnapshot.device.size
-                )
-            ),
-            record: preferences.record ? .all : .missing{% if argument.file %},
-            file: file{% endif %},
-            testName: prefireSnapshot.name
+        let strategy: Snapshotting<NSView, NSImage> = .wait(
+            for: preferences.delay,
+            on: .image(
+                precision: preferences.precision,
+                perceptualPrecision: preferences.perceptualPrecision,
+                size: prefireSnapshot.device.size
+            )
         )
         #else
+        let strategy: Snapshotting<AnyView, UIImage> = .wait(
+            for: preferences.delay,
+            on: .image(
+                {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
+                drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
+                {% endif %}
+                precision: preferences.precision,
+                perceptualPrecision: preferences.perceptualPrecision,
+                layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
+                traits: prefireSnapshot.traits
+            )
+        )
+        #endif
+
         let failure = verifySnapshot(
             of: previewView,
-            as: .wait(
-                for: preferences.delay,
-                on: .image(
-                    {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
-                    drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
-                    {% endif %}
-                    precision: preferences.precision,
-                    perceptualPrecision: preferences.perceptualPrecision,
-                    layout: snapshotLayout(for: prefireSnapshot),
-                    traits: prefireSnapshot.traits
-                )
-            ),
+            as: strategy,
             record: preferences.record ? .all : .missing{% if argument.file %},
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
-        #endif
 
         #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
             let vc = UIHostingController(rootView: previewView)
@@ -226,16 +222,6 @@ import SnapshotTesting
 // MARK: - SnapshotTesting + Extensions
 
 #if os(iOS) || os(tvOS)
-private func snapshotLayout<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> SwiftUISnapshotLayout {
-    if prefireSnapshot.isScreen {
-        return .device(config: prefireSnapshot.device.imageConfig)
-    }
-    if let size = prefireSnapshot.device.size {
-        return .fixed(width: size.width, height: size.height)
-    }
-    return .sizeThatFits
-}
-
 private extension DeviceConfig {
     var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
 }

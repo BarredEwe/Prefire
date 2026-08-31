@@ -3,8 +3,8 @@ import Foundation
 struct RawPreviewModel: Codable, Equatable {
     var displayName: String
     var traits: [String]
-    var fixedLayoutWidth: String?
-    var fixedLayoutHeight: String?
+    /// `CGSize` expression from `.fixedLayout(width:height:)`, or `nil` when the trait is absent.
+    var fixedLayoutSize: String?
     var body: String
     var properties: String?
     var arguments: String?
@@ -16,11 +16,6 @@ struct RawPreviewModel: Codable, Equatable {
 
     var hasArguments: Bool {
         arguments != nil && argumentPattern != nil
-    }
-
-    var fixedLayoutSize: String? {
-        guard let fixedLayoutWidth, let fixedLayoutHeight else { return nil }
-        return "CGSize(width: \(fixedLayoutWidth), height: \(fixedLayoutHeight))"
     }
 }
 
@@ -39,8 +34,6 @@ extension RawPreviewModel {
             "displayName": displayName,
             "componentTestName": componentTestName,
             "isScreen": isScreen,
-            "fixedLayoutWidth": fixedLayoutWidth,
-            "fixedLayoutHeight": fixedLayoutHeight,
             "fixedLayoutSize": fixedLayoutSize,
             "body": body,
             "properties": properties,

@@ -5,8 +5,8 @@ final class PreviewParser: SyntaxVisitor {
     private(set) var properties: [String] = []
     private(set) var displayName: String?
     private(set) var traits: [String]?
-    private(set) var fixedLayoutWidth: String?
-    private(set) var fixedLayoutHeight: String?
+    /// `CGSize` expression from `.fixedLayout(width:height:)`, or `nil` when the trait is absent.
+    private(set) var fixedLayoutSize: String?
     private(set) var arguments: String?
     private(set) var argumentPattern: String?
     
@@ -82,10 +82,9 @@ private extension PreviewParser {
             displayName = Self.stringLiteralValue(from: firstArgument.expression)
         }
 
-        traits = Self.traits(from: macroArguments)
-        let fixedLayout = Self.fixedLayout(from: macroArguments)
-        fixedLayoutWidth = fixedLayout?.width
-        fixedLayoutHeight = fixedLayout?.height
+        let traitArguments = Self.traitArguments(from: macroArguments)
+        traits = traitArguments.isEmpty ? nil : traitArguments.map { "\($0.expression.trimmed)" }
+        fixedLayoutSize = Self.fixedLayoutSize(from: traitArguments)
 
         arguments = macroArguments.first(where: { $0.label?.text == "arguments" }).map {
             "\($0.expression.trimmed)"
@@ -103,32 +102,25 @@ private extension PreviewParser {
         return segments.joined()
     }
 
-    static func traits(from arguments: [LabeledExprSyntax]) -> [String]? {
+    /// Expressions passed to the variadic `traits:` parameter: the labelled argument and the
+    /// unlabelled ones following it.
+    static func traitArguments(from arguments: [LabeledExprSyntax]) -> [LabeledExprSyntax] {
         guard let traitsIndex = arguments.firstIndex(where: { $0.label?.text == "traits" }) else {
-            return nil
+            return []
         }
-
-        var traits = ["\(arguments[traitsIndex].expression.trimmed)"]
-        var index = arguments.index(after: traitsIndex)
-
-        while index < arguments.endIndex, arguments[index].label == nil {
-            traits.append("\(arguments[index].expression.trimmed)")
-            index = arguments.index(after: index)
-        }
-
-        return traits
-    }
-
-    static func fixedLayout(from arguments: [LabeledExprSyntax]) -> (width: String, height: String)? {
-        guard let traitsIndex = arguments.firstIndex(where: { $0.label?.text == "traits" }) else { return nil }
 
         var traitArguments = [arguments[traitsIndex]]
         var index = arguments.index(after: traitsIndex)
+
         while index < arguments.endIndex, arguments[index].label == nil {
             traitArguments.append(arguments[index])
             index = arguments.index(after: index)
         }
 
+        return traitArguments
+    }
+
+    static func fixedLayoutSize(from traitArguments: [LabeledExprSyntax]) -> String? {
         for traitArgument in traitArguments {
             guard let call = traitArgument.expression.as(FunctionCallExprSyntax.self),
                   let memberAccess = call.calledExpression.as(MemberAccessExprSyntax.self),
@@ -136,7 +128,7 @@ private extension PreviewParser {
                   let width = call.arguments.first(where: { $0.label?.text == "width" }),
                   let height = call.arguments.first(where: { $0.label?.text == "height" }) else { continue }
 
-            return ("\(width.expression.trimmed)", "\(height.expression.trimmed)")
+            return "CGSize(width: \(width.expression.trimmed), height: \(height.expression.trimmed))"
         }
 
         return nil

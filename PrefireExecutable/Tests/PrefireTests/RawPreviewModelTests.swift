@@ -275,16 +275,26 @@ class RawPreviewModelTests: XCTestCase {
 
         let rawPreviewModel = makePreviewModel(from: source)
 
-        XCTAssertEqual(rawPreviewModel?.fixedLayoutWidth, "Layout.width")
-        XCTAssertEqual(rawPreviewModel?.fixedLayoutHeight, "320 + padding")
         XCTAssertEqual(rawPreviewModel?.fixedLayoutSize, "CGSize(width: Layout.width, height: 320 + padding)")
+    }
+
+    func test_extractsFixedLayoutFromVariadicTraits() {
+        let source = """
+        #Preview("Fixed", traits: .sizeThatFitsLayout, .fixedLayout(width: 200, height: 100)) {
+            Text("TestView")
+        }
+        """
+
+        let rawPreviewModel = makePreviewModel(from: source)
+
+        XCTAssertEqual(rawPreviewModel?.traits, [".sizeThatFitsLayout", ".fixedLayout(width: 200, height: 100)"])
+        XCTAssertEqual(rawPreviewModel?.fixedLayoutSize, "CGSize(width: 200, height: 100)")
     }
 
     func test_hasNoFixedLayoutWhenTraitIsAbsent() {
         let rawPreviewModel = makePreviewModel(from: "#Preview { Text(\"TestView\") }")
 
-        XCTAssertNil(rawPreviewModel?.fixedLayoutWidth)
-        XCTAssertNil(rawPreviewModel?.fixedLayoutHeight)
+        XCTAssertNil(rawPreviewModel?.fixedLayoutSize)
     }
 }
 
