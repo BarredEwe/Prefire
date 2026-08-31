@@ -17,6 +17,7 @@ final class MacOSSnapshotTests: XCTestCase {
         let (view, _) = snapshot.loadViewWithPreferences()
 
         XCTAssertEqual(view.frame.size, CGSize(width: 320, height: 180))
+        XCTAssertNotNil(view.window)
     }
 
     func testSwiftUISnapshotWithoutSizeUsesFittingSize() {
@@ -31,6 +32,7 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertGreaterThan(view.frame.width, 0)
         XCTAssertGreaterThan(view.frame.height, 0)
         XCTAssertFalse(snapshot.isScreen)
+        XCTAssertNotNil(view.window)
     }
 
     func testSnapshotAppliesFixedLayoutSize() {
@@ -41,6 +43,31 @@ final class MacOSSnapshotTests: XCTestCase {
         )
 
         XCTAssertEqual(snapshot.device.size, CGSize(width: 320, height: 180))
+    }
+
+    func testRotation3DEffectHostsWithoutCrashing() {
+        let snapshot = PrefireSnapshot(
+            {
+                Text("Prefire")
+                    .rotation3DEffect(.degrees(45), axis: (x: 1, y: 0, z: 0))
+            },
+            name: "Rotated",
+            device: DeviceConfig(size: CGSize(width: 200, height: 120))
+        )
+
+        let (view, _) = snapshot.loadViewWithPreferences()
+
+        XCTAssertEqual(view.frame.size, CGSize(width: 200, height: 120))
+        XCTAssertNotNil(view.window)
+        XCTAssertTrue(view.wantsLayer)
+    }
+
+    func testPreviewProviderFixedLayoutSetsDeviceSize() {
+        let preview = FixedLayout_Previews._allPreviews[0]
+        let snapshot = PrefireSnapshot(preview)
+
+        XCTAssertEqual(snapshot.device.size, CGSize(width: 200, height: 100))
+        XCTAssertFalse(snapshot.isScreen)
     }
 
     func testAppKitViewAndControllerOverloadsAreAvailable() {
@@ -58,10 +85,26 @@ final class MacOSSnapshotTests: XCTestCase {
 
         XCTAssertEqual(viewSnapshot.loadViewWithPreferences().0.frame.size, CGSize(width: 40, height: 30))
         XCTAssertNotNil(controllerSnapshot.loadViewWithPreferences().0)
-        XCTAssertNotNil(Prefire.NSViewRepresentable(view: NSView()))
-        XCTAssertNotNil(Prefire.NSViewControllerRepresentable(viewController: NSViewController()))
+        XCTAssertLessThanOrEqual(controllerSnapshot.loadViewWithPreferences().0.frame.width, 4096)
+        XCTAssertLessThanOrEqual(controllerSnapshot.loadViewWithPreferences().0.frame.height, 4096)
+        XCTAssertNotNil(ViewRepresentable(view: NSView()))
+        XCTAssertNotNil(ViewControllerRepresentable(viewController: NSViewController()))
         XCTAssertNotNil(PreviewModel(content: { NSView() }, name: "View"))
         XCTAssertNotNil(PreviewModel(content: { NSViewController() }, name: "Controller"))
+        XCTAssertNotNil(UnqualifiedNSViewRepresentable())
     }
+}
+
+private struct FixedLayout_Previews: PreviewProvider {
+    static var previews: some View {
+        Text("Prefire")
+            .previewLayout(.fixed(width: 200, height: 100))
+    }
+}
+
+/// Compiles only when Prefire does not ship a colliding `NSViewRepresentable` type.
+private struct UnqualifiedNSViewRepresentable: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { NSView() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 #endif

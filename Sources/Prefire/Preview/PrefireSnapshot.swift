@@ -7,27 +7,75 @@ public typealias PrefireSnapshotView = AnyView
 import AppKit
 public typealias PrefireSnapshotView = NSView
 
+/// Hosts a SwiftUI preview in a window so SnapshotTesting can snapshot the `NSView`.
+/// Rendering itself is left to SnapshotTesting's `NSView.image` strategy.
+@MainActor
 private final class SnapshotHostingContainer: NSView {
     private let hostingController: NSHostingController<AnyView>
+    private let windowHost: NSWindow
 
     var fittingContentSize: CGSize {
-        hostingController.view.fittingSize
+        let fitting = hostingController.view.fittingSize
+        if isUsableCanvasSize(fitting) {
+            return fitting
+        }
+
+        let proposed = hostingController.sizeThatFits(in: NSSize(width: 4096, height: 4096))
+        if isUsableCanvasSize(proposed) {
+            return proposed
+        }
+
+        return CGSize(width: 1, height: 1)
     }
 
     init(rootView: AnyView) {
+        _ = NSApplication.shared
         hostingController = NSHostingController(rootView: rootView)
+        windowHost = NSWindow(
+            contentRect: NSRect(origin: .zero, size: NSSize(width: 1, height: 1)),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        windowHost.isReleasedWhenClosed = false
         super.init(frame: .zero)
+        wantsLayer = true
+        hostingController.view.wantsLayer = true
+        hostingController.view.autoresizingMask = [.width, .height]
         addSubview(hostingController.view)
+        windowHost.contentView = self
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
+    func applyCanvasSize(_ size: CGSize) {
+        let canvas = CGSize(
+            width: clampedCanvasDimension(size.width),
+            height: clampedCanvasDimension(size.height)
+        )
+        frame = CGRect(origin: .zero, size: canvas)
+        hostingController.view.frame = bounds
+        windowHost.setContentSize(canvas)
+        windowHost.orderFrontRegardless()
+        layoutSubtreeIfNeeded()
+    }
+
     override func layout() {
         super.layout()
         hostingController.view.frame = bounds
     }
+}
+
+private func clampedCanvasDimension(_ value: CGFloat) -> CGFloat {
+    guard value.isFinite, value > 0 else { return 1 }
+    return min(value, 4096)
+}
+
+private func isUsableCanvasSize(_ size: CGSize) -> Bool {
+    size.width > 0 && size.height > 0 && size.width.isFinite && size.height.isFinite
+        && size.width < 4096 && size.height < 4096
 }
 #endif
 
@@ -74,7 +122,11 @@ public struct DeviceConfig {
             )
         }
         #else
-        AnyView(previewContent)
+        if let size = device.size {
+            AnyView(previewContent.frame(width: size.width, height: size.height))
+        } else {
+            AnyView(previewContent)
+        }
         #endif
     }
 
@@ -83,14 +135,14 @@ public struct DeviceConfig {
         previewContent = preview.content
         name = preview.displayName ?? testName
         isScreen = preview.layout == .device
-        self.device = device
+        self.device = Self.deviceConfig(device, layout: preview.layout)
     }
     #elseif os(macOS)
     public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig = .init()) where Content == AnyView {
         previewContent = preview.content
         name = preview.displayName ?? testName
-        isScreen = false
-        self.device = device
+        isScreen = preview.layout == .device
+        self.device = Self.deviceConfig(device, layout: preview.layout)
     }
     #endif
 
@@ -129,16 +181,16 @@ public struct DeviceConfig {
     }
 
     @_disfavoredOverload
-    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == NSViewRepresentable<T> {
-        previewContent = NSViewRepresentable(view: view())
+    public init<T: NSView>(_ view: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == ViewRepresentable<T> {
+        previewContent = ViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
         self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
     }
 
     @_disfavoredOverload
-    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == NSViewControllerRepresentable<T> {
-        previewContent = NSViewControllerRepresentable(viewController: viewController())
+    public init<T: NSViewController>(_ viewController: @escaping @MainActor () -> T, name: String, isScreen: Bool = false, device: DeviceConfig = .init(), fixedLayoutSize: CGSize? = nil) where Content == ViewControllerRepresentable<T> {
+        previewContent = ViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
         self.device = Self.deviceConfig(device, fixedLayoutSize: fixedLayoutSize)
@@ -180,22 +232,21 @@ public struct DeviceConfig {
         return view
         #elseif os(macOS)
         let hostingView = SnapshotHostingContainer(rootView: view)
-        let size = device.size ?? hostingView.fittingContentSize
-        hostingView.frame = CGRect(origin: .zero, size: size)
-        hostingView.layoutSubtreeIfNeeded()
+        hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
         return hostingView
         #endif
     }
 
+    private static func deviceConfig(_ device: DeviceConfig, layout: PreviewLayout) -> DeviceConfig {
+        guard case let .fixed(width, height) = layout else { return device }
+        return deviceConfig(device, fixedLayoutSize: CGSize(width: width, height: height))
+    }
+
     private static func deviceConfig(_ device: DeviceConfig, fixedLayoutSize: CGSize?) -> DeviceConfig {
-        #if os(macOS)
         guard let fixedLayoutSize else { return device }
         var config = device
         config.size = fixedLayoutSize
         return config
-        #else
-        device
-        #endif
     }
 }
 #endif

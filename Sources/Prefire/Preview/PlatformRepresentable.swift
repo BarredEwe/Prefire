@@ -35,7 +35,7 @@ public struct ViewControllerRepresentable<WrappedViewController: UIViewControlle
 #elseif os(macOS)
 import AppKit
 
-public struct NSViewRepresentable<WrappedView: NSView>: SwiftUI.NSViewRepresentable {
+public struct ViewRepresentable<WrappedView: NSView>: NSViewRepresentable {
     let view: WrappedView
 
     public init(view: WrappedView) {
@@ -43,13 +43,15 @@ public struct NSViewRepresentable<WrappedView: NSView>: SwiftUI.NSViewRepresenta
     }
 
     public func makeNSView(context: Context) -> WrappedView {
-        view
+        view.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        view.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        return view
     }
 
     public func updateNSView(_ nsView: WrappedView, context: Context) { }
 }
 
-public struct NSViewControllerRepresentable<WrappedViewController: NSViewController>: SwiftUI.NSViewControllerRepresentable {
+public struct ViewControllerRepresentable<WrappedViewController: NSViewController>: NSViewControllerRepresentable {
     let viewController: WrappedViewController
 
     public init(viewController: WrappedViewController) {

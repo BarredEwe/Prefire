@@ -28,6 +28,7 @@ final class GeneratedMacOSSnapshotFixtureTests: XCTestCase {
         )
 
         XCTAssertEqual(previewView.frame.size, CGSize(width: 320, height: 180))
+        XCTAssertNotNil(previewView.window)
         _ = strategy
     }
 }

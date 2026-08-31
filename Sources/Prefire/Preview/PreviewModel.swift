@@ -109,7 +109,7 @@ public struct PreviewModel: Identifiable {
         device: PreviewDevice? = nil,
         deviceConfig: DeviceConfig? = nil
     ) {
-        self.init(id: id, content: { AnyView(NSViewRepresentable(view: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
 
     @MainActor
@@ -121,7 +121,7 @@ public struct PreviewModel: Identifiable {
         device: PreviewDevice? = nil,
         deviceConfig: DeviceConfig? = nil
     ) {
-        self.init(id: id, content: { AnyView(NSViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
     #endif
 }

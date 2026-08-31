@@ -49,7 +49,7 @@ import SnapshotTesting
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            let prefireSnapshot = PrefireSnapshot(preview, device: preview.deviceConfig ?? preview.device?.snapshotDeviceConfig() ?? deviceConfig)
+            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)
             if let failure = assertSnapshots(for: prefireSnapshot) {
                 XCTFail(failure)
             }
@@ -178,7 +178,7 @@ import SnapshotTesting
                     {% endif %}
                     precision: preferences.precision,
                     perceptualPrecision: preferences.perceptualPrecision,
-                    layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
+                    layout: snapshotLayout(for: prefireSnapshot),
                     traits: prefireSnapshot.traits
                 )
             ),
@@ -226,6 +226,16 @@ import SnapshotTesting
 // MARK: - SnapshotTesting + Extensions
 
 #if os(iOS) || os(tvOS)
+private func snapshotLayout<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> SwiftUISnapshotLayout {
+    if prefireSnapshot.isScreen {
+        return .device(config: prefireSnapshot.device.imageConfig)
+    }
+    if let size = prefireSnapshot.device.size {
+        return .fixed(width: size.width, height: size.height)
+    }
+    return .sizeThatFits
+}
+
 private extension DeviceConfig {
     var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
 }
