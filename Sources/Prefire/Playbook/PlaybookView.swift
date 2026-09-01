@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
 
+#if os(iOS)
+
 extension CGFloat {
     static let scale: CGFloat = 0.55
     static let infoViewHeight: CGFloat = 42
@@ -13,7 +15,6 @@ extension CGFloat {
 /// Can display Previews in two types:
 /// - `isComponent: false // Sorted by Flow`
 /// - `isComponent: true  // Sorted by screen or component name`
-#if os(iOS)
 @available(tvOS, unavailable)
 public struct PlaybookView: View {
     @State private var navigationLinkTriggered: Bool = false

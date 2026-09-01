@@ -80,6 +80,76 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("Text(\"1 \\(suffix)\")"))
     }
 
+    func testFixedLayoutPreviewRendersMacOSDeviceConfig() async throws {
+        let file = Path("/tmp/FixedLayoutPreview.swift")
+        let output = Path("/tmp/FixedLayoutPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_fixed_layout_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("Panel", traits: .fixedLayout(width: 640, height: Layout.height)) {
+            Text("Panel")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("fixedLayoutSize: CGSize(width: 640, height: Layout.height)"))
+        XCTAssertTrue(result.contains("let strategy: Snapshotting<NSView, NSImage>"))
+        XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
+        XCTAssertTrue(result.contains("isScreen: false,"))
+        // On iOS/tvOS the layout follows `isScreen` only.
+        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits"))
+    }
+
+    func testPrefireProviderTemplateUsesPreviewDeviceNotPreviewModel() async throws {
+        let file = Path("/tmp/PrefireProviderPreview.swift")
+        let output = Path("/tmp/PrefireProviderPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_provider_preview/")
+        try file.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider, PrefireProvider {
+            static var previews: some View {
+                Text("Panel")
+                    .previewLayout(.fixed(width: 640, height: 320))
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertTrue(result.contains("PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)"))
+        XCTAssertFalse(result.contains("preview.deviceConfig"))
+    }
+
     func testParameterizedPreviewRendersPlaybookTemplate() async throws {
         let file = Path("/tmp/ParameterizedPlaybookPreview.swift")
         let output = Path("/tmp/ParameterizedPreviewModels.generated.swift")
