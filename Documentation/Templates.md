@@ -277,4 +277,5 @@ import SnapshotTesting
 - **Guard `previewsMacrosDict`.** An empty array will still produce a (broken) `for` block. Always wrap the macro loop in `{% if argument.previewsMacrosDict %}`.
 - **Cache invalidation.** `PrefireCacheManager` keys the cache on source content. When you change a template, delete `~/.prefire-cache/` to force a full re-render.
 - **`isScreen` is a `Bool` but Stencil may serialize it as `1`/`0`.** Compare with `{% if macroModel.isScreen == 1 %}` rather than `{% if macroModel.isScreen %}`, as in the default template.
+- **Failure messages come from the template.** The readable "wrong simulator" text and the `file://` links appended to a snapshot mismatch (see [Configuration](Configuration.md#-reading-a-failing-test)) live in the default tests template. A custom template keeps them only if you copy `prepareEnvironment()` and `snapshotFilesDescription(for:)` along with it.
 - **Stuck on a syntax error?** Run `prefire tests` once with the default template and look at the generated file — it's the fastest way to see which context keys actually have values for your project.
