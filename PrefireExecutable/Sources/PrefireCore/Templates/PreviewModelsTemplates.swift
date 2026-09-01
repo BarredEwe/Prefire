@@ -30,8 +30,8 @@ public enum PreviewModels {
         return views.sorted(by: { $0.name > $1.name || $0.story ?? "" > $1.story ?? "" })
     }()
 
-    @inlinable
-    @MainActor
+    {% if not argument.globalConfiguration %}@inlinable
+    {% endif %}@MainActor
     static func createModel<Preview: PreviewProvider>(for preview: Preview.Type, name: String) -> [PreviewModel] {
         var views: [PreviewModel] = []
 
@@ -42,7 +42,8 @@ public enum PreviewModels {
                     content: { return view.content },
                     name: name,
                     type: view.layout == .device ? .screen : .component,
-                    device: view.device
+                    device: view.device{% if argument.globalConfiguration %},
+                    globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
                 )
             )
         }
@@ -82,13 +83,14 @@ private struct MacroPreviews {
                         {{ macroModel.body|indent:24 }}
                     },
                     name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
-                    type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}
+                    type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}{% if argument.globalConfiguration %},
+                    globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
                 )
             )
         }
         {% else %}
         {% if macroModel.properties %}
-        previews.append(PreviewModel(content: { PreviewWrapper{{ macroModel.componentTestName }}() }, name: "{{ macroModel.displayName }}"))
+        previews.append(PreviewModel(content: { PreviewWrapper{{ macroModel.componentTestName }}() }, name: "{{ macroModel.displayName }}"{% if argument.globalConfiguration %}, globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}))
         {% else %}
         previews.append(
             PreviewModel(
@@ -96,7 +98,8 @@ private struct MacroPreviews {
                     {{ macroModel.body|indent:20 }}
                 },
                 name: "{{ macroModel.displayName }}",
-                type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}
+                type: {% if macroModel.isScreen == 1 %}.screen{% else %}.component{% endif %}{% if argument.globalConfiguration %},
+                globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
             )
         )
         {% endif %}

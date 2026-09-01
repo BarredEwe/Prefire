@@ -76,6 +76,8 @@ final class ConfigDecoder {
             config.tests.splitSnapshotDirectories = getValue(from: components.last, env: env) == "true"
         case .drawHierarchyInKeyWindowDefaultEnabled:
             config.tests.drawHierarchyInKeyWindowDefaultEnabled = getValue(from: components.last, env: env) == "true"
+        case .globalConfiguration:
+            config.tests.globalConfiguration = getValue(from: components.last, env: env)
         }
     }
 
@@ -101,6 +103,8 @@ final class ConfigDecoder {
                 config.playbook.imports = getValues(from: components, lines: lines, env: env)
             case .testableImports:
                 config.playbook.testableImports = getValues(from: components, lines: lines, env: env)
+            case .globalConfiguration:
+                config.playbook.globalConfiguration = getValue(from: components.last, env: env)
         }
     }
 

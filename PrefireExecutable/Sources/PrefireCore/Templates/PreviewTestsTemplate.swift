@@ -49,7 +49,7 @@ import SnapshotTesting
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)
+            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig{% if argument.globalConfiguration %}, globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %})
             if let failure = assertSnapshots(for: prefireSnapshot) {
                 XCTFail(failure)
             }
@@ -75,7 +75,8 @@ import SnapshotTesting
                 name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
                 isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
                 device: deviceConfig,
-                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
+                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}{% if argument.globalConfiguration %},
+                globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
             )
 
             if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -102,7 +103,8 @@ import SnapshotTesting
             name: "{{ macroModel.displayName }}",
             isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
             device: deviceConfig,
-            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
+            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}{% if argument.globalConfiguration %},
+            globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
         )
 
         if let failure = assertSnapshots(for: prefireSnapshot) {

@@ -152,6 +152,35 @@ If you want to disable the automatic get of all previews, use the setting `previ
 }
 ```
 
+### **Global preview configuration**
+
+If every preview needs the same environment — theme, DI container, locale, mocks — declare it once instead of in each `#Preview`:
+
+```swift
+import Prefire
+
+enum MyPrefireSetup: PrefireGlobalConfiguration {
+    static func wrap(_ view: AnyView) -> AnyView {
+        AnyView(
+            view
+                .environment(\.locale, Locale(identifier: "en_US"))
+                .environmentObject(DesignSystem.dark)
+        )
+    }
+}
+```
+
+and point `.prefire.yml` at it:
+
+```yaml
+test_configuration:
+  global_configuration: MyPrefireSetup
+playbook_configuration:
+  global_configuration: MyPrefireSetup
+```
+
+**🔥Prefire** wraps every preview with it before rendering — in snapshot tests and in the Playbook. More details in the [Configuration documentation](Documentation/Configuration.md#global-preview-configuration).
+
 ### **Playbook (Demo) View**
 To use Playbook, simply use `PlaybookView`
 

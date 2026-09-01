@@ -15,6 +15,7 @@ struct GeneratedPlaybookOptions {
     var cacheBasePath: Path?
     var imports: [String]?
     var testableImports: [String]?
+    var globalConfiguration: String?
 
     init(targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
         self.targetPath = config?.playbook.targetPath ?? targetPath
@@ -35,6 +36,7 @@ struct GeneratedPlaybookOptions {
         self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
         imports = config?.playbook.imports
         testableImports = config?.playbook.testableImports
+        globalConfiguration = config?.playbook.globalConfiguration
     }
 }
 
@@ -42,6 +44,7 @@ enum GeneratePlaybookCommand {
     private enum Keys {
         static let imports = "imports"
         static let testableImports = "testableImports"
+        static let globalConfiguration = "globalConfiguration"
     }
 
     static func run(_ options: GeneratedPlaybookOptions) async throws {
@@ -64,12 +67,14 @@ enum GeneratePlaybookCommand {
                 ➜ Template path: \(options.template ?? "default")
                 ➜ Generated models path: \(options.output)
                 ➜ Preview default enabled: \(options.previewDefaultEnabled)
+                ➜ Global configuration: \(options.globalConfiguration ?? "nil")
             """
         )
 
         return [
             Keys.imports: options.imports as? NSArray,
-            Keys.testableImports: options.testableImports as? NSArray
+            Keys.testableImports: options.testableImports as? NSArray,
+            Keys.globalConfiguration: options.globalConfiguration as? NSString
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

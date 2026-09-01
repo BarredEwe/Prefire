@@ -15,6 +15,7 @@ test_configuration:
   preview_default_enabled: true
   use_grouped_snapshots: true
   split_snapshot_directories: false
+  global_configuration: MyPrefireSetup
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -29,6 +30,7 @@ test_configuration:
 playbook_configuration:
   preview_default_enabled: true
   template_file_path: CustomModels.stencil
+  global_configuration: MyPrefireSetup
   imports:
     - UIKit
     - Foundation
@@ -55,7 +57,44 @@ playbook_configuration:
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
+| `global_configuration`                         | Name of a type conforming to `PrefireGlobalConfiguration`. Its `wrap(_:)` is applied to every preview, so theme, DI or locale are set once instead of in every `#Preview`. See [Global preview configuration](#global-preview-configuration). Optional |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
+
+---
+
+### Global preview configuration
+
+Instead of repeating environment setup in every `#Preview`, declare it once in a type conforming to `PrefireGlobalConfiguration`:
+
+```swift
+import Prefire
+import SwiftUI
+
+enum MyPrefireSetup: PrefireGlobalConfiguration {
+    static func wrap(_ view: AnyView) -> AnyView {
+        AnyView(
+            view
+                .environment(\.locale, Locale(identifier: "en_US"))
+                .environmentObject(DesignSystem.dark)
+        )
+    }
+}
+```
+
+Then point the config at it:
+
+```yaml
+test_configuration:
+  global_configuration: MyPrefireSetup
+playbook_configuration:
+  global_configuration: MyPrefireSetup
+```
+
+The generated code passes the type to every `PrefireSnapshot` / `PreviewModel`, and Prefire applies `wrap(_:)` to the preview content before rendering. Preferences set inside a preview (`.snapshot(delay:precision:)`, `.previewUserStory()`) keep working, as long as the wrapper keeps the passed view in the returned hierarchy.
+
+The type must be visible from the generated file: declare it in the test target for `test_configuration` and in the Playbook target for `playbook_configuration`, or add the module to `imports:` / `testable_imports:`.
+
+Without the key nothing changes — the generated code stays exactly as before.
 
 ---
 

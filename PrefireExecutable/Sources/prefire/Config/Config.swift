@@ -26,6 +26,7 @@ struct TestsConfig {
     var useGroupedSnapshots: Bool?
     var splitSnapshotDirectories: Bool?
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    var globalConfiguration: String?
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
@@ -42,6 +43,7 @@ struct TestsConfig {
         case useGroupedSnapshots = "use_grouped_snapshots"
         case splitSnapshotDirectories = "split_snapshot_directories"
         case drawHierarchyInKeyWindowDefaultEnabled = "draw_hierarchy_in_key_window_default_enabled"
+        case globalConfiguration = "global_configuration"
     }
 }
 
@@ -51,6 +53,7 @@ struct PlaybookConfig {
     var previewDefaultEnabled: Bool?
     var imports: [String]?
     var testableImports: [String]?
+    var globalConfiguration: String?
 
     enum CodingKeys: String, CodingKey {
         case targetPath = "target"
@@ -58,6 +61,7 @@ struct PlaybookConfig {
         case previewDefaultEnabled = "preview_default_enabled"
         case imports = "imports"
         case testableImports = "testable_imports"
+        case globalConfiguration = "global_configuration"
     }
 }
 
