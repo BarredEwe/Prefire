@@ -21,6 +21,8 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports:
               - Prefire
           - draw_hierarchy_in_key_window_default_enabled: true
+          - snapshot_wait_for_idle: true
+          - snapshot_wait_timeout: 2.5
         playbook_configuration:
           - template_file_path: CustomModels.stencil
           - imports:
@@ -49,6 +51,8 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports: 
               - Prefire 
           - draw_hierarchy_in_key_window_default_enabled: true 
+          - snapshot_wait_for_idle: true 
+          - snapshot_wait_timeout: 2.5 
         playbook_configuration: 
           - template_file_path: CustomModels.stencil 
           - imports: 
@@ -75,6 +79,8 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config.tests.drawHierarchyInKeyWindowDefaultEnabled, true)
+        XCTAssertEqual(config.tests.snapshotWaitForIdle, true)
+        XCTAssertEqual(config.tests.snapshotWaitTimeout, 2.5)
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
@@ -95,6 +101,8 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config.tests.drawHierarchyInKeyWindowDefaultEnabled, true)
+        XCTAssertEqual(config.tests.snapshotWaitForIdle, true)
+        XCTAssertEqual(config.tests.snapshotWaitTimeout, 2.5)
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")

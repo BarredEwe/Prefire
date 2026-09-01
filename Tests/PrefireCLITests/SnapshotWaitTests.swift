@@ -1,0 +1,118 @@
+#if os(macOS)
+import Prefire
+import SwiftUI
+import XCTest
+
+/// Waiting is exercised on macOS, where the view Prefire waits on is the one being captured.
+@MainActor
+final class SnapshotWaitTests: XCTestCase {
+    override func tearDown() {
+        SnapshotWaitDefaults.waitForIdle = false
+        SnapshotWaitDefaults.timeout = 5
+        super.tearDown()
+    }
+
+    func testPreviewWithoutWaitIsCapturedImmediately() {
+        let start = Date()
+        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(delay: 0.3) }.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.wait)
+        XCTAssertNil(preferences.waitFailure)
+        XCTAssertEqual(preferences.delay, 0.3)
+        XCTAssertEqual(preferences.resolvedDelay, 0.3)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 0.3)
+    }
+
+    func testWaitForIdleReadsPreferences() {
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitForIdle: true, timeout: 2) }.loadViewWithPreferences()
+
+        XCTAssertEqual(preferences.wait, .idle)
+        XCTAssertEqual(preferences.waitTimeout, 2)
+        XCTAssertEqual(preferences.resolvedTimeout, 2)
+        XCTAssertNil(preferences.waitFailure)
+    }
+
+    /// A preview that keeps changing is captured once it stops, not after a fixed delay.
+    func testWaitForIdleReturnsWhenPreviewStopsChanging() {
+        let start = Date()
+        let (_, preferences) = snapshot { Ticking(interval: 0.02, ticks: 10).snapshot(waitForIdle: true, timeout: 5) }
+            .loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitFailure)
+        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.2)
+        // The wait happens on the captured view itself, so nothing is replayed as a delay.
+        XCTAssertEqual(preferences.settleDelay, 0)
+    }
+
+    func testWaitForIdleFailsWithTimeoutMessage() throws {
+        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: true, timeout: 0.3) }
+            .loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.waitFailure)
+        XCTAssertTrue(failure.contains("\"Endless\""), failure)
+        XCTAssertTrue(failure.contains("never stopped changing within 0.3s"), failure)
+    }
+
+    func testWaitUntilConditionReturnsWhenConditionIsMet() {
+        let deadline = Date().addingTimeInterval(0.2)
+        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { Date() >= deadline }, timeout: 5) }
+            .loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitFailure)
+        XCTAssertGreaterThanOrEqual(Date(), deadline)
+    }
+
+    func testWaitUntilConditionFailsWithTimeoutMessage() throws {
+        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { false }, timeout: 0.2) }
+            .loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.waitFailure)
+        XCTAssertTrue(failure.contains("was still false after 0.2s"), failure)
+        // The call site of the modifier is part of the message.
+        XCTAssertTrue(failure.contains("SnapshotWaitTests.swift:"), failure)
+    }
+
+    func testProjectWideDefaultsAreUsedWhenPreviewDoesNotWait() {
+        SnapshotWaitDefaults.waitForIdle = true
+        SnapshotWaitDefaults.timeout = 0.3
+
+        let (_, preferences) = snapshot { Ticking(interval: 0.01) }.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.wait)
+        XCTAssertEqual(preferences.resolvedWait, .idle)
+        XCTAssertEqual(preferences.resolvedTimeout, 0.3)
+        XCTAssertNotNil(preferences.waitFailure)
+    }
+
+    func testPreviewPreferenceWinsOverProjectWideDefault() {
+        SnapshotWaitDefaults.waitForIdle = true
+
+        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: false) }.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.resolvedWait)
+        XCTAssertNil(preferences.waitFailure)
+    }
+
+    // MARK: Private
+
+    private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
+        PrefireSnapshot(view, name: "Endless", isScreen: false, device: DeviceConfig(size: CGSize(width: 120, height: 40)))
+    }
+}
+
+/// Redraws itself on a timer, so consecutive frames differ until `ticks` is reached.
+private struct Ticking: View {
+    let interval: TimeInterval
+    var ticks: Int = .max
+
+    @State private var tick = 0
+
+    var body: some View {
+        Text("tick \(tick)")
+            .onReceive(Timer.publish(every: interval, on: .main, in: .common).autoconnect()) { _ in
+                guard tick < ticks else { return }
+                tick += 1
+            }
+    }
+}
+#endif

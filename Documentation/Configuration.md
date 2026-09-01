@@ -15,6 +15,8 @@ test_configuration:
   preview_default_enabled: true
   use_grouped_snapshots: true
   split_snapshot_directories: false
+  snapshot_wait_for_idle: true
+  snapshot_wait_timeout: 2.0
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -55,6 +57,8 @@ playbook_configuration:
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
+| `snapshot_wait_for_idle`                       | Wait for every preview to stop changing before it is captured, instead of relying on `.snapshot(delay:)`. Single previews opt out with `.snapshot(waitForIdle: false)`. Closes [#28](https://github.com/BarredEwe/Prefire/issues/28). Default: `false`                                                                        |
+| `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds. Used by `.snapshot(waitForIdle:)` and `.snapshotWait(until:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 
 ---
