@@ -126,6 +126,67 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertFalse(snapshot.isScreen)
     }
 
+    // MARK: - Masking
+
+    /// Masked content is replaced by a placeholder, so unstable values snapshot identically.
+    func testMaskedContentRendersIdenticallyForDifferentValues() throws {
+        let first = try snapshotImageData(of: unstableRow(value: "2024-01-01 10:00", masked: true))
+        let second = try snapshotImageData(of: unstableRow(value: "1999-12-31 23:59", masked: true))
+
+        XCTAssertEqual(first, second)
+    }
+
+    /// The same views without the modifier differ — the equality above comes from masking.
+    func testUnmaskedContentRendersDifferentlyForDifferentValues() throws {
+        let first = try snapshotImageData(of: unstableRow(value: "2024-01-01 10:00", masked: false))
+        let second = try snapshotImageData(of: unstableRow(value: "1999-12-31 23:59", masked: false))
+
+        XCTAssertNotEqual(first, second)
+    }
+
+    /// The placeholder is really drawn: the masked area is filled with the mask color.
+    func testMaskDrawsOpaquePlaceholder() throws {
+        let bitmap = try snapshotBitmap(of: unstableRow(value: "2024-01-01 10:00", masked: true))
+        let center = try XCTUnwrap(bitmap.colorAt(x: bitmap.pixelsWide / 2, y: bitmap.pixelsHigh / 2))
+        let expected = try XCTUnwrap(NSColor(Color.prefireSnapshotMask).usingColorSpace(.sRGB))
+        let rendered = try XCTUnwrap(center.usingColorSpace(.sRGB))
+
+        XCTAssertEqual(rendered.redComponent, expected.redComponent, accuracy: 0.01)
+        XCTAssertEqual(rendered.greenComponent, expected.greenComponent, accuracy: 0.01)
+        XCTAssertEqual(rendered.blueComponent, expected.blueComponent, accuracy: 0.01)
+        XCTAssertEqual(rendered.alphaComponent, 1, accuracy: 0.01)
+    }
+
+    /// Masking keeps the view laid out, so nothing around it moves.
+    func testMaskingKeepsLayoutSize() {
+        let masked = PrefireSnapshot(
+            { HStack { Text("Updated").snapshotMasked() }.padding(8) },
+            name: "Masked",
+            isScreen: false,
+            device: DeviceConfig()
+        )
+        let plain = PrefireSnapshot(
+            { HStack { Text("Updated") }.padding(8) },
+            name: "Plain",
+            isScreen: false,
+            device: DeviceConfig()
+        )
+
+        let maskedSize = masked.loadViewWithPreferences().0.frame.size
+        let plainSize = plain.loadViewWithPreferences().0.frame.size
+
+        XCTAssertEqual(maskedSize, plainSize)
+    }
+
+    /// Outside the snapshot path — Playbook, Canvas, the app — the modifier is a no-op.
+    func testMaskingIsNotAppliedOutsideSnapshots() throws {
+        let size = CGSize(width: 160, height: 40)
+        let first = try imageData(of: hostedView(unstableRow(value: "2024-01-01 10:00", masked: true), size: size))
+        let second = try imageData(of: hostedView(unstableRow(value: "1999-12-31 23:59", masked: true), size: size))
+
+        XCTAssertNotEqual(first, second)
+    }
+
     func testAppKitViewAndControllerOverloadsAreAvailable() {
         let viewSnapshot = PrefireSnapshot(
             { NSView(frame: CGRect(x: 0, y: 0, width: 40, height: 30)) },
@@ -150,6 +211,66 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertNotNil(PreviewModel(content: { NSView() }, name: "View"))
         XCTAssertNotNil(PreviewModel(content: { NSViewController() }, name: "Controller"))
         XCTAssertNotNil(UnqualifiedNSViewRepresentable())
+    }
+}
+
+// MARK: - Helpers
+
+private extension MacOSSnapshotTests {
+    /// Row with a fixed frame, so masked and unmasked variants are laid out the same way.
+    @ViewBuilder
+    func unstableRow(value: String, masked: Bool) -> some View {
+        let text = Text(value)
+            .font(.system(size: 12))
+            .frame(width: 140, height: 20)
+
+        if masked {
+            text.snapshotMasked()
+        } else {
+            text
+        }
+    }
+
+    func snapshotImageData(of view: some View) throws -> Data {
+        try XCTUnwrap(snapshotBitmap(of: view).representation(using: .png, properties: [:]))
+    }
+
+    func snapshotBitmap(of view: some View) throws -> NSBitmapImageRep {
+        let snapshot = PrefireSnapshot(
+            { view },
+            name: "Masking",
+            isScreen: false,
+            device: DeviceConfig(size: CGSize(width: 160, height: 40))
+        )
+
+        return try bitmap(of: snapshot.loadViewWithPreferences().0)
+    }
+
+    /// Hosts the view the way `PlaybookView` would: without the snapshot environment.
+    func hostedView(_ view: some View, size: CGSize) -> NSView {
+        _ = NSApplication.shared
+        let hostingController = NSHostingController(rootView: AnyView(view))
+        hostingController.view.frame = CGRect(origin: .zero, size: size)
+
+        let window = NSWindow(
+            contentRect: CGRect(origin: CGPoint(x: -10_000, y: -10_000), size: size),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: true
+        )
+        window.contentView = hostingController.view
+        return hostingController.view
+    }
+
+    func imageData(of view: NSView) throws -> Data {
+        try XCTUnwrap(bitmap(of: view).representation(using: .png, properties: [:]))
+    }
+
+    func bitmap(of view: NSView) throws -> NSBitmapImageRep {
+        view.layoutSubtreeIfNeeded()
+        let representation = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: representation)
+        return representation
     }
 }
 

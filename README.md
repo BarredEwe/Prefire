@@ -197,6 +197,16 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     }
     ```
 
+- Mask unstable content — dates, timers, remote images — so it does not break the snapshot:
+
+    ```swift
+    Text(Date.now.formatted()).snapshotMasked()
+    ```
+
+    The View keeps its size and is replaced by an opaque placeholder while the snapshot is
+    rendered. Apply it to a container to mask its whole subtree, and pass `color:` to change
+    the placeholder. In Xcode Canvas, in the Playbook and in the app the real content is shown.
+
 - Function for connecting preview together in one **Flow**:
 
     <img src="https://i.postimg.cc/jSh23G8W/temp-Image9a-EDKU.avif" width="350" align="right">
@@ -261,6 +271,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Group in a flow | `.previewUserStory(.auth)` |
 | Mark a UI state | `.previewState(.error)` |
 | Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
+| Mask unstable content | `.snapshotMasked()` |
 | Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---
