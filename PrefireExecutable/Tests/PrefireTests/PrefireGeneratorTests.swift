@@ -292,4 +292,55 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try expectedOutput.read(.utf8)
         XCTAssertTrue(result.contains("class TestPreviewTests: XCTestCase"), "Should use source file name as class name for ungrouped snapshots")
     }
+
+    func testTemplateWaitsForPreviewBeforeCapturing() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("if let waitFailure = preferences.waitFailure {"))
+        // The measured settle time is used as the delay, the explicit `delay` keeps working.
+        XCTAssertTrue(result.contains("for: preferences.resolvedDelay,"))
+        XCTAssertFalse(result.contains("for: preferences.delay,"))
+        XCTAssertFalse(result.contains("SnapshotWaitDefaults"))
+    }
+
+    func testTemplateAppliesWaitConfiguration() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_configuration_preview/")
+        let args: [String: NSObject] = [
+            "snapshotWaitForIdle": "true" as NSString,
+            "snapshotWaitTimeout": "2.5" as NSString,
+        ]
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: args,
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.waitForIdle = true"))
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.timeout = 2.5"))
+    }
 }

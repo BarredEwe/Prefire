@@ -76,6 +76,15 @@ final class ConfigDecoder {
             config.tests.splitSnapshotDirectories = getValue(from: components.last, env: env) == "true"
         case .drawHierarchyInKeyWindowDefaultEnabled:
             config.tests.drawHierarchyInKeyWindowDefaultEnabled = getValue(from: components.last, env: env) == "true"
+        case .snapshotWaitForIdle:
+            config.tests.snapshotWaitForIdle = getValue(from: components.last, env: env) == "true"
+        case .snapshotWaitTimeout:
+            let value = getValue(from: components.last, env: env)
+            config.tests.snapshotWaitTimeout = value.flatMap(Double.init)
+
+            if config.tests.snapshotWaitTimeout == nil {
+                Logger.warning("⚠️ `snapshot_wait_timeout` is not a number: '\(value ?? "")'")
+            }
         }
     }
 

@@ -152,9 +152,14 @@ import SnapshotTesting
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
 
+        // Waiting for `.snapshot(waitForIdle:)` or `.snapshotWait(until:)` ran out of time.
+        if let waitFailure = preferences.waitFailure {
+            return waitFailure
+        }
+
         #if os(macOS)
         let strategy: Snapshotting<NSView, NSImage> = .wait(
-            for: preferences.delay,
+            for: preferences.resolvedDelay,
             on: .image(
                 precision: preferences.precision,
                 perceptualPrecision: preferences.perceptualPrecision,
@@ -163,7 +168,7 @@ import SnapshotTesting
         )
         #else
         let strategy: Snapshotting<AnyView, UIImage> = .wait(
-            for: preferences.delay,
+            for: preferences.resolvedDelay,
             on: .image(
                 {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
                 drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
@@ -190,7 +195,7 @@ import SnapshotTesting
 
             SnapshotTesting.assertSnapshot(
                 matching: vc,
-                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
+                as: .wait(for: preferences.resolvedDelay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
                 record: preferences.record ? .all : .missing,
                 file: file{% endif %},
                 testName: prefireSnapshot.name + ".accessibility"
@@ -200,6 +205,12 @@ import SnapshotTesting
     }
 
     private func prepareEnvironment() {
+        {% if argument.snapshotWaitForIdle %}
+        SnapshotWaitDefaults.waitForIdle = {{ argument.snapshotWaitForIdle }}
+        {% endif %}
+        {% if argument.snapshotWaitTimeout %}
+        SnapshotWaitDefaults.timeout = {{ argument.snapshotWaitTimeout }}
+        {% endif %}
         #if os(iOS) || os(tvOS)
         if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
             guard deviceModel.contains(simulatorDevice) else {
