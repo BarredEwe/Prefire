@@ -150,6 +150,68 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertFalse(result.contains("preview.deviceConfig"))
     }
 
+    func testSnapshotVariantsRenderConfiguredVariants() async throws {
+        let file = Path("/tmp/VariantsPreview.swift")
+        let output = Path("/tmp/VariantsPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_variants_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("Panel") {
+            Text("Panel")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["snapshotVariants": "light|dark" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains(#"private let snapshotVariants: [SnapshotVariant] = SnapshotVariant.variants(named: ["light", "dark"])"#))
+        // Variants compose with devices, so the device suffix comes first.
+        XCTAssertTrue(result.contains(#"snapshot.name = "\(prefireSnapshot.name)-\(deviceName)""#))
+        XCTAssertTrue(result.contains("snapshot.name = prefireSnapshot.name + variant.nameSuffix"))
+        XCTAssertTrue(result.contains("let variants = preferences.variants ?? snapshotVariants"))
+    }
+
+    func testWithoutSnapshotVariantsRendersEmptyVariants() async throws {
+        let file = Path("/tmp/NoVariantsPreview.swift")
+        let output = Path("/tmp/NoVariantsPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_no_variants_preview/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("Panel") {
+            Text("Panel")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("private let snapshotVariants: [SnapshotVariant] = []"))
+    }
+
     func testParameterizedPreviewRendersPlaybookTemplate() async throws {
         let file = Path("/tmp/ParameterizedPlaybookPreview.swift")
         let output = Path("/tmp/ParameterizedPreviewModels.generated.swift")
