@@ -5,6 +5,8 @@ import PathKit
 private enum Constants {
     static let snapshotFileName = "PreviewTests.generated.swift"
     static let snapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
+    static let snapshotsFolderName = "__Snapshots__"
+    static let previewFileNamePlaceholder = "{PREVIEW_FILE_NAME}"
 }
 
 struct GeneratedTestsOptions {
@@ -23,6 +25,7 @@ struct GeneratedTestsOptions {
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
     var splitSnapshotDirectories: Bool
+    var deleteUnusedSnapshots: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
 
     init(
@@ -57,6 +60,7 @@ struct GeneratedTestsOptions {
         self.osVersion = config?.tests.osVersion ?? osVersion
         useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
         splitSnapshotDirectories = config?.tests.splitSnapshotDirectories ?? false
+        deleteUnusedSnapshots = config?.tests.deleteUnusedSnapshots ?? false
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
@@ -85,7 +89,7 @@ enum GenerateTestsCommand {
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
-        try await PrefireGenerator.generate(
+        let result = try await PrefireGenerator.generate(
             version: Prefire.Version.value,
             sources: options.sources,
             output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.snapshotFileTemplated),
@@ -94,6 +98,63 @@ enum GenerateTestsCommand {
             defaultEnabled: options.prefireEnabledMarker,
             cacheDir: options.cacheBasePath,
             useGroupedSnapshots: options.useGroupedSnapshots
+        )
+
+        let manifest = makeManifest(for: options, result: result)
+        let manifestPath = manifestPath(for: options)
+        try manifest.write(to: manifestPath.string)
+        Logger.info("💾 Writing snapshot manifest: \(manifestPath)")
+
+        guard options.deleteUnusedSnapshots else { return }
+
+        let orphans = SnapshotPruner.orphans(for: manifest)
+        guard !orphans.isEmpty else { return }
+
+        let deleted = try SnapshotPruner.delete(orphans)
+        Logger.warning("🗑 Deleted \(deleted.count) unused snapshot(s):" + deleted.map({ "\n  - " + $0 }).joined())
+    }
+
+    /// The manifest lives next to the generated tests, the only folder both `tests` and `prune`
+    /// can resolve from the same configuration.
+    static func manifestPath(for options: GeneratedTestsOptions) -> Path {
+        options.output + SnapshotManifest.fileName
+    }
+
+    /// Describes the snapshots the generated tests will record.
+    ///
+    /// SnapshotTesting derives a folder from each test file: `<file's folder>/__Snapshots__/<file
+    /// name>`. The generated tests pass `file` explicitly whenever `test_target_path` is set;
+    /// otherwise the generated file's own `#file` is used, which already splits the folders when
+    /// `use_grouped_snapshots: false`.
+    static func makeManifest(for options: GeneratedTestsOptions, result: GenerationResult) -> SnapshotManifest {
+        let splitDirectories = options.splitSnapshotDirectories && !options.useGroupedSnapshots
+        let perSourceDirectories = options.testTargetPath != nil ? splitDirectories : !options.useGroupedSnapshots
+        let base = options.testTargetPath ?? options.output
+
+        var grouped: [String: [SnapshotManifest.Snapshot]] = [:]
+
+        for preview in result.previews {
+            let testFileName = perSourceDirectories
+                ? Constants.snapshotFileTemplated.replacingOccurrences(of: Constants.previewFileNamePlaceholder, with: preview.sourceFileName)
+                : Constants.snapshotFileName
+            let directory = (base + Constants.snapshotsFolderName + Path(testFileName).lastComponentWithoutExtension).string
+
+            grouped[directory, default: []].append(
+                SnapshotManifest.Snapshot(name: preview.displayName, parameterized: preview.isParameterized)
+            )
+        }
+
+        return SnapshotManifest(
+            snapshotDevices: options.snapshotDevices ?? [],
+            directories: grouped
+                .sorted(by: { $0.key < $1.key })
+                .map { path, snapshots in
+                    SnapshotManifest.Directory(
+                        path: path,
+                        snapshots: snapshots.sorted(by: { $0.name < $1.name }),
+                        complete: !result.hasPreviewProviders
+                    )
+                }
         )
     }
 

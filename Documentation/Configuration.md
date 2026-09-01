@@ -15,6 +15,7 @@ test_configuration:
   preview_default_enabled: true
   use_grouped_snapshots: true
   split_snapshot_directories: false
+  delete_unused_snapshots: false
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -52,10 +53,41 @@ playbook_configuration:
 | `preview_default_enabled`                      | Should all detected previews be included by default? Set `false` if you want to require `.prefireEnabled()` manually. Default: `true`                                                                                                     |
 | `use_grouped_snapshots`                        | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true`                                         |
 | `split_snapshot_directories`                   | When `use_grouped_snapshots: false`, also write snapshots into a separate `__Snapshots__/<File>Tests.generated/` folder per source file instead of one shared `__Snapshots__/PreviewTests.generated/` folder. Closes [#80](https://github.com/BarredEwe/Prefire/issues/80). Default: `false` to keep existing snapshot layouts working — opt in once you're ready to move the files.                |
+| `delete_unused_snapshots`                      | Delete recorded snapshots that no generated test refers to anymore, right after generation. Closes [#85](https://github.com/BarredEwe/Prefire/issues/85). Default: `false` — leave it off and run `prefire prune` to review the list first. See [Pruning unused snapshots](#pruning-unused-snapshots). |
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
+
+---
+
+### Pruning unused snapshots
+
+Renaming or deleting a `#Preview` leaves its recorded snapshot behind. Every `prefire tests` run
+therefore writes `prefire-snapshots.json` next to the generated tests, listing the
+`__Snapshots__/<TestFile>` folders and the snapshots each one is expected to hold. `prefire prune`
+compares that manifest with what is on disk:
+
+```bash
+# Report the snapshots no generated test refers to anymore
+prefire prune
+
+# Remove them
+prefire prune --delete
+```
+
+Reporting is the default; nothing is deleted without `--delete`, and `--dry-run` wins if both are
+passed. `prune` only ever touches image files that sit directly inside a `__Snapshots__/<TestFile>`
+folder named by the manifest.
+
+A snapshot survives together with its whole family: the `snapshot_devices` suffix
+(`AuthView-iPhone-15.1.png`), the `#Preview(arguments:)` expansion (`TextView-1-A.1.png`) and the
+accessibility variant (`AuthView-accessibility.1.png`) all belong to the preview they were named
+after. Folders that also receive `PrefireProvider` snapshots are skipped entirely — those names come
+from `previewDisplayName` at runtime, so nothing in them can be proven unused.
+
+Set `delete_unused_snapshots: true` to run the same cleanup automatically at the end of every
+`prefire tests`.
 
 ---
 
