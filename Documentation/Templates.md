@@ -61,7 +61,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 | `argument.simulatorOSVersion`            | `String` (or absent)   | tests  | Major iOS version from `required_os:`.                                                                   |
 | `argument.snapshotDevices`               | `String` (or absent)   | tests  | Snapshot device names joined by `\|`. Iterate by applying `\|split:"\|"`. See §4.                        |
 | `argument.drawHierarchyInKeyWindowDefaultEnabled` | `String` `"true"`/`"false"` (or absent) | tests | Value of `draw_hierarchy_in_key_window_default_enabled:` as a string. |
-| `argument.globalConfiguration`           | `String` (or absent)   | both   | Type name from `global_configuration:`; emitted as `globalConfiguration: {{ argument.globalConfiguration }}.self`. |
+| `argument.globalConfiguration`           | `String` (or absent)   | both   | Type name from `global_configuration:`, or the single `PrefireGlobalConfiguration` conformer found in the sources. Absent when neither applies. |
 | `argument.previewsMacrosDict`            | `[[String: Any]]`      | both   | Array of `#Preview` macro models. See §3.3.                                                              |
 
 `NSNull` values (i.e. when a config key is missing) should be guarded with `{% if argument.foo %}` — Stencil treats both `nil` and `NSNull` as falsy.

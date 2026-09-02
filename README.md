@@ -170,7 +170,9 @@ enum MyPrefireSetup: PrefireGlobalConfiguration {
 }
 ```
 
-and point `.prefire.yml` at it:
+That is the whole setup: **🔥Prefire** finds the type and wraps every preview with it before rendering — in snapshot tests and in the Playbook. No `.prefire.yml` entry needed.
+
+Name it explicitly only when the type lives somewhere the scan does not reach, or when you have more than one:
 
 ```yaml
 test_configuration:
@@ -179,7 +181,7 @@ playbook_configuration:
   global_configuration: MyPrefireSetup
 ```
 
-**🔥Prefire** wraps every preview with it before rendering — in snapshot tests and in the Playbook. More details in the [Configuration documentation](Documentation/Configuration.md#global-preview-configuration).
+More details in the [Configuration documentation](Documentation/Configuration.md#global-preview-configuration).
 
 ### **Playbook (Demo) View**
 To use Playbook, simply use `PlaybookView`

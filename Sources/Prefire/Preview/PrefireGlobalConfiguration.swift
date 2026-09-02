@@ -2,8 +2,10 @@ import SwiftUI
 
 /// Decoration applied to every preview, both in generated snapshot tests and in the Playbook.
 ///
-/// Conform a type to it and point `global_configuration:` in `.prefire.yml` at that type
-/// to inject a theme, DI container, locale or mocks once instead of in every `#Preview`:
+/// Conform a type to it to inject a theme, DI container, locale or mocks once instead of in every
+/// `#Preview`. A single conforming type in the scanned sources is picked up automatically; name it
+/// with `global_configuration:` in `.prefire.yml` when there is more than one, or when it lives
+/// outside those sources:
 ///
 ///     enum MyPrefireSetup: PrefireGlobalConfiguration {
 ///         static func wrap(_ view: AnyView) -> AnyView {

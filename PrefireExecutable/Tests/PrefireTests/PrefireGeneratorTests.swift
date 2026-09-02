@@ -438,6 +438,77 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertFalse(result.contains("MyPrefireSetup.self,"), "The type name belongs on the resolving line only")
     }
 
+    /// With no `global_configuration:` key, the type is found in the sources.
+    func testGlobalConfigurationIsDetectedWithoutConfiguration() async throws {
+        let file = Path("/tmp/DetectedGlobalConfigurationPreview.swift")
+        let output = Path("/tmp/DetectedGlobalConfigurationTests.generated.swift")
+        let cache = Path("/tmp/cache_detected_global_configuration/")
+        try file.write("""
+        import Prefire
+        import SwiftUI
+
+        enum MyPrefireSetup: PrefireGlobalConfiguration {
+            static func wrap(_ view: AnyView) -> AnyView { view }
+        }
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        XCTAssertTrue(try output.read(.utf8).contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPrefireSetup.self"
+        ))
+    }
+
+    func testAmbiguousGlobalConfigurationFailsGeneration() async throws {
+        let file = Path("/tmp/AmbiguousGlobalConfigurationPreview.swift")
+        let output = Path("/tmp/AmbiguousGlobalConfigurationTests.generated.swift")
+        let cache = Path("/tmp/cache_ambiguous_global_configuration/")
+        try file.write("""
+        import Prefire
+        import SwiftUI
+
+        enum FirstSetup: PrefireGlobalConfiguration {}
+        enum SecondSetup: PrefireGlobalConfiguration {}
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        do {
+            try await PrefireGenerator.generate(
+                version: "1.0.0",
+                sources: [file],
+                output: output,
+                arguments: [:],
+                inlineTemplate: EmbeddedTemplates.previewTests,
+                defaultEnabled: true,
+                cacheDir: cache,
+                useGroupedSnapshots: true
+            )
+            XCTFail("Generation should fail rather than pick one of the two arbitrarily")
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? ""
+            XCTAssertTrue(message.contains("FirstSetup"), message)
+            XCTAssertTrue(message.contains("SecondSetup"), message)
+        }
+    }
+
     func testMissingGlobalConfigurationResolvesToNilInTestsTemplate() async throws {
         let file = Path("/tmp/NoGlobalConfigurationPreview.swift")
         let output = Path("/tmp/NoGlobalConfigurationPreviewTests.generated.swift")

@@ -57,7 +57,7 @@ playbook_configuration:
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
-| `global_configuration`                         | Name of a type conforming to `PrefireGlobalConfiguration`. Its `wrap(_:)` is applied to every preview, so theme, DI or locale are set once instead of in every `#Preview`. See [Global preview configuration](#global-preview-configuration). Optional |
+| `global_configuration`                         | Name of a type conforming to `PrefireGlobalConfiguration`. Its `wrap(_:)` is applied to every preview, so theme, DI or locale are set once instead of in every `#Preview`. Optional — a single conforming type in `sources` is detected automatically. See [Global preview configuration](#global-preview-configuration). |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 
 ---
@@ -81,20 +81,38 @@ enum MyPrefireSetup: PrefireGlobalConfiguration {
 }
 ```
 
-Then point the config at it:
+That is all. Prefire scans `sources` for types conforming to `PrefireGlobalConfiguration`, and a single one is used automatically. The generated file resolves it once:
+
+```swift
+private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPrefireSetup.self
+```
+
+and passes that constant to every `PrefireSnapshot` / `PreviewModel`. Prefire applies `wrap(_:)` to the preview content before rendering. Preferences set inside a preview (`.snapshot(delay:precision:)`, `.previewUserStory()`) keep working, as long as the wrapper keeps the passed view in the returned hierarchy.
+
+#### Naming it explicitly
+
+Set `global_configuration:` when detection cannot do the job:
 
 ```yaml
 test_configuration:
   global_configuration: MyPrefireSetup
 playbook_configuration:
-  global_configuration: MyPrefireSetup
+  global_configuration: MyPlaybookSetup
 ```
 
-The generated code passes the type to every `PrefireSnapshot` / `PreviewModel`, and Prefire applies `wrap(_:)` to the preview content before rendering. Preferences set inside a preview (`.snapshot(delay:precision:)`, `.previewUserStory()`) keep working, as long as the wrapper keeps the passed view in the returned hierarchy.
+Reach for it when:
 
-The type must be visible from the generated file: declare it in the test target for `test_configuration` and in the Playbook target for `playbook_configuration`, or add the module to `imports:` / `testable_imports:`.
+- **The type is not in `sources`.** Only `sources` is scanned, so a configuration declared in the test target is invisible to detection and has to be named.
+- **You want different wrappers for tests and the Playbook.** Detection picks the same type for both.
+- **There is more than one conforming type.** Generation fails with the list of names rather than picking one; naming one resolves it.
 
-Without the key nothing changes — the generated code stays exactly as before.
+An explicit name always wins over what was found, and is never checked against the sources — that is what makes the test-target case work.
+
+#### Requirements
+
+- **The type must be visible from the generated file.** Declare it in the module the generated file is compiled into, or add its module to `imports:` / `testable_imports:`. A `private` or `fileprivate` type is skipped by detection, with a warning saying why.
+- **Turning this on changes rendered sizes.** The wrapper sits inside the layout Prefire applies, so a `wrap(_:)` that adds padding or a container changes measured heights — existing snapshots need re-recording.
+- **Do not apply it twice.** `PreviewModel` already wraps its content, so hand-written snapshot tests built on `PreviewModels.models` should not also pass `globalConfiguration:` to `PrefireSnapshot`.
 
 ---
 
