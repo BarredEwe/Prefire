@@ -109,6 +109,15 @@ public enum SnapshotWaitDefaults {
 
     /// Time limit for a wait that does not set its own.
     public nonisolated(unsafe) static var timeout: TimeInterval = 5
+
+    /// Restores the library defaults.
+    ///
+    /// Generated suites call it before applying their own configuration, so a test target hosting
+    /// suites from several `.prefire.yml` files does not depend on the order they run in.
+    public static func reset() {
+        waitForIdle = false
+        timeout = 5
+    }
 }
 
 public struct WaitPreferenceKey: PreferenceKey {
@@ -141,18 +150,24 @@ public class PreferenceKeys: @unchecked Sendable {
     /// Time limit for `wait`. `0` falls back to `SnapshotWaitDefaults.timeout`.
     public var waitTimeout: TimeInterval
 
-    /// Time the preview needed to become ready.
+    /// Time the preview needed to become ready, `delay` included.
     ///
     /// Filled in on iOS/tvOS only: there the snapshot strategy renders its own copy of the view,
     /// so the wait runs on a probe and its duration is replayed as a delay. On macOS the view
-    /// Prefire waited on is the one being captured, so no delay is needed.
+    /// Prefire waited on is the one being captured, so nothing has to be replayed.
     public internal(set) var settleDelay: TimeInterval = 0
+
+    /// Whether the wait already spent `delay` on the view that is about to be captured.
+    public internal(set) var isDelayApplied = false
 
     /// Why waiting failed, or `nil` when there was nothing to wait for or the wait succeeded.
     public internal(set) var waitFailure: String?
 
     /// Delay for the snapshot strategy: the explicit `delay`, or the measured `settleDelay`.
-    public var resolvedDelay: TimeInterval { max(delay, settleDelay) }
+    ///
+    /// A wait starts by spending `delay`, so a preview that only starts working after it is still
+    /// observed. When that happened on the view being captured, the strategy must not spend it again.
+    public var resolvedDelay: TimeInterval { isDelayApplied ? settleDelay : max(delay, settleDelay) }
 
     /// Condition to wait for, including the project wide default.
     public var resolvedWait: SnapshotWait? {
@@ -207,7 +222,8 @@ public extension View {
     /// Prefire renders the preview and compares consecutive frames: the snapshot is taken once the
     /// same frame comes back twice in a row. Combine it with
     /// `snapshot(delay:precision:perceptualPrecision:record:)` when you also need to tune the
-    /// comparison, or to keep a floor under the wait.
+    /// comparison, or to keep a floor under the wait: `delay` is spent before the frames are
+    /// compared, so a preview that only starts working after it is still waited for.
     ///
     /// - Parameters:
     ///   - waitForIdle: Whether to wait for the rendered frame to stabilize. `false` also opts the

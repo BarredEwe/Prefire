@@ -315,7 +315,10 @@ final class PrefireGeneratorTests: XCTestCase {
         // The measured settle time is used as the delay, the explicit `delay` keeps working.
         XCTAssertTrue(result.contains("for: preferences.resolvedDelay,"))
         XCTAssertFalse(result.contains("for: preferences.delay,"))
-        XCTAssertFalse(result.contains("SnapshotWaitDefaults"))
+        // Waiting is off by default, but the suite still may not inherit another suite's defaults.
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
+        XCTAssertFalse(result.contains("SnapshotWaitDefaults.waitForIdle"))
+        XCTAssertFalse(result.contains("SnapshotWaitDefaults.timeout"))
     }
 
     func testTemplateAppliesWaitConfiguration() async throws {
@@ -340,6 +343,7 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.waitForIdle = true"))
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.timeout = 2.5"))
     }

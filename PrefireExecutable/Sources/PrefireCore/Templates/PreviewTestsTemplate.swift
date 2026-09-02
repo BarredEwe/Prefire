@@ -205,6 +205,8 @@ import SnapshotTesting
     }
 
     private func prepareEnvironment() {
+        // Another generated suite in this target may have configured waiting differently.
+        SnapshotWaitDefaults.reset()
         {% if argument.snapshotWaitForIdle %}
         SnapshotWaitDefaults.waitForIdle = {{ argument.snapshotWaitForIdle }}
         {% endif %}

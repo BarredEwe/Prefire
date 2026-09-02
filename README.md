@@ -208,9 +208,10 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     taken once the same frame comes back twice in a row, so about 100 ms of no change. A preview
     that never settles fails with a message instead of hanging, after `timeout` (5 seconds by default).
 
-    Waiting for idle only knows about changes that already started: a preview that begins loading
-    later still needs a `delay` as a floor. Both modifiers can be combined, since they configure
-    different things:
+    Waiting for idle only knows about changes that already started, so a preview that begins loading
+    later still needs a `delay` as a floor: Prefire spends it before it starts comparing frames, and
+    does not wait it out a second time when capturing. Both modifiers can be combined, since they
+    configure different things:
 
     ```swift
     static var previews: some View {

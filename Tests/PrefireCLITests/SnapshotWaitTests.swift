@@ -7,8 +7,7 @@ import XCTest
 @MainActor
 final class SnapshotWaitTests: XCTestCase {
     override func tearDown() {
-        SnapshotWaitDefaults.waitForIdle = false
-        SnapshotWaitDefaults.timeout = 5
+        SnapshotWaitDefaults.reset()
         super.tearDown()
     }
 
@@ -51,6 +50,33 @@ final class SnapshotWaitTests: XCTestCase {
         let failure = try XCTUnwrap(preferences.waitFailure)
         XCTAssertTrue(failure.contains("\"Endless\""), failure)
         XCTAssertTrue(failure.contains("never stopped changing within 0.3s"), failure)
+    }
+
+    /// `delay` is the floor of the wait: work starting after it is still waited for.
+    func testDelayIsSpentBeforeFramesAreCompared() {
+        let start = Date()
+        let (_, preferences) = snapshot {
+            Ticking(interval: 0.02, ticks: 10, startsAfter: 0.25)
+                .snapshot(delay: 0.3)
+                .snapshot(waitForIdle: true, timeout: 5)
+        }.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitFailure)
+        // Without the floor the preview looks idle after ~0.1s, before it starts changing at 0.25s.
+        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.45)
+        // The delay was spent on the view being captured, so the strategy must not spend it again.
+        XCTAssertTrue(preferences.isDelayApplied)
+        XCTAssertEqual(preferences.resolvedDelay, 0)
+    }
+
+    func testDefaultsAreRestoredForEverySuite() {
+        SnapshotWaitDefaults.waitForIdle = true
+        SnapshotWaitDefaults.timeout = 0.3
+
+        SnapshotWaitDefaults.reset()
+
+        XCTAssertFalse(SnapshotWaitDefaults.waitForIdle)
+        XCTAssertEqual(SnapshotWaitDefaults.timeout, 5)
     }
 
     func testWaitUntilConditionReturnsWhenConditionIsMet() {
@@ -104,14 +130,20 @@ final class SnapshotWaitTests: XCTestCase {
 private struct Ticking: View {
     let interval: TimeInterval
     var ticks: Int = .max
+    var startsAfter: TimeInterval = 0
 
     @State private var tick = 0
+    @State private var isStarted = false
 
     var body: some View {
         Text("tick \(tick)")
             .onReceive(Timer.publish(every: interval, on: .main, in: .common).autoconnect()) { _ in
-                guard tick < ticks else { return }
+                guard isStarted, tick < ticks else { return }
                 tick += 1
+            }
+            .task {
+                try? await Task.sleep(nanoseconds: UInt64(startsAfter * 1_000_000_000))
+                isStarted = true
             }
     }
 }
