@@ -16,6 +16,22 @@ final class SnapshotVariantTests: XCTestCase {
         XCTAssertEqual(SnapshotVariant.variants(named: ["light", "dark"]), [.light, .dark])
     }
 
+    /// Prefire owns the size categories, so they stay `Sendable` on every SDK.
+    func testSizeCategoriesMapToSwiftUI() {
+        let categories = SnapshotVariant.SizeCategory.allCases
+
+        XCTAssertEqual(Set(categories.map(\.contentSizeCategory)).count, categories.count)
+        XCTAssertEqual(SnapshotVariant.SizeCategory.large.contentSizeCategory, .large)
+        XCTAssertEqual(
+            SnapshotVariant.SizeCategory.accessibilityExtraExtraExtraLarge.contentSizeCategory,
+            .accessibilityExtraExtraExtraLarge
+        )
+
+        XCTAssertEqual(SnapshotVariant.SizeCategory(name: "XXXL"), .extraExtraExtraLarge)
+        XCTAssertEqual(SnapshotVariant.SizeCategory(name: "extraExtraExtraLarge"), .extraExtraExtraLarge)
+        XCTAssertNil(SnapshotVariant.SizeCategory(name: "huge"))
+    }
+
     /// `.light` stays unsuffixed, so snapshots recorded before variants existed keep their name.
     func testNameSuffixes() {
         XCTAssertEqual(SnapshotVariant.light.nameSuffix, "")

@@ -4,10 +4,28 @@ import SwiftUI
 ///
 /// Variants come from the `snapshot_variants` configuration key or from `.snapshotVariants(_:)`.
 public enum SnapshotVariant: Hashable, Sendable {
+    /// Dynamic Type size, mirroring `ContentSizeCategory`, which older SDKs do not mark as `Sendable`.
+    ///
+    /// The raw value is the name used in the configuration file and in the snapshot name.
+    public enum SizeCategory: String, Hashable, Sendable, CaseIterable {
+        case extraSmall = "XS"
+        case small = "S"
+        case medium = "M"
+        case large = "L"
+        case extraLarge = "XL"
+        case extraExtraLarge = "XXL"
+        case extraExtraExtraLarge = "XXXL"
+        case accessibilityMedium = "accessibilityM"
+        case accessibilityLarge = "accessibilityL"
+        case accessibilityExtraLarge = "accessibilityXL"
+        case accessibilityExtraExtraLarge = "accessibilityXXL"
+        case accessibilityExtraExtraExtraLarge = "accessibilityXXXL"
+    }
+
     /// Baseline appearance. Keeps the snapshot name unsuffixed, so recorded snapshots stay valid.
     case light
     case dark
-    case sizeCategory(ContentSizeCategory)
+    case sizeCategory(SizeCategory)
     case rightToLeft
     case locale(Locale)
 
@@ -16,7 +34,7 @@ public enum SnapshotVariant: Hashable, Sendable {
         switch self {
         case .light: return ""
         case .dark: return "-dark"
-        case let .sizeCategory(category): return "-" + Self.name(of: category)
+        case let .sizeCategory(category): return "-" + category.rawValue
         case .rightToLeft: return "-rtl"
         case let .locale(locale): return "-" + Self.localePrefix + locale.identifier
         }
@@ -32,8 +50,8 @@ public enum SnapshotVariant: Hashable, Sendable {
         case "rtl", "rightToLeft":
             self = .rightToLeft
         default:
-            if let category = Self.sizeCategories.first(where: { $0.name == name || $0.swiftUIName == name }) {
-                self = .sizeCategory(category.value)
+            if let category = SizeCategory(name: name) {
+                self = .sizeCategory(category)
             } else if name.hasPrefix(Self.localePrefix) {
                 self = .locale(Locale(identifier: String(name.dropFirst(Self.localePrefix.count))))
             } else {
@@ -52,27 +70,32 @@ public enum SnapshotVariant: Hashable, Sendable {
         }
     }
 
-    // MARK: - Private
-
     private static let localePrefix = "locale_"
+}
 
-    private static let sizeCategories: [(name: String, swiftUIName: String, value: ContentSizeCategory)] = [
-        ("XS", "extraSmall", .extraSmall),
-        ("S", "small", .small),
-        ("M", "medium", .medium),
-        ("L", "large", .large),
-        ("XL", "extraLarge", .extraLarge),
-        ("XXL", "extraExtraLarge", .extraExtraLarge),
-        ("XXXL", "extraExtraExtraLarge", .extraExtraExtraLarge),
-        ("accessibilityM", "accessibilityMedium", .accessibilityMedium),
-        ("accessibilityL", "accessibilityLarge", .accessibilityLarge),
-        ("accessibilityXL", "accessibilityExtraLarge", .accessibilityExtraLarge),
-        ("accessibilityXXL", "accessibilityExtraExtraLarge", .accessibilityExtraExtraLarge),
-        ("accessibilityXXXL", "accessibilityExtraExtraExtraLarge", .accessibilityExtraExtraExtraLarge),
-    ]
+public extension SnapshotVariant.SizeCategory {
+    /// Creates a size category from its short name (`XXXL`) or its SwiftUI case name (`extraExtraExtraLarge`).
+    init?(name: String) {
+        guard let category = Self(rawValue: name) ?? Self.allCases.first(where: { "\($0)" == name }) else { return nil }
+        self = category
+    }
 
-    private static func name(of category: ContentSizeCategory) -> String {
-        sizeCategories.first(where: { $0.value == category })?.name ?? "\(category)"
+    /// The SwiftUI value applied to the environment.
+    var contentSizeCategory: ContentSizeCategory {
+        switch self {
+        case .extraSmall: return .extraSmall
+        case .small: return .small
+        case .medium: return .medium
+        case .large: return .large
+        case .extraLarge: return .extraLarge
+        case .extraExtraLarge: return .extraExtraLarge
+        case .extraExtraExtraLarge: return .extraExtraExtraLarge
+        case .accessibilityMedium: return .accessibilityMedium
+        case .accessibilityLarge: return .accessibilityLarge
+        case .accessibilityExtraLarge: return .accessibilityExtraLarge
+        case .accessibilityExtraExtraLarge: return .accessibilityExtraExtraLarge
+        case .accessibilityExtraExtraExtraLarge: return .accessibilityExtraExtraExtraLarge
+        }
     }
 }
 
@@ -88,7 +111,7 @@ extension View {
         case .dark:
             environment(\.colorScheme, .dark)
         case let .sizeCategory(category):
-            environment(\.sizeCategory, category)
+            environment(\.sizeCategory, category.contentSizeCategory)
         case .rightToLeft:
             environment(\.layoutDirection, .rightToLeft)
         case let .locale(locale):
