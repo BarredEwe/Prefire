@@ -204,7 +204,7 @@ import SnapshotTesting
                 testName: prefireSnapshot.name + ".accessibility"
             )
         #endif
-        return failure.map { $0 + snapshotFilesDescription(for: prefireSnapshot.name) }
+        return failure.map { $0 + PrefireSnapshotFailure.fileLinks(for: $0, snapshotDirectory: snapshotDirectory) }
     }
 
     /// Directory SnapshotTesting reads reference images from.
@@ -214,36 +214,6 @@ import SnapshotTesting
             .deletingLastPathComponent()
             .appendingPathComponent("__Snapshots__")
             .appendingPathComponent(source.deletingPathExtension().lastPathComponent)
-    }
-
-    /// Directory SnapshotTesting writes the image recorded for a failing test to.
-    private var snapshotArtifactsDirectory: URL {
-        URL(fileURLWithPath: ProcessInfo().environment["SNAPSHOT_ARTIFACTS"] ?? NSTemporaryDirectory(), isDirectory: true)
-            .appendingPathComponent(snapshotDirectory.lastPathComponent)
-    }
-
-    /// `file://` links to the images behind a failure, so they open straight from the console.
-    private func snapshotFilesDescription(for name: String) -> String {
-        let prefix = name
-            .replacingOccurrences(of: "\\W+", with: "-", options: .regularExpression)
-            .replacingOccurrences(of: "^-|-$", with: "", options: .regularExpression) + "."
-        let reference = snapshotFile(withPrefix: prefix, in: snapshotDirectory)
-        let recorded = snapshotFile(withPrefix: prefix, in: snapshotArtifactsDirectory)
-
-        var lines = ["", "Snapshot files:", "  reference: \(reference?.absoluteString ?? snapshotDirectory.absoluteString)"]
-        if let recorded {
-            lines.append("  recorded:  \(recorded.absoluteString)")
-            if let reference {
-                lines.append("  diff:      ksdiff \"\(reference.path)\" \"\(recorded.path)\"")
-            }
-        }
-        return lines.joined(separator: "\n")
-    }
-
-    private func snapshotFile(withPrefix prefix: String, in directory: URL) -> URL? {
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
-        guard let name = names.filter({ $0.hasPrefix(prefix) }).sorted().first else { return nil }
-        return directory.appendingPathComponent(name)
     }
 
     private func prepareEnvironment() {

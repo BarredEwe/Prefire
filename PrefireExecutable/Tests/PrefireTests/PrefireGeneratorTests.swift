@@ -346,12 +346,15 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("private var snapshotSourceFile: String { \"/Users/dev/Tests/PreviewTests.generated.swift\" }"))
-        XCTAssertTrue(result.contains("return failure.map { $0 + snapshotFilesDescription(for: prefireSnapshot.name) }"))
         XCTAssertTrue(result.contains("appendingPathComponent(\"__Snapshots__\")"))
-        XCTAssertTrue(result.contains("ProcessInfo().environment[\"SNAPSHOT_ARTIFACTS\"] ?? NSTemporaryDirectory()"))
-        XCTAssertTrue(result.contains("\"  reference: \\(reference?.absoluteString ?? snapshotDirectory.absoluteString)\""))
-        XCTAssertTrue(result.contains("\"  recorded:  \\(recorded.absoluteString)\""))
-        XCTAssertTrue(result.contains("\"  diff:      ksdiff"))
+        XCTAssertTrue(
+            result.contains("return failure.map { $0 + PrefireSnapshotFailure.fileLinks(for: $0, snapshotDirectory: snapshotDirectory) }"),
+            "The failure itself has to be passed on, so the links point at the images it is about"
+        )
+        XCTAssertFalse(
+            result.contains("hasPrefix"),
+            "Files must not be picked by name prefix: snapshots sharing a name differ only by SnapshotTesting's counter"
+        )
     }
 
     func testGeneratedTestsFallBackToOwnPathWhenNoSnapshotPathIsConfigured() async throws {
