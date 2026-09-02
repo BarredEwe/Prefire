@@ -34,23 +34,25 @@ extension Prefire {
             Logger.level = verbose ? .verbose : .warnings
             let config = Config.load(from: config, testTargetPath: testTargetPath, env: ProcessInfo.processInfo.environment)
 
-            let path = try manifest.map({ Path($0) }) ?? GenerateTestsCommand.manifestPath(
-                for: GeneratedTestsOptions(
-                    target: nil,
-                    testTarget: nil,
-                    template: nil,
-                    sources: [],
-                    output: output,
-                    testTargetPath: testTargetPath,
-                    cacheBasePath: nil,
-                    device: nil,
-                    osVersion: nil,
-                    config: config
-                )
+            let options = try GeneratedTestsOptions(
+                target: nil,
+                testTarget: nil,
+                template: nil,
+                sources: [],
+                output: output,
+                testTargetPath: testTargetPath,
+                cacheBasePath: nil,
+                device: nil,
+                osVersion: nil,
+                config: config
             )
+            let candidates = manifest.map({ [Path($0)] }) ?? GenerateTestsCommand.possibleManifestPaths(for: options)
 
-            guard path.exists else {
-                throw ValidationError("Snapshot manifest not found at \(path). Run `prefire tests` first, or pass --manifest.")
+            guard let path = candidates.first(where: { $0.exists }) else {
+                throw ValidationError(
+                    "Snapshot manifest not found. Run `prefire tests` first, or pass --manifest. Looked in:"
+                        + candidates.map({ "\n  - " + $0.string }).joined()
+                )
             }
 
             let orphans = SnapshotPruner.orphans(for: try SnapshotManifest.read(from: path.string))

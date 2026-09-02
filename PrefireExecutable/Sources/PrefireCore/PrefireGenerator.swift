@@ -27,10 +27,14 @@ public struct GenerationResult: Equatable, Sendable {
     /// `PrefireProvider` conformances found in the sources. Their snapshots are named from
     /// `previewDisplayName` at runtime, so they cannot be listed up front.
     public let hasPreviewProviders: Bool
+    /// Swift files the run actually looked at. Zero means the sources were empty or
+    /// misconfigured — no preview was seen, and nothing can be concluded from that.
+    public let parsedSourceCount: Int
 
-    public init(previews: [GeneratedPreview], hasPreviewProviders: Bool) {
+    public init(previews: [GeneratedPreview], hasPreviewProviders: Bool, parsedSourceCount: Int) {
         self.previews = previews
         self.hasPreviewProviders = hasPreviewProviders
+        self.parsedSourceCount = parsedSourceCount
     }
 }
 
@@ -65,7 +69,7 @@ public enum PrefireGenerator {
 
         guard !swiftFiles.isEmpty else {
             Logger.info("No Swift sources found to process.")
-            return GenerationResult(previews: [], hasPreviewProviders: false)
+            return GenerationResult(previews: [], hasPreviewProviders: false, parsedSourceCount: 0)
         }
 
         let fileContents: [(Path, String)] = try swiftFiles.map { ($0, try $0.read(.utf8)) }
@@ -151,7 +155,8 @@ public enum PrefireGenerator {
                     isParameterized: entry.value.hasArguments
                 )
             },
-            hasPreviewProviders: types.types.contains(where: isPreviewProvider)
+            hasPreviewProviders: types.types.contains(where: isPreviewProvider),
+            parsedSourceCount: swiftFiles.count
         )
     }
 

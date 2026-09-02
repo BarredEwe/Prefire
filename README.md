@@ -281,8 +281,10 @@ prefire prune
 prefire prune --delete
 ```
 
-`prefire tests` writes a `prefire-snapshots.json` manifest next to the generated tests; `prefire prune`
-compares it with the `__Snapshots__` folders. Nothing is deleted without `--delete`. See
+`prefire tests` writes a `prefire-snapshots.json` manifest into `test_target_path`, next to the
+`__Snapshots__` folders; `prefire prune` compares it with what is on disk. Nothing is deleted
+without `--delete`, and folders the manifest cannot fully account for — a custom template, or
+`PrefireProvider` previews — are never touched. See
 [Pruning unused snapshots](Documentation/Configuration.md#pruning-unused-snapshots).
 
 Run `prefire tests --help`, `prefire playbook --help` or `prefire prune --help` for more options.

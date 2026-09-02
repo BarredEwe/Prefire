@@ -53,6 +53,17 @@ final class SnapshotPrunerTests: XCTestCase {
         XCTAssertEqual(orphans, [(snapshots + "RemovedView.1.png").string])
     }
 
+    /// A folder the generator no longer writes to is carried into the manifest with nothing
+    /// expected in it, so everything it still holds is orphaned.
+    func test_orphans_reportsEverythingWhenNoSnapshotIsExpected() throws {
+        try write(["AuthView.1.png", "TextView-1-A.1.png", "keep.txt"])
+
+        XCTAssertEqual(
+            SnapshotPruner.orphans(for: manifest([])),
+            [(snapshots + "AuthView.1.png").string, (snapshots + "TextView-1-A.1.png").string]
+        )
+    }
+
     func test_orphans_ignoresNonImageAndHiddenFiles() throws {
         try write(["Stale.1.png", "README.md", "notes.txt", ".gitkeep", ".DS_Store"])
 

@@ -2,8 +2,8 @@ import Foundation
 
 /// Snapshots the generated tests are expected to record.
 ///
-/// Written next to the generated test files so `prefire prune` can tell the snapshots that are
-/// still referenced from the ones left behind by a renamed or deleted preview.
+/// Written next to the snapshots it describes so `prefire prune` can tell the ones that are still
+/// referenced from the ones left behind by a renamed or deleted preview.
 public struct SnapshotManifest: Codable, Equatable, Sendable {
     /// One `__Snapshots__/<TestFile>` folder, the unit SnapshotTesting writes into.
     public struct Directory: Codable, Equatable, Sendable {
@@ -11,9 +11,10 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
         public var path: String
         /// Snapshots recorded in this folder, sorted by name.
         public var snapshots: [Snapshot]
-        /// `false` when the folder also receives snapshots named only at runtime
-        /// (`PrefireProvider` previews take their names from `previewDisplayName`).
-        /// Such folders are listed for information and never pruned.
+        /// `false` when `snapshots` is not the whole picture: `PrefireProvider` previews take
+        /// their names from `previewDisplayName` at runtime, and a custom template may record
+        /// snapshots under names the parser never saw. Such folders are listed for information
+        /// and never pruned.
         public var complete: Bool
 
         public init(path: String, snapshots: [Snapshot], complete: Bool) {

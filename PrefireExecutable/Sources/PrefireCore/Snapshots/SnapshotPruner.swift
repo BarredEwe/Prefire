@@ -44,7 +44,7 @@ public enum SnapshotPruner {
 
     private static func orphans(in directory: SnapshotManifest.Directory, fileManager: FileManager) -> [String] {
         guard directory.complete else {
-            Logger.warning("⚠️ Skipping \(directory.path): it also holds snapshots named at runtime by PrefireProvider previews.")
+            Logger.warning("⚠️ Skipping \(directory.path): the manifest does not describe every snapshot recorded there.")
             return []
         }
 

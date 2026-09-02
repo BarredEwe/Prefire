@@ -64,9 +64,15 @@ playbook_configuration:
 ### Pruning unused snapshots
 
 Renaming or deleting a `#Preview` leaves its recorded snapshot behind. Every `prefire tests` run
-therefore writes `prefire-snapshots.json` next to the generated tests, listing the
-`__Snapshots__/<TestFile>` folders and the snapshots each one is expected to hold. `prefire prune`
-compares that manifest with what is on disk:
+therefore writes `prefire-snapshots.json` into `test_target_path`, next to the `__Snapshots__`
+folders it describes, listing each folder and the snapshots it is expected to hold. That location
+is what makes a bare `prefire prune` work: a plugin build generates the tests into DerivedData,
+which no standalone command can guess, while `test_target_path` resolves the same way for both.
+Without `test_target_path` — or if the folder cannot be written to, as under the SwiftPM plugin
+sandbox — the manifest falls back to the generated tests folder, and `prune` looks in both.
+
+The file is meant to be committed: it is what lets CI prune without regenerating first.
+`prefire prune` compares the manifest with what is on disk:
 
 ```bash
 # Report the snapshots no generated test refers to anymore
@@ -83,8 +89,20 @@ folder named by the manifest.
 A snapshot survives together with its whole family: the `snapshot_devices` suffix
 (`AuthView-iPhone-15.1.png`), the `#Preview(arguments:)` expansion (`TextView-1-A.1.png`) and the
 accessibility variant (`AuthView-accessibility.1.png`) all belong to the preview they were named
-after. Folders that also receive `PrefireProvider` snapshots are skipped entirely — those names come
-from `previewDisplayName` at runtime, so nothing in them can be proven unused.
+after.
+
+A folder is skipped entirely whenever the manifest cannot account for everything recorded in it:
+
+- **`PrefireProvider` previews** anywhere in the sources — their names come from
+  `previewDisplayName` at runtime.
+- **A custom `template_file_path`** — the template is free to rename snapshots or add its own, so
+  nothing in the manifest proves a file unused. Pruning is off for the whole project in that case.
+
+Two more rules keep the destructive path honest. A folder the run no longer generates into — you
+deleted the last preview of a source file, or every preview in the project — stays in the manifest
+with nothing expected in it, so its leftovers are still reported instead of silently surviving. And
+a run that parsed no Swift file at all leaves the previous manifest untouched: a misconfigured
+`sources` must not read as "every preview was deleted".
 
 Set `delete_unused_snapshots: true` to run the same cleanup automatically at the end of every
 `prefire tests`.
