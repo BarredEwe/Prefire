@@ -245,7 +245,9 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
-        XCTAssertTrue(result.contains("PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)"))
+        XCTAssertTrue(result.contains(
+            "PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: prefireGlobalConfiguration)"
+        ))
         XCTAssertFalse(result.contains("preview.deviceConfig"))
     }
 
@@ -426,11 +428,17 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: MyPrefireSetup.self)"))
-        XCTAssertTrue(result.contains("globalConfiguration: MyPrefireSetup.self"))
+        // Resolved once, then referenced by every call site.
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPrefireSetup.self"
+        ))
+        XCTAssertTrue(result.contains(
+            "PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: prefireGlobalConfiguration)"
+        ))
+        XCTAssertFalse(result.contains("MyPrefireSetup.self,"), "The type name belongs on the resolving line only")
     }
 
-    func testMissingGlobalConfigurationKeepsTestsTemplateUnchanged() async throws {
+    func testMissingGlobalConfigurationResolvesToNilInTestsTemplate() async throws {
         let file = Path("/tmp/NoGlobalConfigurationPreview.swift")
         let output = Path("/tmp/NoGlobalConfigurationPreviewTests.generated.swift")
         let cache = Path("/tmp/cache_no_global_configuration_tests/")
@@ -456,7 +464,10 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertFalse(result.contains("globalConfiguration"))
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
     }
 
     func testGlobalConfigurationIsAppliedInPlaybookTemplate() async throws {
@@ -485,12 +496,13 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("globalConfiguration: MyPlaybookSetup.self"))
-        // `createModel` references the user type, so it cannot stay `@inlinable`.
-        XCTAssertFalse(result.contains("@inlinable"))
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPlaybookSetup.self"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
     }
 
-    func testMissingGlobalConfigurationKeepsPlaybookTemplateUnchanged() async throws {
+    func testMissingGlobalConfigurationResolvesToNilInPlaybookTemplate() async throws {
         let file = Path("/tmp/NoGlobalConfigurationPlaybookPreview.swift")
         let output = Path("/tmp/NoGlobalConfigurationPreviewModels.generated.swift")
         let cache = Path("/tmp/cache_no_global_configuration_playbook/")
@@ -516,7 +528,9 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertFalse(result.contains("globalConfiguration"))
-        XCTAssertTrue(result.contains("@inlinable"))
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
     }
 }

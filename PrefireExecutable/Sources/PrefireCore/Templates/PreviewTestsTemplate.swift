@@ -20,6 +20,9 @@ import SnapshotTesting
     import AccessibilitySnapshot
 #endif
 
+/// Applied to every preview below. Set `global_configuration:` in `.prefire.yml` to change it.
+private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = {% if argument.globalConfiguration %}{{ argument.globalConfiguration }}.self{% else %}nil{% endif %}
+
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
@@ -49,7 +52,7 @@ import SnapshotTesting
     {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
         for preview in {{ type.name }}._allPreviews {
-            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig{% if argument.globalConfiguration %}, globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %})
+            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: prefireGlobalConfiguration)
             if let failure = assertSnapshots(for: prefireSnapshot) {
                 XCTFail(failure)
             }
@@ -75,8 +78,8 @@ import SnapshotTesting
                 name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
                 isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
                 device: deviceConfig,
-                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}{% if argument.globalConfiguration %},
-                globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
+                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %},
+                globalConfiguration: prefireGlobalConfiguration
             )
 
             if let failure = assertSnapshots(for: prefireSnapshot) {
@@ -103,8 +106,8 @@ import SnapshotTesting
             name: "{{ macroModel.displayName }}",
             isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
             device: deviceConfig,
-            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}{% if argument.globalConfiguration %},
-            globalConfiguration: {{ argument.globalConfiguration }}.self{% endif %}
+            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %},
+            globalConfiguration: prefireGlobalConfiguration
         )
 
         if let failure = assertSnapshots(for: prefireSnapshot) {
