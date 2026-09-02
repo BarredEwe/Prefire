@@ -257,8 +257,13 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         let hostingView = SnapshotHostingContainer(rootView: view, scale: device.scale)
         hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
 
-        // The view being captured is the one waited on, so nothing has to be replayed as a delay.
-        SnapshotWaiter.wait(for: preferences, in: hostingView, name: name)
+        // The view being captured is the one waited on: nothing has to be replayed as a delay, and
+        // the `delay` the wait spent on it must not be spent again by the snapshot strategy.
+        if preferences.resolvedWait != nil {
+            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name)
+            preferences.isDelayApplied = true
+        }
+
         return hostingView
         #endif
     }

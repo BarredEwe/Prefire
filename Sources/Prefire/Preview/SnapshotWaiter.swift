@@ -22,7 +22,7 @@ enum SnapshotWaiter {
     /// How many times in a row a frame has to repeat itself to count as idle.
     static let requiredStableFrames = 2
 
-    /// Waits for `preferences.resolvedWait` and returns how long it took.
+    /// Waits for `preferences.resolvedWait` and returns how long it took, `delay` included.
     ///
     /// A timeout is reported through `preferences.waitFailure` instead of an assertion,
     /// so the generated test decides how to fail.
@@ -32,6 +32,10 @@ enum SnapshotWaiter {
 
         let timeout = preferences.resolvedTimeout
         let start = Date()
+
+        // `delay` is the floor of the wait: a preview that only starts working after it would
+        // otherwise look idle right away. The timeout covers the checks that follow it.
+        spinRunLoop(for: preferences.delay)
 
         switch wait {
         case .idle:
