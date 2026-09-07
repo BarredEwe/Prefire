@@ -61,10 +61,11 @@ public struct PreviewModel: Identifiable {
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil,
-        deviceConfig: DeviceConfig? = nil
+        deviceConfig: DeviceConfig? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) {
         self.id = id ?? name + String(describing: content.self)
-        self.content = { AnyView(content()) }
+        self.content = { prefireWrapped(AnyView(content()), with: globalConfiguration) }
         self.name = name
         self.type = type
         self.device = device
@@ -78,9 +79,18 @@ public struct PreviewModel: Identifiable {
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil,
-        deviceConfig: DeviceConfig? = nil
+        deviceConfig: DeviceConfig? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) {
-        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+        self.init(
+            id: id,
+            content: { AnyView(ViewRepresentable(view: content())) },
+            name: name,
+            type: type,
+            device: device,
+            deviceConfig: deviceConfig,
+            globalConfiguration: globalConfiguration
+        )
     }
 
     @MainActor
@@ -90,8 +100,17 @@ public struct PreviewModel: Identifiable {
         name: String,
         type: LayoutType = .component,
         device: PreviewDevice? = nil,
-        deviceConfig: DeviceConfig? = nil
+        deviceConfig: DeviceConfig? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) {
-        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
+        self.init(
+            id: id,
+            content: { AnyView(ViewControllerRepresentable(viewController: content())) },
+            name: name,
+            type: type,
+            device: device,
+            deviceConfig: deviceConfig,
+            globalConfiguration: globalConfiguration
+        )
     }
 }

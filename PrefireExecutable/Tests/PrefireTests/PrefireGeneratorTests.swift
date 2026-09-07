@@ -278,7 +278,9 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
-        XCTAssertTrue(result.contains("PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)"))
+        XCTAssertTrue(result.contains(
+            "PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: prefireGlobalConfiguration)"
+        ))
         XCTAssertFalse(result.contains("preview.deviceConfig"))
     }
 
@@ -423,5 +425,216 @@ final class PrefireGeneratorTests: XCTestCase {
         
         let result = try expectedOutput.read(.utf8)
         XCTAssertTrue(result.contains("class TestPreviewTests: XCTestCase"), "Should use source file name as class name for ungrouped snapshots")
+    }
+
+    func testGlobalConfigurationIsAppliedInTestsTemplate() async throws {
+        let file = Path("/tmp/GlobalConfigurationPreview.swift")
+        let output = Path("/tmp/GlobalConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_global_configuration_tests/")
+        try file.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider, PrefireProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["globalConfiguration": "MyPrefireSetup" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        // Resolved once, then referenced by every call site.
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPrefireSetup.self"
+        ))
+        XCTAssertTrue(result.contains(
+            "PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig, globalConfiguration: prefireGlobalConfiguration)"
+        ))
+        XCTAssertFalse(result.contains("MyPrefireSetup.self,"), "The type name belongs on the resolving line only")
+    }
+
+    /// With no `global_configuration:` key, the type is found in the sources.
+    func testGlobalConfigurationIsDetectedWithoutConfiguration() async throws {
+        let file = Path("/tmp/DetectedGlobalConfigurationPreview.swift")
+        let output = Path("/tmp/DetectedGlobalConfigurationTests.generated.swift")
+        let cache = Path("/tmp/cache_detected_global_configuration/")
+        try file.write("""
+        import Prefire
+        import SwiftUI
+
+        enum MyPrefireSetup: PrefireGlobalConfiguration {
+            static func wrap(_ view: AnyView) -> AnyView { view }
+        }
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        XCTAssertTrue(try output.read(.utf8).contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPrefireSetup.self"
+        ))
+    }
+
+    func testAmbiguousGlobalConfigurationFailsGeneration() async throws {
+        let file = Path("/tmp/AmbiguousGlobalConfigurationPreview.swift")
+        let output = Path("/tmp/AmbiguousGlobalConfigurationTests.generated.swift")
+        let cache = Path("/tmp/cache_ambiguous_global_configuration/")
+        try file.write("""
+        import Prefire
+        import SwiftUI
+
+        enum FirstSetup: PrefireGlobalConfiguration {}
+        enum SecondSetup: PrefireGlobalConfiguration {}
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        do {
+            try await PrefireGenerator.generate(
+                version: "1.0.0",
+                sources: [file],
+                output: output,
+                arguments: [:],
+                inlineTemplate: EmbeddedTemplates.previewTests,
+                defaultEnabled: true,
+                cacheDir: cache,
+                useGroupedSnapshots: true
+            )
+            XCTFail("Generation should fail rather than pick one of the two arbitrarily")
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? ""
+            XCTAssertTrue(message.contains("FirstSetup"), message)
+            XCTAssertTrue(message.contains("SecondSetup"), message)
+        }
+    }
+
+    func testMissingGlobalConfigurationResolvesToNilInTestsTemplate() async throws {
+        let file = Path("/tmp/NoGlobalConfigurationPreview.swift")
+        let output = Path("/tmp/NoGlobalConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_no_global_configuration_tests/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
+    }
+
+    func testGlobalConfigurationIsAppliedInPlaybookTemplate() async throws {
+        let file = Path("/tmp/GlobalConfigurationPlaybookPreview.swift")
+        let output = Path("/tmp/GlobalConfigurationPreviewModels.generated.swift")
+        let cache = Path("/tmp/cache_global_configuration_playbook/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["globalConfiguration": "MyPlaybookSetup" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewModels,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = MyPlaybookSetup.self"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
+    }
+
+    func testMissingGlobalConfigurationResolvesToNilInPlaybookTemplate() async throws {
+        let file = Path("/tmp/NoGlobalConfigurationPlaybookPreview.swift")
+        let output = Path("/tmp/NoGlobalConfigurationPreviewModels.generated.swift")
+        let cache = Path("/tmp/cache_no_global_configuration_playbook/")
+        try file.write("""
+        import SwiftUI
+
+        #Preview("TextView") {
+            Text("1")
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewModels,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains(
+            "private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil"
+        ))
+        XCTAssertTrue(result.contains("globalConfiguration: prefireGlobalConfiguration"))
     }
 }

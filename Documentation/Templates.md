@@ -61,6 +61,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 | `argument.simulatorOSVersion`            | `String` (or absent)   | tests  | Major iOS version from `required_os:`.                                                                   |
 | `argument.snapshotDevices`               | `String` (or absent)   | tests  | Snapshot device names joined by `\|`. Iterate by applying `\|split:"\|"`. See §4.                        |
 | `argument.drawHierarchyInKeyWindowDefaultEnabled` | `String` `"true"`/`"false"` (or absent) | tests | Value of `draw_hierarchy_in_key_window_default_enabled:` as a string. |
+| `argument.globalConfiguration`           | `String` (or absent)   | both   | Type name from `global_configuration:`, or the single `PrefireGlobalConfiguration` conformer found in the sources. Absent when neither applies. |
 | `argument.previewsMacrosDict`            | `[[String: Any]]`      | both   | Array of `#Preview` macro models. See §3.3.                                                              |
 
 `NSNull` values (i.e. when a config key is missing) should be guarded with `{% if argument.foo %}` — Stencil treats both `nil` and `NSNull` as falsy.
@@ -290,6 +291,7 @@ import SnapshotTesting
 - **`{PREVIEW_FILE_NAME}` is a real placeholder.** It is replaced in the template string *and* in `test_file_path` *only* when `use_grouped_snapshots: false`. The class declared in your template must be named `{PREVIEW_FILE_NAME}Tests`, otherwise the generated file won't compile.
 - **`snapshotDevices` is a pipe-joined string**, not an array. Use `|split:"|"`. Forgetting the filter produces `snapshotDevices = iPhone 14|iPad` in the generated file.
 - **Guard `previewsMacrosDict`.** An empty array will still produce a (broken) `for` block. Always wrap the macro loop in `{% if argument.previewsMacrosDict %}`.
+- **`globalConfiguration` names a type in the user's module.** Resolve it once at file scope — `private let prefireGlobalConfiguration: (any PrefireGlobalConfiguration.Type)? = {{ argument.globalConfiguration }}.self` — and pass that constant to each `PrefireSnapshot` / `PreviewModel`. The user's type is usually internal, so any function referencing it cannot be `@inlinable`.
 - **Cache invalidation.** `PrefireCacheManager` keys the cache on source content. When you change a template, delete `~/.prefire-cache/` to force a full re-render.
 - **`isScreen` is a `Bool` but Stencil may serialize it as `1`/`0`.** Compare with `{% if macroModel.isScreen == 1 %}` rather than `{% if macroModel.isScreen %}`, as in the default template.
 - **Stuck on a syntax error?** Run `prefire tests` once with the default template and look at the generated file — it's the fastest way to see which context keys actually have values for your project.

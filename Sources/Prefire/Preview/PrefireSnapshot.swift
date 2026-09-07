@@ -124,31 +124,42 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
     public var traits: UITraitCollection = .init()
     #endif
 
+    /// Global decoration applied to the content before it is laid out and rendered.
+    private var globalConfiguration: (any PrefireGlobalConfiguration.Type)?
+
     private var content: AnyView {
+        let wrappedContent = prefireWrapped(AnyView(previewContent), with: globalConfiguration)
+
         #if os(iOS) || os(tvOS)
         if isScreen {
-            AnyView(previewContent)
+            return wrappedContent
         } else {
-            AnyView(
-                previewContent
+            return AnyView(
+                wrappedContent
                     .frame(width: device.size?.width)
                     .fixedSize(horizontal: false, vertical: true)
             )
         }
         #else
         if let size = device.size {
-            AnyView(previewContent.frame(width: size.width, height: size.height))
+            return AnyView(wrappedContent.frame(width: size.width, height: size.height))
         } else {
-            AnyView(previewContent)
+            return wrappedContent
         }
         #endif
     }
 
-    public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig) where Content == AnyView {
+    public init(
+        _ preview: _Preview,
+        testName: String = #function,
+        device: DeviceConfig,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
+    ) where Content == AnyView {
         previewContent = preview.content
         name = preview.displayName ?? testName
         isScreen = preview.layout == .device
         self.device = Self.resolvedDevice(device, layout: preview.layout)
+        self.globalConfiguration = globalConfiguration
     }
 
     /// - Parameter fixedLayoutSize: Canvas requested by `.fixedLayout(width:height:)`. Applied on
@@ -158,12 +169,14 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         name: String,
         isScreen: Bool,
         device: DeviceConfig,
-        fixedLayoutSize: CGSize? = nil
+        fixedLayoutSize: CGSize? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) {
         previewContent = view()
         self.name = name
         self.isScreen = isScreen
         self.device = Self.resolvedDevice(device, fixedLayoutSize: fixedLayoutSize)
+        self.globalConfiguration = globalConfiguration
     }
 
     @_disfavoredOverload
@@ -172,12 +185,14 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         name: String,
         isScreen: Bool,
         device: DeviceConfig,
-        fixedLayoutSize: CGSize? = nil
+        fixedLayoutSize: CGSize? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) where Content == ViewRepresentable<T> {
         previewContent = ViewRepresentable(view: view())
         self.name = name
         self.isScreen = isScreen
         self.device = Self.resolvedDevice(device, fixedLayoutSize: fixedLayoutSize)
+        self.globalConfiguration = globalConfiguration
     }
 
     @_disfavoredOverload
@@ -186,12 +201,14 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         name: String,
         isScreen: Bool,
         device: DeviceConfig,
-        fixedLayoutSize: CGSize? = nil
+        fixedLayoutSize: CGSize? = nil,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) where Content == ViewControllerRepresentable<T> {
         previewContent = ViewControllerRepresentable(viewController: viewController())
         self.name = name
         self.isScreen = isScreen
         self.device = Self.resolvedDevice(device, fixedLayoutSize: fixedLayoutSize)
+        self.globalConfiguration = globalConfiguration
     }
 
     public func loadViewWithPreferences() -> (PrefireSnapshotView, PreferenceKeys) {
@@ -266,9 +283,10 @@ public extension PrefireSnapshot {
         isScreen: Bool,
         device: DeviceConfig,
         fixedLayoutSize: CGSize? = nil,
-        traits: UITraitCollection
+        traits: UITraitCollection,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) {
-        self.init(view, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize)
+        self.init(view, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize, globalConfiguration: globalConfiguration)
         self.traits = traits
     }
 
@@ -279,9 +297,10 @@ public extension PrefireSnapshot {
         isScreen: Bool,
         device: DeviceConfig,
         fixedLayoutSize: CGSize? = nil,
-        traits: UITraitCollection
+        traits: UITraitCollection,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) where Content == ViewRepresentable<T> {
-        self.init(view, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize)
+        self.init(view, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize, globalConfiguration: globalConfiguration)
         self.traits = traits
     }
 
@@ -292,9 +311,10 @@ public extension PrefireSnapshot {
         isScreen: Bool,
         device: DeviceConfig,
         fixedLayoutSize: CGSize? = nil,
-        traits: UITraitCollection
+        traits: UITraitCollection,
+        globalConfiguration: (any PrefireGlobalConfiguration.Type)? = nil
     ) where Content == ViewControllerRepresentable<T> {
-        self.init(viewController, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize)
+        self.init(viewController, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize, globalConfiguration: globalConfiguration)
         self.traits = traits
     }
 }

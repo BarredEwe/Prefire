@@ -21,8 +21,10 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports:
               - Prefire
           - draw_hierarchy_in_key_window_default_enabled: true
+          - global_configuration: MyPrefireSetup
         playbook_configuration:
           - template_file_path: CustomModels.stencil
+          - global_configuration: MyPlaybookSetup
           - imports:
               - UIKit
               - Foundation
@@ -49,8 +51,10 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports: 
               - Prefire 
           - draw_hierarchy_in_key_window_default_enabled: true 
+          - global_configuration: MyPrefireSetup  
         playbook_configuration: 
           - template_file_path: CustomModels.stencil 
+          - global_configuration: MyPlaybookSetup  
           - imports: 
               - UIKit 
               - Foundation  
@@ -79,6 +83,8 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
+        XCTAssertEqual(config.tests.globalConfiguration, "MyPrefireSetup")
+        XCTAssertEqual(config.playbook.globalConfiguration, "MyPlaybookSetup")
     }
     
     func test_successDecodeConfig_with_whiteSpaces() {
@@ -99,5 +105,14 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
+        XCTAssertEqual(config.tests.globalConfiguration, "MyPrefireSetup")
+        XCTAssertEqual(config.playbook.globalConfiguration, "MyPlaybookSetup")
+    }
+
+    func test_decodeConfig_withoutGlobalConfiguration() {
+        let config = ConfigDecoder().decode(from: "test_configuration:\n  - target: PrefireExample", env: env)
+
+        XCTAssertNil(config.tests.globalConfiguration)
+        XCTAssertNil(config.playbook.globalConfiguration)
     }
 }

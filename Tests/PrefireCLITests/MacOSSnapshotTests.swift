@@ -151,7 +151,60 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertNotNil(PreviewModel(content: { NSViewController() }, name: "Controller"))
         XCTAssertNotNil(UnqualifiedNSViewRepresentable())
     }
+
+    func testGlobalConfigurationWrapsSnapshotContent() {
+        let snapshot = PrefireSnapshot(
+            { Text("Prefire") },
+            name: "Wrapped",
+            isScreen: false,
+            device: DeviceConfig(),
+            globalConfiguration: SizedConfiguration.self
+        )
+
+        let (view, _) = snapshot.loadViewWithPreferences()
+
+        XCTAssertEqual(view.frame.size, CGSize(width: 120, height: 60))
+    }
+
+    /// The wrapper is applied inside the preference readers, so preview preferences still arrive.
+    func testGlobalConfigurationKeepsPreferences() {
+        let snapshot = PrefireSnapshot(
+            { Text("Prefire").snapshot(delay: 1.5, precision: 0.9, record: true) },
+            name: "WrappedPreferences",
+            isScreen: false,
+            device: DeviceConfig(),
+            globalConfiguration: SizedConfiguration.self
+        )
+
+        let (_, preferences) = snapshot.loadViewWithPreferences()
+
+        XCTAssertEqual(preferences.delay, 1.5)
+        XCTAssertEqual(preferences.precision, 0.9)
+        XCTAssertTrue(preferences.record)
+    }
+
+    /// The default implementation returns the view untouched.
+    func testDefaultGlobalConfigurationDoesNotChangeContent() {
+        let plain = PrefireSnapshot({ Text("Prefire") }, name: "Plain", isScreen: false, device: DeviceConfig())
+        let configured = PrefireSnapshot(
+            { Text("Prefire") },
+            name: "Configured",
+            isScreen: false,
+            device: DeviceConfig(),
+            globalConfiguration: EmptyConfiguration.self
+        )
+
+        XCTAssertEqual(plain.loadViewWithPreferences().0.frame.size, configured.loadViewWithPreferences().0.frame.size)
+    }
 }
+
+private enum SizedConfiguration: PrefireGlobalConfiguration {
+    static func wrap(_ view: AnyView) -> AnyView {
+        AnyView(view.frame(width: 120, height: 60))
+    }
+}
+
+private enum EmptyConfiguration: PrefireGlobalConfiguration {}
 
 private struct FixedLayout_Previews: PreviewProvider {
     static var previews: some View {

@@ -72,6 +72,7 @@ public enum PrefireGenerator {
             }
 
         let graph = TypeGraph(types: types)
+        let arguments = try GlobalConfigurationResolver.resolve(arguments: arguments, graph: graph)
 
         if useGroupedSnapshots {
             // Generate one file with all previews

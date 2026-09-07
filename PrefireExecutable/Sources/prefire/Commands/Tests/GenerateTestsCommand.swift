@@ -24,6 +24,7 @@ struct GeneratedTestsOptions {
     var useGroupedSnapshots: Bool
     var splitSnapshotDirectories: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    var globalConfiguration: String?
 
     init(
         target: String?,
@@ -61,6 +62,7 @@ struct GeneratedTestsOptions {
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
         drawHierarchyInKeyWindowDefaultEnabled = config?.tests.drawHierarchyInKeyWindowDefaultEnabled
+        globalConfiguration = config?.tests.globalConfiguration
     }
 }
 
@@ -82,6 +84,7 @@ enum GenerateTestsCommand {
         static let previewsMacros = "previewsMacros"
         static let previewsMacrosDict = "previewsMacrosDict"
         static let drawHierarchyInKeyWindowDefaultEnabled = "drawHierarchyInKeyWindowDefaultEnabled"
+        static let globalConfiguration = "globalConfiguration"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -119,6 +122,7 @@ enum GenerateTestsCommand {
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
                 ➜ drawHierarchyInKeyWindow default enabled: \(options.drawHierarchyInKeyWindowDefaultEnabled?.description ?? "nil")
+                ➜ Global configuration: \(options.globalConfiguration ?? "nil")
             """
         )
 
@@ -131,6 +135,7 @@ enum GenerateTestsCommand {
             Keys.mainTarget: options.target as? NSString,
             Keys.file: snapshotOutput?.string as? NSString,
             Keys.drawHierarchyInKeyWindowDefaultEnabled: options.drawHierarchyInKeyWindowDefaultEnabled?.description as? NSString,
+            Keys.globalConfiguration: options.globalConfiguration as? NSString,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }
