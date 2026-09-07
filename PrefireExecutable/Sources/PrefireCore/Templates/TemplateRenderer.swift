@@ -2,11 +2,6 @@ import Foundation
 import Stencil
 import StencilSwiftKit
 
-/// Renders a Stencil template against the Prefire context.
-///
-/// The environment is assembled the same way Sourcery assembled it — StencilSwiftKit's extensions
-/// plus a small set of Prefire filters — and keeps Stencil's default trim behaviour, so template
-/// whitespace renders exactly as before.
 enum TemplateRenderer {
     static func render(template: String, context: [String: Any]) throws -> String {
         try environment().renderTemplate(string: template, context: context)
@@ -24,6 +19,9 @@ enum TemplateRenderer {
         ext.registerFilter("annotated") { value, arguments in
             guard let annotation = arguments.first as? String else {
                 throw TemplateSyntaxError("'annotated' filter takes a single string argument")
+            }
+            if let types = typeDictionaries(value) {
+                return types.filter { ParsedType.isAnnotated($0, with: annotation) }
             }
             return typeDictionary(value).map { ParsedType.isAnnotated($0, with: annotation) } ?? false
         }
@@ -47,26 +45,32 @@ enum TemplateRenderer {
         }
 
         ext.registerFilter("toArray") { value in
-            if let array = value as? [Any] { return array }
+            if let array = asArray(value) { return array }
             return value.map { [$0] }
         }
 
         ext.registerFilter("last") { value in
-            (value as? [Any])?.last
+            asArray(value)?.last
         }
 
         ext.registerFilter("reversed") { value in
-            (value as? [Any])?.reversed()
+            asArray(value).map { Array($0.reversed()) }
         }
 
         return ext
     }
 
-    /// `type|based:"Foo"`, and the `implements` / `inherits` variants.
+    /// `type|based:"Foo"` (boolean) or `types.types|based:"Foo"` (filtered list).
     private static func registerConformanceFilter(on ext: Extension, named name: String) {
         ext.registerFilter(name) { value, arguments in
             guard let expected = arguments.first as? String else {
                 throw TemplateSyntaxError("'\(name)' filter takes a single string argument")
+            }
+            if let types = typeDictionaries(value) {
+                return types.filter { type in
+                    guard let names = type[name] as? [String: String] else { return false }
+                    return names[expected] != nil
+                }
             }
             guard let type = typeDictionary(value), let names = type[name] as? [String: String] else {
                 return false
@@ -78,16 +82,22 @@ enum TemplateRenderer {
     private static func typeDictionary(_ value: Any?) -> [String: Any]? {
         value as? [String: Any]
     }
+
+    private static func typeDictionaries(_ value: Any?) -> [[String: Any]]? {
+        guard let array = value as? [Any] else { return nil }
+        let types = array.compactMap { $0 as? [String: Any] }
+        return types.count == array.count ? types : nil
+    }
+
+    private static func asArray(_ value: Any?) -> [Any]? {
+        value as? [Any]
+    }
 }
 
-/// Collapses the blank lines that `{% if %}` / `{% for %}` blocks leave behind.
+/// Collapses blank lines that `{% if %}` / `{% for %}` leave behind.
 ///
-/// Stencil keeps the newline that follows a block tag ([stencil#22]), so a template that reads
-/// well in source renders with runs of empty lines. Templates are authored against this cleanup —
-/// it is the behaviour StencilSwiftKit's (now deprecated) `StencilSwiftTemplate` provided through
-/// Sourcery, reproduced here so the generated files keep their current shape.
-///
-/// [stencil#22]: https://github.com/stencilproject/Stencil/issues/22
+/// Stencil keeps the newline after a block tag, so a readable template would otherwise emit runs of
+/// empty lines. Marked blank lines in the source survive the cleanup.
 private final class BlankLineCollapsingTemplate: Template {
     /// Marks blank lines the template author wrote on purpose, so they survive the cleanup.
     private static let marker = "\u{000b}"

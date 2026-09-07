@@ -1,10 +1,5 @@
 import Foundation
 
-/// A type declaration found in the scanned sources.
-///
-/// This is the whole model the templates need: a name, what the declaration inherits from and the
-/// `// prefire:` / `// sourcery:` annotations attached to it. Everything else Sourcery used to
-/// expose (members, methods, generic parameters) was never read by any Prefire template.
 struct ParsedType: Codable, Equatable {
     enum Kind: String, Codable {
         case `struct`
@@ -12,8 +7,8 @@ struct ParsedType: Codable, Equatable {
         case `enum`
         case `actor`
         case `protocol`
-        /// A conformance added by an `extension` to a type declared outside the scanned sources.
-        case unknown
+        /// Conformance added by an `extension` of a type not declared in the scanned sources.
+        case `extension`
     }
 
     /// Fully-qualified name, e.g. `Outer.Inner`.

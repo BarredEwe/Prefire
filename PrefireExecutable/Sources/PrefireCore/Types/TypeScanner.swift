@@ -2,10 +2,6 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
-/// Collects the type declarations a template needs from a Swift source file.
-///
-/// Replaces Sourcery's full-fidelity AST model: the templates only ever look at a type's name, its
-/// conformances and its annotations, so that is all this scans for.
 enum TypeScanner {
     /// Scans one file. Types are returned in source order.
     static func scan(contents: String) -> [ParsedType] {
@@ -98,7 +94,7 @@ private final class TypeDeclarationVisitor: SyntaxVisitor {
             ParsedType(
                 name: extendedName,
                 localName: extendedName.split(separator: ".").last.map(String.init) ?? extendedName,
-                kind: .unknown,
+                kind: .extension,
                 accessLevel: Self.accessLevel(from: node.modifiers),
                 inherits: Self.inheritedNames(from: node.inheritanceClause),
                 annotations: AnnotationParser.parse(node.leadingTrivia),
@@ -140,7 +136,16 @@ private final class TypeDeclarationVisitor: SyntaxVisitor {
 
     private static func inheritedNames(from clause: InheritanceClauseSyntax?) -> [String] {
         guard let clause else { return [] }
-        return clause.inheritedTypes.map { $0.type.trimmedDescription }
+        return clause.inheritedTypes.flatMap { names(from: $0.type) }
+    }
+
+    /// `A & B` is one `CompositionTypeSyntax`; flatten it so each name is a separate conformance.
+    private static func names(from type: TypeSyntax) -> [String] {
+        if let composition = type.as(CompositionTypeSyntax.self) {
+            return composition.elements.flatMap { names(from: $0.type) }
+        }
+        let description = type.trimmedDescription
+        return description.isEmpty ? [] : [description]
     }
 
     private static func accessLevel(from modifiers: DeclModifierListSyntax) -> String {

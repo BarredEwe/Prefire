@@ -18,7 +18,7 @@ public enum PreviewModels {
         var views: [PreviewModel] = []
         #if !PLAYBOOK_DISABLED
         // PreviewProvider
-        {% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
+        {% for type in types.types where type.kind != "protocol" and type.kind != "extension" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
         views.append(contentsOf: createModel(for: {{ type.name }}.self, name: "{{ type.name | replace:"_Previews","" | replace:"_Preview","" }}"))
         {% endfor %}
         {% if argument.previewsMacrosDict %}

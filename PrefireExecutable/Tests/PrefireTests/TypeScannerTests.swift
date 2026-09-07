@@ -20,6 +20,14 @@ final class TypeScannerTests: XCTestCase {
         XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["Panel_Previews"])
     }
 
+    func test_protocolCompositionIsSplit() throws {
+        let graph = graph("struct Panel_Previews: PreviewProvider & PrefireProvider {}")
+        let panel = try type(named: "Panel_Previews", in: graph)
+
+        XCTAssertEqual(graph.based(of: panel), ["PreviewProvider", "PrefireProvider"])
+        XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["Panel_Previews"])
+    }
+
     /// The case Sourcery's `based` used to cover: conformance inherited through another protocol.
     func test_conformanceThroughAnotherProtocol() throws {
         let graph = graph(
@@ -56,6 +64,7 @@ final class TypeScannerTests: XCTestCase {
 
         XCTAssertEqual(graph.types.count, 1)
         XCTAssertTrue(graph.types[0].isExtension)
+        XCTAssertEqual(graph.types[0].kind, .extension)
         XCTAssertTrue(graph.types(conformingTo: "PrefireProvider").isEmpty)
     }
 
@@ -178,5 +187,24 @@ final class TypeScannerTests: XCTestCase {
         )
 
         XCTAssertTrue(try type(named: "Panel_Previews", in: graph).annotations.isEmpty)
+    }
+
+    // MARK: - Stencil context
+
+    func test_typesAllExcludesProtocols() {
+        let graph = graph(
+            """
+            protocol TeamProvider: PrefireProvider {}
+            struct Panel_Previews: TeamProvider {}
+            """
+        )
+        let context = StencilContext.make(graph: graph, arguments: [:])
+        let types = context["types"] as? [String: Any]
+
+        let allNames = ((types?["all"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
+        XCTAssertEqual(allNames, ["Panel_Previews"])
+
+        let everyName = ((types?["types"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
+        XCTAssertEqual(Set(everyName), ["TeamProvider", "Panel_Previews"])
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Inheritance is followed transitively through the types found in the sources, so a type declared
 /// as `struct Foo: MyProvider` where `protocol MyProvider: PrefireProvider` is still reported as
-/// being based on `PrefireProvider` — matching what Sourcery's `based` used to return.
+/// being based on `PrefireProvider`.
 struct TypeGraph {
     let types: [ParsedType]
 

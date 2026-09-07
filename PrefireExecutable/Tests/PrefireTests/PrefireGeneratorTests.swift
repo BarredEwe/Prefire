@@ -145,6 +145,39 @@ final class PrefireGeneratorTests: XCTestCase {
             useGroupedSnapshots: true
         )
 
+        let result = try output.read(.utf8)
+        XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertFalse(result.contains("TeamProvider._allPreviews"))
+    }
+
+    func testProviderDetectedThroughProtocolComposition() async throws {
+        let file = Path("/tmp/PrefireCompositionProvider.swift")
+        let output = Path("/tmp/PrefireCompositionProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_composition_provider/")
+        try file.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider & PrefireProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
         XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
     }
 

@@ -1,10 +1,5 @@
 import Foundation
 
-/// Builds the dictionary rendered into a template.
-///
-/// The shape mirrors the context Sourcery used to provide (`types`, `type`, `argument`), so
-/// templates written against `types.types`, `type.name`, `type.implements.X` and `type.based.X`
-/// keep working unchanged.
 enum StencilContext {
     static func make(graph: TypeGraph, arguments: [String: NSObject]) -> [String: Any] {
         let dictionaries = graph.types.map { dictionary(for: $0, graph: graph) }
@@ -16,11 +11,13 @@ enum StencilContext {
         }
 
         let declared = dictionaries.filter { $0["isExtension"] as? Bool == false }
+        // Sourcery's `types.all` excludes protocols (and protocol compositions).
+        let all = declared.filter { $0["kind"] as? String != "protocol" }
 
         return [
             "types": [
                 "types": dictionaries,
-                "all": declared,
+                "all": all,
                 "protocols": declared.filter { $0["kind"] as? String == "protocol" },
                 "classes": declared.filter { $0["kind"] as? String == "class" },
                 "structs": declared.filter { $0["kind"] as? String == "struct" },

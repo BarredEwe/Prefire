@@ -70,7 +70,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 `types` comes from Prefire's own scan of the sources. The default templates iterate over it to generate one `func test_*()` per `PreviewProvider`/`PrefireProvider` type:
 
 ```stencil
-{% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
+{% for type in types.types where type.kind != "protocol" and type.kind != "extension" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
 func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
     for preview in {{ type.name }}._allPreviews {
         // ...
@@ -78,6 +78,8 @@ func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
 }
 {% endfor %}
 ```
+
+Skip `protocol` and `extension` kinds: an intermediate `protocol TeamProvider: PrefireProvider` is itself "based on" `PrefireProvider`, but `TeamProvider._allPreviews` does not compile.
 
 Fields on a `type`:
 
@@ -89,13 +91,14 @@ Fields on a `type`:
 | `based.X`        | Truthy if the type inherits from anything named `X`, whether or not `X` itself is in the sources. Use this for protocols declared in another module, such as `PrefireProvider`. |
 | `inherits.X`     | Truthy if the type inherits from a class named `X` declared in the scanned sources.              |
 | `inheritedTypes` | The names written in the declaration's inheritance clause, as an array.                          |
-| `kind`           | `struct`, `class`, `enum`, `actor`, `protocol`, or `unknown` for an extension of a type declared elsewhere. |
+| `kind`           | `struct`, `class`, `enum`, `actor`, `protocol`, or `extension` for a conformance added to a type declared elsewhere. |
+| `isExtension`    | `true` when the type is only known through an `extension` (no declaration in the scanned sources). |
 | `accessLevel`    | `open`, `public`, `package`, `internal`, `fileprivate` or `private`.                              |
 | `annotations`    | Dictionary of `// prefire:` / `// sourcery:` annotations on the declaration.                      |
 
 `implements`, `based` and `inherits` are resolved transitively and include conformances added by an `extension`, in any scanned file. Given `protocol TeamProvider: PrefireProvider` and `struct Panel_Previews: TeamProvider`, `based.PrefireProvider` is truthy.
 
-Besides `types.types`, the collection also offers `types.all`, `types.protocols`, `types.classes`, `types.structs`, `types.enums`, `types.extensions`, and the `types.based.X` / `types.implementing.X` / `types.inheriting.X` lookups.
+Besides `types.types` (every scanned declaration, including protocols and extension-only placeholders), the collection also offers `types.all` (declarations excluding protocols), `types.protocols`, `types.classes`, `types.structs`, `types.enums`, `types.extensions`, and the `types.based.X` / `types.implementing.X` / `types.inheriting.X` lookups.
 
 Types are visited in sorted source-file order, so the generated declarations keep a stable order between runs.
 
@@ -138,8 +141,8 @@ Only filters that the default templates actually use are listed below. For the c
 | `split:SEP`           | Stencil  | Split a string by `SEP` and emit a Swift array literal.                | `{{ argument.snapshotDevices\|split:"\|" }}` → `["iPhone 14"]` |
 | `indent:N`            | Stencil  | Indent every line of the input by `N` spaces.                           | `{{ macroModel.body\|indent:12 }}`                             |
 | `default:VALUE`       | Stencil  | Use `VALUE` when the variable is missing.                               | `{{ argument.simulatorDevice\|default:nil }}`                 |
-| `annotated:NAME`      | Prefire  | Inside a `{% for type in types.types %}`, filter types annotated with `NAME`. Supports `NAME = VALUE`. | `{% for type in types.types where type\|annotated:"PrefireProvider" %}` |
-| `based:NAME`          | Prefire  | Filter form of `type.based.NAME`. `implements:` and `inherits:` work the same way. | `{% for type in types.types where type\|based:"PrefireProvider" %}` |
+| `annotated:NAME`      | Prefire  | Boolean on a single type, or a filtered list when applied to an array. Supports `NAME = VALUE`. | `{% for type in types.types where type\|annotated:"PrefireProvider" %}` or `{% for type in types.types\|annotated:"PrefireProvider" %}` |
+| `based:NAME`          | Prefire  | Filter form of `type.based.NAME`. `implements:` and `inherits:` work the same way. Boolean or filtered list. | `{% for type in types.types where type\|based:"PrefireProvider" %}` |
 | `forloop.last`        | Stencil  | `true` on the last iteration of a `{% for %}` loop. Useful for separators. | `{%- if not forloop.last %}\n\n{% endif %}`               |
 
 ---
