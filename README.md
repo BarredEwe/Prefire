@@ -340,6 +340,18 @@ Xcode is unable to generate tests in a custom path.
 - To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
 `defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES`
 
+## 🐱 Also by the author
+
+<img src="https://mewmori.com/assets/press/gifs/en/01-hello.gif" alt="Mewmori" width="200" align="right">
+
+[**Mewmori**](https://mewmori.com/?src=prefire) is a pixel cat that lives on your Mac desktop.
+He reads what's on screen, says something about it, and remembers you between sessions.
+A 2B model runs on the machine through llama.cpp, so screen text, chats and memory stay on your Mac.
+
+Swift, AppKit + SwiftUI, 29 MB. Free; only skins are paid.
+
+<br clear="all">
+
 ## 🤝 Contributing
 We welcome contributions! Please follow these steps:
 
