@@ -127,7 +127,7 @@ import SnapshotTesting
 
         for deviceName in snapshotDevices {
             var snapshot = prefireSnapshot
-            guard let device: DeviceConfig = PreviewDevice(rawValue: deviceName).snapshotDevice() else {
+            guard let device = PreviewDevice(rawValue: deviceName).snapshotDeviceConfig() else {
                 fatalError("Unknown device name from configuration file: \(deviceName)")
             }
 
