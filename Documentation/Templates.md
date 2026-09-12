@@ -34,10 +34,12 @@ Notes:
 
 ## 2. Template engine
 
-Prefire uses the Stencil templating language with a few extra filters and Swift-language extensions shipped by [Sourcery](https://github.com/SourceryProtocol/Sourcery). If you've written a SwiftGen or Sourcery template before, the syntax will feel familiar.
+Prefire uses the Stencil templating language with the Swift-oriented filters from [StencilSwiftKit](https://github.com/SwiftGen/StencilSwiftKit) and a few of its own. If you've written a SwiftGen or Sourcery template before, the syntax will feel familiar.
 
 - [Stencil syntax](https://stencil.fuller.li/) — `{% ... %}` for logic, `{{ ... }}` for output, `{# ... #}` for comments.
-- [Sourcery template extensions](https://github.com/SourceryProtocol/Sourcery/blob/master/Documentation/Templates.md) — additional filters and helpers for Swift code generation.
+- [StencilSwiftKit filters](https://github.com/SwiftGen/StencilSwiftKit/blob/master/Documentation/filters.md) — string helpers for Swift code generation.
+
+Runs of blank lines left behind by `{% if %}` and `{% for %}` blocks are collapsed before the file is written, so a template can be laid out for readability without padding the generated output.
 
 The context rendered into your template has three top-level objects: `argument`, `types`, and (implicitly) the `previewsMacrosDict` array attached to `argument`.
 
@@ -65,10 +67,10 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 
 ### 3.2 `types.*` — `PreviewProvider`-based previews
 
-The `types` collection comes from Sourcery's `Types` wrapper around the parsed Swift AST. The default templates iterate over it to generate one `func test_*()` per `PreviewProvider`/`PrefireProvider` type:
+`types` comes from Prefire's own scan of the sources. The default templates iterate over it to generate one `func test_*()` per `PreviewProvider`/`PrefireProvider` type:
 
 ```stencil
-{% for type in types.types where type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider" %}
+{% for type in types.types where type.kind != "protocol" and type.kind != "extension" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
 func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
     for preview in {{ type.name }}._allPreviews {
         // ...
@@ -77,16 +79,28 @@ func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
 {% endfor %}
 ```
 
-Commonly used fields on a `type`:
+Skip `protocol` and `extension` kinds: an intermediate `protocol TeamProvider: PrefireProvider` is itself "based on" `PrefireProvider`, but `TeamProvider._allPreviews` does not compile.
 
-| Field       | Description                                                      |
-| ----------- | ---------------------------------------------------------------- |
-| `name`      | Fully-qualified type name.                                       |
-| `implements.X` | `true` if the type conforms to protocol `X` (e.g. `PrefireProvider`). |
-| `based.X`   | `true` if the type inherits from a class (or protocol) named `X`. |
-| `localName` | Short (unqualified) name of the type.                            |
+Fields on a `type`:
 
-For the full Sourcery `Type` API, see the [Sourcery type reference](https://github.com/SourceryProtocol/Sourcery/blob/master/Documentation/Templates.md#types).
+| Field            | Description                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------- |
+| `name`           | Fully-qualified type name, e.g. `Outer.Inner`.                                                  |
+| `localName`      | Short (unqualified) name of the type.                                                            |
+| `implements.X`   | Truthy if the type conforms to a protocol named `X` that is declared in the scanned sources.     |
+| `based.X`        | Truthy if the type inherits from anything named `X`, whether or not `X` itself is in the sources. Use this for protocols declared in another module, such as `PrefireProvider`. |
+| `inherits.X`     | Truthy if the type inherits from a class named `X` declared in the scanned sources.              |
+| `inheritedTypes` | The names written in the declaration's inheritance clause, as an array.                          |
+| `kind`           | `struct`, `class`, `enum`, `actor`, `protocol`, or `extension` for a conformance added to a type declared elsewhere. |
+| `isExtension`    | `true` when the type is only known through an `extension` (no declaration in the scanned sources). |
+| `accessLevel`    | `open`, `public`, `package`, `internal`, `fileprivate` or `private`.                              |
+| `annotations`    | Dictionary of `// prefire:` / `// sourcery:` annotations on the declaration.                      |
+
+`implements`, `based` and `inherits` are resolved transitively and include conformances added by an `extension`, in any scanned file. Given `protocol TeamProvider: PrefireProvider` and `struct Panel_Previews: TeamProvider`, `based.PrefireProvider` is truthy.
+
+Besides `types.types` (every scanned declaration, including protocols and extension-only placeholders), the collection also offers `types.all` (declarations excluding protocols), `types.protocols`, `types.classes`, `types.structs`, `types.enums`, `types.extensions`, and the `types.based.X` / `types.implementing.X` / `types.inheriting.X` lookups.
+
+Types are visited in sorted source-file order, so the generated declarations keep a stable order between runs.
 
 ### 3.3 `macroModel.*` — `#Preview` macro models
 
@@ -118,16 +132,17 @@ Each element of `previewsMacrosDict` has the following keys (see `RawPreviewMode
 
 ## 4. Filters reference
 
-Only filters that the default templates actually use are listed below. For the complete set, see the [Stencil built-in filters](https://stencil.fuller.li/) and the [Sourcery template extensions](https://github.com/SourceryProtocol/Sourcery/blob/master/Documentation/Templates.md#filters).
+Only filters that the default templates actually use are listed below. For the complete set, see the [Stencil built-in filters](https://stencil.fuller.li/) and the [StencilSwiftKit filters](https://github.com/SwiftGen/StencilSwiftKit/blob/master/Documentation/filters.md). Prefire additionally provides `count`, `isEmpty`, `toArray`, `last` and `reversed`.
 
 | Filter                | Origin   | Purpose                                                                 | Example                                                        |
 | --------------------- | -------- | ----------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `lowerFirstLetter`    | Stencil  | Lowercase the first character (for test function names).               | `{{ type.name\|lowerFirstLetter }}` → `myView` from `MyView`   |
-| `replace:OLD,NEW`     | Stencil  | Replace literal substring `OLD` with `NEW`.                            | `{{ type.name\|replace:"_Previews", "" }}`                     |
-| `split:SEP`           | Sourcery | Split a string by `SEP` and emit a Swift array literal.                | `{{ argument.snapshotDevices\|split:"\|" }}` → `["iPhone 14"]` |
+| `lowerFirstLetter`    | StencilSwiftKit | Lowercase the first character (for test function names).        | `{{ type.name\|lowerFirstLetter }}` → `myView` from `MyView`   |
+| `replace:OLD,NEW`     | StencilSwiftKit | Replace literal substring `OLD` with `NEW`.                     | `{{ type.name\|replace:"_Previews", "" }}`                     |
+| `split:SEP`           | Stencil  | Split a string by `SEP` and emit a Swift array literal.                | `{{ argument.snapshotDevices\|split:"\|" }}` → `["iPhone 14"]` |
 | `indent:N`            | Stencil  | Indent every line of the input by `N` spaces.                           | `{{ macroModel.body\|indent:12 }}`                             |
 | `default:VALUE`       | Stencil  | Use `VALUE` when the variable is missing.                               | `{{ argument.simulatorDevice\|default:nil }}`                 |
-| `annotated:NAME`      | Sourcery | Inside a `{% for type in types.types %}`, filter types annotated with `NAME`. | `{% for type in types.types where type\|annotated:"PrefireProvider" %}` |
+| `annotated:NAME`      | Prefire  | Boolean on a single type, or a filtered list when applied to an array. Supports `NAME = VALUE`. | `{% for type in types.types where type\|annotated:"PrefireProvider" %}` or `{% for type in types.types\|annotated:"PrefireProvider" %}` |
+| `based:NAME`          | Prefire  | Filter form of `type.based.NAME`. `implements:` and `inherits:` work the same way. Boolean or filtered list. | `{% for type in types.types where type\|based:"PrefireProvider" %}` |
 | `forloop.last`        | Stencil  | `true` on the last iteration of a `{% for %}` loop. Useful for separators. | `{%- if not forloop.last %}\n\n{% endif %}`               |
 
 ---
