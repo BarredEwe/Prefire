@@ -59,6 +59,34 @@ playbook_configuration:
 
 ---
 
+### 🧭 Reading a failing test
+
+**Wrong simulator or OS.** `simulator_device` and `required_os` are checked in `setUp()` against the running simulator. A mismatch stops the run with the device *name* rather than the bare model identifier:
+
+```
+Prefire: wrong simulator. These tests are configured for iPhone 16 Pro (iPhone17,1), but are running on iPhone 13 Pro Max (iPhone14,3).
+Pick iPhone 16 Pro (iPhone17,1) as the test destination, or change `simulator_device` in .prefire.yml.
+```
+
+The running device's name comes from the simulator environment; the expected one is resolved through `PrefireDeviceIdentifier`, which falls back to the raw identifier for devices it doesn't know.
+
+**Snapshot mismatch.** Every snapshot failure ends with `file://` links, which Xcode's console and most terminals open on click:
+
+```
+Snapshot files:
+  reference: file:///…/Tests/__Snapshots__/PreviewTests.generated/AuthView.1.png
+  recorded:  file:///…/T/PreviewTests.generated/AuthView.1.png
+  diff:      ksdiff "/…/__Snapshots__/PreviewTests.generated/AuthView.1.png" "/…/T/PreviewTests.generated/AuthView.1.png"
+```
+
+The reference folder follows `use_grouped_snapshots` and `split_snapshot_directories`. The recorded image is written to `SNAPSHOT_ARTIFACTS` when that variable is set, and to the temporary directory otherwise — set it to keep the images after a CI run.
+
+The linked file is the one the failure itself is about, which matters when several previews share a name: a `PreviewProvider` with multiple unnamed previews snapshots them as `AuthView.1.png`, `AuthView.2.png` and so on. When the images cannot be identified — a custom diff tool printing paths in an unexpected shape, for instance — only the folder is reported:
+
+```
+Snapshot files: file:///…/Tests/__Snapshots__/PreviewTests.generated/
+```
+
 ### macOS snapshot tests
 
 macOS targets require no additional configuration. Use `AppKit` instead of `UIKit` in `imports:` and omit the iOS-only `simulator_device`, `required_os`, and `snapshot_devices` keys — the generated file ignores them on macOS.
