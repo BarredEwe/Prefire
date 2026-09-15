@@ -197,6 +197,43 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     }
     ```
 
+- Instead of guessing a delay, you can wait until the preview stops changing:
+
+    ```swift
+    .snapshot(waitForIdle: true)
+    .snapshot(waitForIdle: true, timeout: 2.0)
+    ```
+
+    Prefire renders the preview and compares frames captured at least 50 ms apart: the snapshot is
+    taken once the same frame comes back twice in a row, so about 100 ms of no change. A preview
+    that never settles fails with a message instead of hanging, after `timeout` (5 seconds by default).
+
+    Waiting for idle only knows about changes that already started, so a preview that begins loading
+    later still needs a `delay` as a floor: Prefire spends it before it starts comparing frames, and
+    does not wait it out a second time when capturing. Both modifiers can be combined, since they
+    configure different things:
+
+    ```swift
+    static var previews: some View {
+        TestView()
+            .snapshot(delay: 0.1, precision: 0.95)
+            .snapshot(waitForIdle: true)
+    }
+    ```
+
+    Set `snapshot_wait_for_idle: true` in [`.prefire.yml`](Documentation/Configuration.md) to make
+    it the default for every preview, and opt single previews out with `.snapshot(waitForIdle: false)`.
+
+- When the preview itself knows when it is ready, wait for a condition:
+
+    ```swift
+    .snapshotWait(until: { viewModel.isLoaded })
+    .snapshotWait(until: { viewModel.isLoaded }, timeout: 2.0)
+    ```
+
+    The condition is checked on the main thread while the preview keeps rendering, and the test
+    fails with the call site of the modifier when it is still `false` after `timeout`.
+
 - Function for connecting preview together in one **Flow**:
 
     <img src="https://i.postimg.cc/jSh23G8W/temp-Image9a-EDKU.avif" width="350" align="right">
@@ -261,6 +298,8 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Group in a flow | `.previewUserStory(.auth)` |
 | Mark a UI state | `.previewState(.error)` |
 | Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
+| Wait until the preview settles | `.snapshot(waitForIdle: true, timeout: 2.0)` |
+| Wait for a condition | `.snapshotWait(until: { viewModel.isLoaded })` |
 | Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---

@@ -211,18 +211,25 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 .onPreferenceChange(RecordPreferenceKey.self) {
                     preferences.record = $0
                 }
+                .onPreferenceChange(WaitPreferenceKey.self) {
+                    preferences.wait = $0
+                }
+                .onPreferenceChange(WaitTimeoutPreferenceKey.self) {
+                    preferences.waitTimeout = $0
+                }
         )
 
-        return (render(view: view), preferences)
+        return (render(view: view, preferences: preferences), preferences)
     }
 
     // MARK: - Private functions
 
-    /// Renders the view once so `onPreferenceChange` has fired, and returns the value to snapshot.
+    /// Renders the view once so `onPreferenceChange` has fired, waits until it is ready,
+    /// and returns the value to snapshot.
     ///
     /// On macOS the result is hosted in a shared window and stays valid only until the next
     /// `loadViewWithPreferences()` call.
-    private func render(view: AnyView) -> PrefireSnapshotView {
+    private func render(view: AnyView, preferences: PreferenceKeys) -> PrefireSnapshotView {
         #if os(iOS) || os(tvOS)
         let hostingController = UIHostingController(rootView: view)
         let window = UIWindow(frame: .init())
@@ -232,10 +239,31 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
+
+        // The snapshot strategy builds its own hosting controller from `view`, discarding any state
+        // this one reached. So the wait runs on this window, which is given a canvas only when it is
+        // needed, and the time it took is replayed as a delay by `PreferenceKeys.resolvedDelay`.
+        if preferences.resolvedWait != nil {
+            window.frame = CGRect(origin: .zero, size: device.size ?? UIScreen.main.bounds.size)
+            hostingController.view.frame = window.bounds
+            hostingController.view.layoutIfNeeded()
+
+            preferences.settleDelay = SnapshotWaiter.wait(for: preferences, in: hostingController.view, name: name)
+            window.isHidden = true
+        }
+
         return view
         #elseif os(macOS)
         let hostingView = SnapshotHostingContainer(rootView: view, scale: device.scale)
         hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
+
+        // The view being captured is the one waited on: nothing has to be replayed as a delay, and
+        // the `delay` the wait spent on it must not be spent again by the snapshot strategy.
+        if preferences.resolvedWait != nil {
+            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name)
+            preferences.isDelayApplied = true
+        }
+
         return hostingView
         #endif
     }
