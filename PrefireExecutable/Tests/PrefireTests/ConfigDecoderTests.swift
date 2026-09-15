@@ -14,6 +14,9 @@ class ConfigDecoderTests: XCTestCase {
           - snapshot_devices:
               - iPhone 15
               - iPad
+          - snapshot_variants:
+              - light
+              - dark
           - preview_default_enabled: true
           - imports:
               - UIKit
@@ -42,6 +45,9 @@ class ConfigDecoderTests: XCTestCase {
           - snapshot_devices:  
               - iPhone 15   
               - iPad 
+          - snapshot_variants: 
+              - light 
+              - dark  
           - preview_default_enabled: true 
           - imports: 
               - UIKit 
@@ -71,6 +77,7 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.device, "iPhone15,2")
         XCTAssertEqual(config.tests.osVersion, "17")
         XCTAssertEqual(config.tests.snapshotDevices, ["iPhone 15", "iPad"])
+        XCTAssertEqual(config.tests.snapshotVariants, ["light", "dark"])
         XCTAssertEqual(config.tests.previewDefaultEnabled, true)
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
@@ -91,6 +98,7 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.device, "iPhone15,2")
         XCTAssertEqual(config.tests.osVersion, "17")
         XCTAssertEqual(config.tests.snapshotDevices, ["iPhone 15", "iPad"])
+        XCTAssertEqual(config.tests.snapshotVariants, ["light", "dark"])
         XCTAssertEqual(config.tests.previewDefaultEnabled, true)
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])

@@ -24,6 +24,7 @@ import SnapshotTesting
     private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
     private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
     private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
+    private let snapshotVariants: [SnapshotVariant]{% if argument.snapshotVariants %} = SnapshotVariant.variants(named: {{ argument.snapshotVariants|split:"|" }}){% else %} = []{% endif %}
 #if os(iOS)
     private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
 #elseif os(tvOS)
@@ -119,10 +120,10 @@ import SnapshotTesting
 
     private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         #if os(macOS)
-        return assertSnapshot(for: prefireSnapshot)
+        return assertVariants(for: prefireSnapshot)
         #else
         guard !snapshotDevices.isEmpty else {
-            return assertSnapshot(for: prefireSnapshot)
+            return assertVariants(for: prefireSnapshot)
         }
 
         for deviceName in snapshotDevices {
@@ -140,7 +141,7 @@ import SnapshotTesting
             // Ignore specific device display scale
             snapshot.traits = UITraitCollection(displayScale: 2.0)
 
-            if let failure = assertSnapshot(for: snapshot) {
+            if let failure = assertVariants(for: snapshot) {
                 XCTFail(failure)
             }
         }
@@ -149,9 +150,34 @@ import SnapshotTesting
         #endif
     }
 
-    private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
+    /// Snapshots the preview once per variant, or once as is when no variant is configured.
+    private func assertVariants<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
+        let variants = preferences.variants ?? snapshotVariants
 
+        guard !variants.isEmpty else {
+            return assertSnapshot(for: prefireSnapshot, previewView: previewView, preferences: preferences)
+        }
+
+        for variant in variants {
+            var snapshot = prefireSnapshot
+            snapshot.variant = variant
+            snapshot.name = prefireSnapshot.name + variant.nameSuffix
+
+            let (variantView, variantPreferences) = snapshot.loadViewWithPreferences()
+            if let failure = assertSnapshot(for: snapshot, previewView: variantView, preferences: variantPreferences) {
+                XCTFail(failure)
+            }
+        }
+
+        return nil
+    }
+
+    private func assertSnapshot<Content: SwiftUI.View>(
+        for prefireSnapshot: PrefireSnapshot<Content>,
+        previewView: PrefireSnapshotView,
+        preferences: PreferenceKeys
+    ) -> String? {
         #if os(macOS)
         let strategy: Snapshotting<NSView, NSImage> = .wait(
             for: preferences.delay,
