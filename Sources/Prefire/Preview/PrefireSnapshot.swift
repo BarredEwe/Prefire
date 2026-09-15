@@ -199,6 +199,8 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
         let view = AnyView(
             content
+                // Turns `snapshotMasked()` on: only the snapshot path replaces content with a placeholder.
+                .environment(\.isPrefireSnapshotRendering, true)
                 .onPreferenceChange(DelayPreferenceKey.self) {
                     preferences.delay = $0
                 }

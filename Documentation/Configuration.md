@@ -102,6 +102,8 @@ The backing scale factor is pinned to `2` rather than inherited from the current
 
 Snapshot images are still pixel-based and can differ between macOS or Xcode releases. Record and compare a baseline on the same macOS/Xcode version.
 
+Content that changes between runs — dates, timers, remote images — is masked with `.snapshotMasked()`, which draws an opaque placeholder over the View while the snapshot is rendered and leaves the layout untouched. It works the same way on iOS, tvOS and macOS, and is a no-op outside snapshots.
+
 #### Running from SwiftPM
 
 Verifying snapshots works with a plain `swift test`. **Recording** new references writes into `__Snapshots__` next to your sources, which SwiftPM’s build sandbox denies — pass `--disable-sandbox` for the recording run only:
