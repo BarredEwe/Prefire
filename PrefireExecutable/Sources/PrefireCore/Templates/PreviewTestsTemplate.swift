@@ -179,7 +179,7 @@ import SnapshotTesting
         let failure = verifySnapshot(
             of: previewView,
             as: strategy,
-            record: preferences.record ? .all : .missing{% if argument.file %},
+            record: preferences.record ? .all : nil{% if argument.file %},
             file: file{% endif %},
             testName: prefireSnapshot.name
         )
@@ -190,8 +190,8 @@ import SnapshotTesting
 
             SnapshotTesting.assertSnapshot(
                 matching: vc,
-                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)){% if argument.file %},
-                record: preferences.record ? .all : .missing,
+                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)),
+                record: preferences.record ? .all : nil{% if argument.file %},
                 file: file{% endif %},
                 testName: prefireSnapshot.name + ".accessibility"
             )
