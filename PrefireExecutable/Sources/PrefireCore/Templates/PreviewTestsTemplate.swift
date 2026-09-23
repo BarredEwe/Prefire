@@ -150,6 +150,17 @@ import SnapshotTesting
     }
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
+        #if os(iOS) || os(tvOS)
+        // Make `UIDevice.current.userInterfaceIdiom` match the snapshot device
+        return UIDevice.prefire_withInterfaceIdiom(prefireSnapshot.device.traits.userInterfaceIdiom) {
+            renderSnapshot(for: prefireSnapshot)
+        }
+        #else
+        return renderSnapshot(for: prefireSnapshot)
+        #endif
+    }
+
+    private func renderSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
 
         #if os(macOS)

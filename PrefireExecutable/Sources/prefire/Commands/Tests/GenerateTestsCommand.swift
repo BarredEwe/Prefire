@@ -41,10 +41,8 @@ struct GeneratedTestsOptions {
         self.testTarget = testTarget
         self.testTargetPath = (config?.tests.testTargetPath ?? testTargetPath).flatMap({ Path($0) })
 
-        if let template = config?.tests.template, let testTargetPath = self.testTargetPath {
-            let testTargetURL = URL(filePath: testTargetPath.string)
-            let templateURL = testTargetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
+        if let config, let template = config.tests.template {
+            self.template = Path(config.resolveTemplatePath(template, targetPath: self.testTargetPath?.string))
         } else if let template {
             self.template = Path(template)
         }

@@ -1,363 +1,317 @@
-![Prefire](https://i.postimg.cc/Y9cbLVY4/temp-Image-P7o5-NQ.jpg)
-
 <p align="center">
-<a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
-<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS-green.svg"/></a>
-<a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
-<a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
-<img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
+  <img src="Documentation/Assets/prefire-readme.png" alt="Prefire — Preview. Prove. Ship. Turn your SwiftUI previews into snapshot tests and an interactive component catalog." width="100%">
 </p>
 
-## 🔥 What is Prefire?
+<p align="center">
+  <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img src="https://img.shields.io/github/v/release/BarredEwe/Prefire?style=flat&label=release&color=FF6A35&labelColor=17181C" alt="Latest release"></a>
+  <a href="#requirements"><img src="https://img.shields.io/badge/Swift-6.0%2B-FFB629?style=flat&labelColor=17181C" alt="Swift 6.0 or later"></a>
+  <a href="Documentation/Installation.md"><img src="https://img.shields.io/badge/SwiftPM-build%20plugins-FF6A35?style=flat&labelColor=17181C" alt="Swift Package Manager build plugins"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-F5F0E7?style=flat&labelColor=17181C" alt="Apache 2.0 license"></a>
+</p>
 
-**Prefire** transforms your `#Preview` blocks into:
-- ✅ Snapshot tests
-- ✅ Playbook views
-- ✅ Visual flows with states and user stories
-- ✅ Living documentation — fully automated
+<p align="center">
+  <a href="https://prefire.ru">Website</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="Documentation/Configuration.md">Configuration</a> ·
+  <a href="Example">Example project</a>
+</p>
 
-## 🚀 Key Features
+**Prefire turns the SwiftUI previews you already write into snapshot tests and a browsable Playbook.** Reuse the same UI states for development, visual regression checks, and team demos.
 
-<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
+| Preview | Snapshot tests | Playbook |
+| :--- | :--- | :--- |
+| <img src="Documentation/Assets/preview-small.svg" alt="A preview definition renders a UI component" width="240"> | <img src="Documentation/Assets/snapshot-small.svg" alt="Reference and changed render with the button shift highlighted" width="240"> | <img src="Documentation/Assets/playbook-small.svg" alt="Default, loading, and error states together in a catalog" width="240"> |
+| Define your UI states once. | Catch changes against a reference. | Browse states in one catalog. |
 
-- 🧠 **Smart Preview Parsing** — including `#Preview`, `@Previewable`
-- 📸 **Snapshot Testing** — automatic test generation from previews (iOS, tvOS, macOS)
-- 📚 **Playbook View** — auto-generated interactive component catalog (iOS)
-- 🏃 **Flow-aware** — build user stories from multiple preview steps
-- 🧩 **UIKit + AppKit Support** — support for `UIView`/`UIViewController` and `NSView`/`NSViewController`
-- ⚙️ **SPM + Xcode Plugins** — works in CLI, Xcode build phases, or CI
-- 🧠 **Fast Caching** — fingerprint-based AST and body caching avoids redundant work
-- ✍️ **Stencil Templates** — customize output with [your own templates](Documentation/Templates.md)
+Prefire supports `#Preview`, `@Previewable`, parameterized previews, and opted-in `PreviewProvider` types. It runs through Xcode and SwiftPM build plugins or the CLI. Tests use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing); [custom templates](Documentation/Templates.md) control the generated code.
 
-### Why Prefire? 
+## Quick start
 
-- 🔥 **Save Time** - Generate tests and documentation automatically
-- 🔥 **Stay Consistent** - Keep previews and tests always in sync
-- 🔥 **Improve Quality** - Catch visual regressions before users do
-- 🔥 **Boost Collaboration** - Share living documentation with your team
+### 1. Connect your test target
 
-<br clear="all">
+For an **Xcode project**:
 
----
-## ⚡️ Quick Start
+1. Add [Prefire](https://github.com/BarredEwe/Prefire) and [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) as package dependencies.
+2. Link the `Prefire` product to your app target. Link `Prefire` and `SnapshotTesting` to your unit test target.
+3. In the unit test target, open **Build Phases → Run Build Tool Plug-ins** and add **PrefireTestsPlugin**.
 
-> 📦 Example project available at: [Prefire Example](https://github.com/BarredEwe/Prefire/tree/main/Example)
+For a **Swift package**, use this manifest as a starting point. Replace `MyUI` and `MyUITests` with your target names.
 
-### 1. Add Prefire to Your Project
+<details>
+<summary><strong>Show Package.swift</strong></summary>
 
 ```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "5.4.0")
-    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
-],
-.testTarget(
-    dependencies: [
-      .product(name: "Prefire", package: "Prefire"),
-      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+    name: "MyUI",
+    platforms: [.iOS(.v17)],
+    products: [
+        .library(name: "MyUI", targets: ["MyUI"])
     ],
-    plugins: [
-        .plugin(name: "PrefireTestsPlugin", package: "Prefire")
+    dependencies: [
+        .package(url: "https://github.com/BarredEwe/Prefire.git", from: "5.8.1"),
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", from: "1.18.0")
+    ],
+    targets: [
+        .target(
+            name: "MyUI",
+            dependencies: [.product(name: "Prefire", package: "Prefire")]
+        ),
+        .testTarget(
+            name: "MyUITests",
+            dependencies: [
+                "MyUI",
+                .product(name: "Prefire", package: "Prefire"),
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ],
+            plugins: [.plugin(name: "PrefireTestsPlugin", package: "Prefire")]
+        )
     ]
 )
 ```
 
-### 2. Write `#Preview`
+</details>
+
+### 2. Write a preview
+
+Add a preview to your app or library sources. Prefire discovers `#Preview` blocks automatically.
 
 ```swift
-#Preview {
-    Button("Submit")
+import SwiftUI
+import Prefire
+
+#Preview("Submit button", traits: .sizeThatFitsLayout) {
+    Button("Submit", action: {})
+        .buttonStyle(.borderedProminent)
+        .padding()
 }
 ```
 
-### 3. Run tests
+### 3. Run and review
 
-Just run the test target 🚀 — Prefire will auto-generate snapshots based on your previews.
+Run the unit test target in Xcode (**⌘U**) with an iOS Simulator selected. The plugin generates the tests during the build.
 
-> 💡 If your test target is empty, Prefire will still generate files and snapshot code during build.
+The first run records missing reference images and reports a test failure so you can review them. Commit the approved `__Snapshots__` images, then run again to compare against that baseline. Keep the simulator model and OS version consistent between local runs and CI.
 
-<img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
+For a complete setup, open the [example project](Example). For other installation options, see the [installation guide](Documentation/Installation.md).
 
+## Add a Playbook
 
----
+Attach **PrefirePlaybookPlugin** to your iOS app or UI target, then display the generated models:
 
-## 📦 Installation
-
-Supports:
-
-- ✅ SPM Plugin (`Package.swift`)
-- ✅ Xcode Build Tool Plugin
-- ✅ CLI (`brew install prefire`)
-- ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
-- ✅ GitHub Actions / CI
-
-See detailed setup in the [Installation guide](Documentation/Installation.md)
-
-### Mint
-
-Install the bundled CLI via [Mint](https://github.com/yonaskolb/Mint):
-
-```sh
-mint install BarredEwe/Prefire
-```
-
-The installed `prefire` wrapper ships the `PrefireBinary` artifactbundle as an embedded SwiftPM resource, so it is self-contained — no external binary path is required. To override the path of the embedded binary (e.g. for local development against an in-progress build), set `PREFIRE_BINARY_PATH` to the absolute path of the `prefire` executable.
-
-## 🧠 How It Works
-
-### 🔍 1. Parses all source files
-
-- Finds all `#Preview` and `PreviewProvider` blocks
-- Supports modifiers: `.prefireEnabled()`, `.prefireIgnored()`
-
-### 📂 2. Caches `Types` and `PreviewBodies`
-
-- Based on file modification date + SHA-256 of inputs
-- Avoids re-parsing if nothing changed
-
-### 🔢 3. Generates Snapshot Tests
-
-- Uses `Stencil` templates
-- Respects `.prefire.yml` configuration
-
-### 📘 4. Generates Playbook View
-
-- Groups by `UserStory`, `State`
-- Outputs `PreviewModels.generated.swift`
-
----
-
-## 🛠 Advanced Usage
-To generate **tests** and **playbook**, simply mark your preview using the `PrefireProvider` protocol:
 ```swift
-struct Text_Previews: PreviewProvider, PrefireProvider {
-    static var previews: some View { ... }
+import SwiftUI
+import Prefire
+
+struct ComponentCatalog: View {
+    var body: some View {
+        PlaybookView(
+            isComponent: true,
+            previewModels: PreviewModels.models
+        )
+    }
 }
 ```
-If you use the **`#Preview`** macro, **🔥Prefire** will automatically find it!
 
-If you don't need it, mark view - `.prefireIgnored()`:
+Use `isComponent: true` to browse components, or `false` to group previews by user story. Add `.previewUserStory(.auth)` to connect screens in an authentication flow and `.previewState(.loading)` to label a state.
+
+**Playbook is iOS-only.** On macOS, use Prefire for snapshot tests.
+
+### User stories in Playbook
+
+<table>
+<tr>
+<td width="34%" valign="top">
+
+<img src="https://i.postimg.cc/jSh23G8W/temp-Image9a-EDKU.avif" alt="Prefire Playbook screenshot showing screens grouped into a user story" width="280">
+
+</td>
+<td valign="top">
+
+Connect related screens with `.previewUserStory(.auth)` to browse an authentication flow, such as login, one-time password, and PIN entry.
+
+```swift
+#Preview("Login") {
+    LoginView()
+        .previewUserStory(.auth)
+}
+
+#Preview("One-time password") {
+    OTPView()
+        .previewUserStory(.auth)
+}
+```
+
+`LoginView` and `OTPView` stand for your own screen views. Display the catalog with `isComponent: false` to browse by user story.
+
+</td>
+</tr>
+</table>
+
+### Component states in Playbook
+
+<table>
+<tr>
+<td width="34%" valign="top">
+
+<img src="https://i.postimg.cc/Z5JKNwTJ/temp-Imageh19pin.avif" alt="Prefire Playbook screenshot showing default and loading component states" width="280">
+
+</td>
+<td valign="top">
+
+Label variations with `.previewState(...)` to make loading and error states easy to find alongside the default UI.
+
+```swift
+#Preview("Default") {
+    Text("Your content")
+}
+
+#Preview("Loading") {
+    ProgressView("Loading")
+        .previewState(.loading)
+}
+```
+
+</td>
+</tr>
+</table>
+
+## Control what gets generated
+
+| Intent | API |
+| --- | --- |
+| Exclude a `#Preview` | `.prefireIgnored()` |
+| Include a `#Preview` when automatic discovery is disabled | `.prefireEnabled()` |
+| Group previews into a user story | `.previewUserStory(.auth)` |
+| Label a UI state | `.previewState(.loading)` |
+| Adjust snapshot rendering and comparison | `.snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)` |
+
+For example, exclude a preview that depends on a live service:
+
 ```swift
 #Preview {
-    Text("")
+    Text("Live service demo")
         .prefireIgnored()
 }
 ```
 
-If you want to disable the automatic get of all previews, use the setting `preview_default_enabled`: false. Then to include preview in the test, you need to call the `.prefireEnabled()`:
-```swift
-#Preview {
-    Text("")
-        .prefireEnabled()
-}
-```
+To include only explicitly marked previews, set `preview_default_enabled: false` in the relevant configuration section and add `.prefireEnabled()` to the previews you want.
 
-### **Playbook (Demo) View**
-To use Playbook, simply use `PlaybookView`
+<details>
+<summary><strong>Using PreviewProvider</strong></summary>
 
-- If you want to see a list of all the Views, use `isComponent: true`
-- If you want to sort by UserStory, use `isComponent: false`
+Opt in by adding `PrefireProvider` conformance:
 
 ```swift
-import Prefire 
-
-struct ContentView: View {
-    var body: some View {
-        PlaybookView(isComponent: true, previewModels: PreviewModels.models)
+struct Greeting_Previews: PreviewProvider, PrefireProvider {
+    static var previews: some View {
+        Text("Hello, Prefire")
+            .padding()
     }
 }
 ```
 
-### **Snapshot tests**
+</details>
 
-Just run generated tests 🚀
-All tests will be generated in the DerivedData folder.
+<details>
+<summary><strong>Using parameterized previews</strong></summary>
 
-<img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
+With a toolchain that supports parameterized SwiftUI previews, each argument becomes a separate snapshot and Playbook preview:
 
-Plugin `PrefireTestsPlugin` will handle everything for you 🛠️
-
-For detailed instruction, check out [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) or examine an example project.
-
----
-
-## API
-**Prefire** provide new commands for previews:
-
-- You can set the delay, precision and perceptualPrecision parameters for the snapshot:
-
-    ```swift
-    .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
-    ```
-    
-    ```swift
-    static var previews: some View {
-        TestView()
-            .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
-    }
-    ```
-
-- Function for connecting preview together in one **Flow**:
-
-    <img src="https://i.postimg.cc/jSh23G8W/temp-Image9a-EDKU.avif" width="350" align="right">
-
-    ```swift
-    .previewUserStory(.auth)
-    ```
-
-    ```swift
-    static var previews: some View {
-        PrefireView()
-            .previewUserStory(.auth)
-    }
-
-    static var previews: some View {
-        AuthView()
-            .previewUserStory(.auth)
-    }
-    ```
-
-    For example Authorization flow: `LoginView`, `OTPView` and `PincodeView`
-
-    <br clear="all">
-
-- If a preview contains more than one `View`, you can mark `State` for these views.
-
-    <img src="https://i.postimg.cc/Z5JKNwTJ/temp-Imageh19pin.avif" width="350" align="right">
-
-    ```swift
-    .previewState(.loading)
-    ```
-
-    ```swift
-    static var previews: some View {
-        TestView("Default")
-
-        TestView("Loading")
-            .previewState(.loading)
-    }
-    ```
-
-    <br clear="all">
-
-- Prefire supports native SwiftUI parameterized previews:
-
-    ```swift
-    #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B", "- C"]) { suffix in
-        Text("1 \(suffix)")
-    }
-    ```
-
-    Prefire expands each argument into its own snapshot and Playbook preview.
-
----
-
-## 🧰 API Summary
-
-| Feature | Modifier |
-|--------|----------|
-| Include in snapshot | `.prefireEnabled()` |
-| Exclude from snapshot | `.prefireIgnored()` |
-| Group in a flow | `.previewUserStory(.auth)` |
-| Mark a UI state | `.previewState(.error)` |
-| Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
-| Parameterized preview | `#Preview(..., arguments: values)` |
-
----
-
-## 💡 Advanced: CLI Usage
-
-```bash
-# Generate snapshot tests
-prefire tests
-
-# Generate playbook models
-prefire playbook
+```swift
+#Preview("Greeting", traits: .sizeThatFitsLayout, arguments: ["Alex", "Sam"]) { name in
+    Text("Hello, \(name)")
+        .padding()
+}
 ```
 
-Run `prefire tests --help` or `prefire playbook --help` for more options.
+</details>
 
----
-## 🗂 Configuration: `.prefire.yml`
+## Configuration
 
-See detailed configuration in the [Configuration guide](Documentation/Configuration.md)
+Use `.prefire.yml` to set the source target, select previews, and customize generation. For Xcode projects, place it in the project root. For SwiftPM plugins, place it in the source target's directory.
 
 ```yaml
 test_configuration:
-  target: MyApp
+  target: MyUI
+  preview_default_enabled: true
 
 playbook_configuration:
   preview_default_enabled: true
 ```
 
----
+The [configuration guide](Documentation/Configuration.md) covers source paths, snapshot devices, imports, per-file output, and [macOS rendering](Documentation/Configuration.md#macos-snapshot-tests). To change the generated Swift code, see [custom templates](Documentation/Templates.md).
 
-## Distribution
+## Command line
 
-When preparing for distribution, you may want to exclude your `PreviewProvider` and mock data from release builds. This can be achieved by wrapping them in `#if DEBUG` compiler directives. Alternatively, you can pass a compiler flag to exclude `PreviewModels` from release builds.
+Install with Homebrew:
 
-To exclude `PreviewModels` using Swift Package Manager, pass the `PLAYBOOK_DISABLED` swift setting in the package that links `PrefirePlaybookPlugin`:
-
-```swift
-swiftSettings: [
-    .define("PLAYBOOK_DISABLED", .when(configuration: .release)),
-]
+```sh
+brew tap barredewe/prefire
+brew install prefire
 ```
 
-If you are using Xcode, you can pass the compiler flag in the Xcode build settings:
+Generate tests or Playbook models from your project directory:
 
+```sh
+prefire tests
+prefire playbook
 ```
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
+
+Run `prefire tests --help` or `prefire playbook --help` for options.
+
+<details>
+<summary><strong>Install with Mint (beta)</strong></summary>
+
+```sh
+mint install BarredEwe/Prefire
 ```
 
----
+The CLI wrapper includes the Prefire binary as a SwiftPM resource. For local generator development, set `PREFIRE_BINARY_PATH` to the absolute path of your own `prefire` executable.
 
-## 🧠 Internal Architecture
-
-- `PrefireCore` — AST + preview parsing, caching, logic
-- `PrefireGenerator` — handles stencil templating + snapshot generation
-- `PrefireCacheManager` — unifies caching for `Types` and `Previews`
-- `PrefireTestsPlugin` / `PrefirePlaybookPlugin` — SPM/Xcode integrations
-- `prefire` — CLI entry point, calls shared generator code
-
----
+</details>
 
 ## Requirements
 
-- Swift 6.0 or higher
-- Xcode 16.0 or higher
-- iOS 14 or higher; macOS 13 or higher (macOS: snapshot tests only, see [Configuration](Documentation/Configuration.md#macos-snapshot-tests))
+- **Swift 6.0+ and Xcode 16.0+.** Individual preview APIs may require a newer SDK or deployment target.
+- **iOS 14+, macOS 13+ or watchOS 7+** for the Prefire library. The quick-start example uses iOS 17.
+- **Snapshot tests:** iOS and macOS; the generator also includes tvOS snapshot support. watchOS is not supported: SnapshotTesting cannot render images there.
+- **Playbook:** iOS only. `NavigationView` previews are not supported in Playbook.
 
-## Troubleshooting
-`NavigationView` in Preview not supported for Playbook
-- Consider using other views or layouts for your Playbook needs.
+## Release builds and CI
 
-Running Prefire via CI
-- To run Prefire via Continuous Integration (CI), you need to configure permissions:
-`defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES`
+Wrap previews and mock data in `#if DEBUG` when they should be excluded from release builds. To disable generated Playbook models in release builds, add this setting to the target using `PrefirePlaybookPlugin`:
 
-Xcode is unable to generate tests in a custom path.
-- To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
-`defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES`
+```swift
+swiftSettings: [
+    .define("PLAYBOOK_DISABLED", .when(configuration: .release))
+]
+```
 
-## 🐱 Also by the author
+In Xcode, add `PLAYBOOK_DISABLED` to **Active Compilation Conditions** for the Release configuration. Guard code that references `PreviewModels` with the same condition.
 
-<img src="https://mewmori.com/assets/press/gifs/en/01-hello.gif" alt="Mewmori" width="200" align="right">
+For CI, install the required packages, allow the Prefire build plugin to run, and use the same simulator and OS as your recorded references. On macOS, see the [recording and sandbox instructions](Documentation/Configuration.md#running-from-swiftpm).
 
-[**Mewmori**](https://mewmori.com/?src=prefire) is a pixel cat that lives on your Mac desktop.
-He reads what's on screen, says something about it, and remembers you between sessions.
-A 2B model runs on the machine through llama.cpp, so screen text, chats and memory stay on your Mac.
+## Documentation
 
-Swift, AppKit + SwiftUI, 29 MB. Free; only skins are paid.
+- [Installation](Documentation/Installation.md) — Xcode, SwiftPM, and CLI setup.
+- [Configuration](Documentation/Configuration.md) — generation options and platform details.
+- [Templates](Documentation/Templates.md) — customize generated tests and models.
+- [Example project](Example) — previews, plugins, and a Playbook in one app.
+- [Releases](https://github.com/BarredEwe/Prefire/releases) — changes by version.
 
-<br clear="all">
+## Contributing
 
-## 🤝 Contributing
-We welcome contributions! Please follow these steps:
+Bug reports and pull requests are welcome. For a bug, include a minimal preview, your configuration, and your Xcode and OS versions. To contribute code, fork the repository, create a branch, and open a pull request.
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a Pull Request
+## Also by the author
 
-## 📄 License
-Prefire is released under the Apache License 2.0. See [LICENSE](https://github.com/BarredEwe/Prefire/blob/main/LICENSE) for details.
+[**Mewmori**](https://mewmori.com/?src=prefire) is a pixel cat for your Mac desktop, built with Swift, AppKit, and SwiftUI. It reacts to your screen and remembers your conversations using a local model.
+
+<a href="https://mewmori.com/?src=prefire"><img src="https://mewmori.com/assets/press/gifs/en/01-hello.gif" alt="Mewmori pixel cat greeting you on the Mac desktop" width="300"></a>
+
+## License
+
+Prefire is available under the [Apache License 2.0](LICENSE).
