@@ -3,6 +3,7 @@ extension EmbeddedTemplates {
 // swiftlint:disable all
 // swiftformat:disable all
 
+import Foundation
 import XCTest
 import SwiftUI
 import Prefire
@@ -36,6 +37,13 @@ import SnapshotTesting
     {% if argument.file %}
 
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
+
+    /// Same value as `file`, as a `String`: the path SnapshotTesting derives `__Snapshots__` from.
+    private var snapshotSourceFile: String { "{{ argument.file }}" }
+    {% else %}
+
+    /// Path SnapshotTesting derives `__Snapshots__` from when no snapshot path is configured.
+    private var snapshotSourceFile: String { #filePath }
     {% endif %}
 
     @MainActor override func setUp() async throws {
@@ -196,21 +204,49 @@ import SnapshotTesting
                 testName: prefireSnapshot.name + ".accessibility"
             )
         #endif
-        return failure
+        return failure.map { $0 + PrefireSnapshotFailure.fileLinks(for: $0, snapshotDirectory: snapshotDirectory) }
+    }
+
+    /// Directory SnapshotTesting reads reference images from.
+    private var snapshotDirectory: URL {
+        let source = URL(fileURLWithPath: snapshotSourceFile)
+        return source
+            .deletingLastPathComponent()
+            .appendingPathComponent("__Snapshots__")
+            .appendingPathComponent(source.deletingPathExtension().lastPathComponent)
     }
 
     private func prepareEnvironment() {
         #if os(iOS) || os(tvOS)
+        #if os(tvOS)
+        let osName = "tvOS"
+        #else
+        let osName = "iOS"
+        #endif
+
         if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
             guard deviceModel.contains(simulatorDevice) else {
-                fatalError("Switch to using \(simulatorDevice) for these tests. (You are using \(deviceModel))")
+                let expected = PrefireDeviceIdentifier.describe(simulatorDevice)
+                let current = PrefireDeviceIdentifier.describe(deviceModel, name: ProcessInfo().environment["SIMULATOR_DEVICE_NAME"])
+                fatalError(
+                    """
+                    Prefire: wrong simulator. These tests are configured for \(expected), but are running on \(current).
+                    Pick \(expected) as the test destination, or change `simulator_device` in .prefire.yml.
+                    """
+                )
             }
         }
 
         if let requiredOSVersion {
             let osVersion = ProcessInfo().operatingSystemVersion
             guard osVersion.majorVersion == requiredOSVersion else {
-                fatalError("Switch to iOS \(requiredOSVersion) for these tests. (You are using \(osVersion))")
+                let current = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+                fatalError(
+                    """
+                    Prefire: wrong OS version. These tests require \(osName) \(requiredOSVersion), but are running on \(osName) \(current).
+                    Pick a simulator running \(osName) \(requiredOSVersion), or change `required_os` in .prefire.yml.
+                    """
+                )
             }
         }
 
