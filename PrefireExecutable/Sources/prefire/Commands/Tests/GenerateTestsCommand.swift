@@ -19,6 +19,7 @@ struct GeneratedTestsOptions {
     var device: String?
     var osVersion: String?
     var snapshotDevices: [String]?
+    var snapshotVariants: [String]?
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
@@ -58,6 +59,7 @@ struct GeneratedTestsOptions {
         useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
         splitSnapshotDirectories = config?.tests.splitSnapshotDirectories ?? false
         snapshotDevices = config?.tests.snapshotDevices
+        snapshotVariants = config?.tests.snapshotVariants
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
         drawHierarchyInKeyWindowDefaultEnabled = config?.tests.drawHierarchyInKeyWindowDefaultEnabled
@@ -75,6 +77,7 @@ enum GenerateTestsCommand {
         static let simulatorOSVersion = "simulatorOSVersion"
         static let simulatorDevice = "simulatorDevice"
         static let snapshotDevices = "snapshotDevices"
+        static let snapshotVariants = "snapshotVariants"
         static let mainTarget = "mainTarget"
         static let file = "file"
         static let imports = "imports"
@@ -126,6 +129,7 @@ enum GenerateTestsCommand {
             Keys.simulatorOSVersion: options.osVersion as? NSString,
             Keys.simulatorDevice: options.device as? NSString,
             Keys.snapshotDevices: options.snapshotDevices?.joined(separator: "|") as? NSString,
+            Keys.snapshotVariants: options.snapshotVariants?.joined(separator: "|") as? NSString,
             Keys.imports: options.imports as? NSArray,
             Keys.testableImports: options.testableImports as? NSArray,
             Keys.mainTarget: options.target as? NSString,

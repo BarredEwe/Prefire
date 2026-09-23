@@ -74,18 +74,35 @@ public struct RecordPreferenceKey: PreferenceKey {
     }
 }
 
+public struct SnapshotVariantsPreferenceKey: PreferenceKey {
+    public static let defaultValue: [SnapshotVariant]? = nil
+
+    public static func reduce(value: inout [SnapshotVariant]?, nextValue: () -> [SnapshotVariant]?) {
+        value = nextValue() ?? value
+    }
+}
+
 /// Wrapper for secure data storage
 public class PreferenceKeys: @unchecked Sendable {
     public var delay: TimeInterval
     public var precision: Float
     public var perceptualPrecision: Float
     public var record: Bool
+    /// Variants declared by the preview. `nil` means the configured ones are used.
+    public var variants: [SnapshotVariant]?
 
-    public init(delay: TimeInterval = 0, precision: Float = 1, perceptualPrecision: Float = 1, record: Bool = false) {
+    public init(
+        delay: TimeInterval = 0,
+        precision: Float = 1,
+        perceptualPrecision: Float = 1,
+        record: Bool = false,
+        variants: [SnapshotVariant]? = nil
+    ) {
         self.delay = delay
         self.precision = precision
         self.perceptualPrecision = perceptualPrecision
         self.record = record
+        self.variants = variants
     }
 }
 

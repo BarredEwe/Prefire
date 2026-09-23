@@ -150,6 +150,10 @@ Key blocks worth studying:
   ```stencil
   private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
   ```
+- **`snapshotVariants` array** — the configured `snapshot_variants` names are resolved by the runtime, so a custom template only forwards them:
+  ```stencil
+  private let snapshotVariants: [SnapshotVariant]{% if argument.snapshotVariants %} = SnapshotVariant.variants(named: {{ argument.snapshotVariants|split:"|" }}){% else %} = []{% endif %}
+  ```
 - **Per-device iteration** — guarded by an empty-check, so a single test runs once on the default device and once per `snapshot_devices` entry:
   ```stencil
   {% if argument.file %}
