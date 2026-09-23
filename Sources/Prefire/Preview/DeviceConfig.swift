@@ -32,5 +32,9 @@ public struct DeviceConfig {
         self.size = size
         self.scale = scale
     }
+    #else
+    public init(size: CGSize? = nil) {
+        self.size = size
+    }
     #endif
 }

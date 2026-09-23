@@ -113,7 +113,7 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 }
 #endif
 
-#if canImport(XCTest)
+#if canImport(XCTest) && !os(watchOS)
 @MainActor public struct PrefireSnapshot<Content: SwiftUI.View> {
     private var previewContent: Content
     public var name: String
