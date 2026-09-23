@@ -273,9 +273,21 @@ prefire tests
 
 # Generate playbook models
 prefire playbook
+
+# Report the snapshots left behind by renamed or deleted previews
+prefire prune
+
+# ...and remove them
+prefire prune --delete
 ```
 
-Run `prefire tests --help` or `prefire playbook --help` for more options.
+`prefire tests` writes a `prefire-snapshots.json` manifest into `test_target_path`, next to the
+`__Snapshots__` folders; `prefire prune` compares it with what is on disk. Nothing is deleted
+without `--delete`, and folders the manifest cannot fully account for — a custom template, or
+`PrefireProvider` previews — are never touched. See
+[Pruning unused snapshots](Documentation/Configuration.md#pruning-unused-snapshots).
+
+Run `prefire tests --help`, `prefire playbook --help` or `prefire prune --help` for more options.
 
 ---
 ## 🗂 Configuration: `.prefire.yml`
@@ -317,6 +329,7 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 - `PrefireCore` — AST + preview parsing, caching, logic
 - `PrefireGenerator` — handles stencil templating + snapshot generation
 - `PrefireCacheManager` — unifies caching for `Types` and `Previews`
+- `SnapshotManifest` / `SnapshotPruner` — expected snapshots per run, and the cleanup behind `prefire prune`
 - `PrefireTestsPlugin` / `PrefirePlaybookPlugin` — SPM/Xcode integrations
 - `prefire` — CLI entry point, calls shared generator code
 

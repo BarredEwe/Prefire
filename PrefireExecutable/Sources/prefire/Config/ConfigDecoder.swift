@@ -74,6 +74,8 @@ final class ConfigDecoder {
             config.tests.useGroupedSnapshots = getValue(from: components.last, env: env) == "true"
         case .splitSnapshotDirectories:
             config.tests.splitSnapshotDirectories = getValue(from: components.last, env: env) == "true"
+        case .deleteUnusedSnapshots:
+            config.tests.deleteUnusedSnapshots = getValue(from: components.last, env: env) == "true"
         case .drawHierarchyInKeyWindowDefaultEnabled:
             config.tests.drawHierarchyInKeyWindowDefaultEnabled = getValue(from: components.last, env: env) == "true"
         }
