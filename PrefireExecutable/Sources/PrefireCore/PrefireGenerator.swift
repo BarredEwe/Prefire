@@ -1,8 +1,5 @@
 import Foundation
 import PathKit
-import SourceryFramework
-import SourceryRuntime
-import SourceryStencil
 
 public enum PrefireGenerator {
     nonisolated(unsafe) static var startTime = Date()
@@ -19,20 +16,22 @@ public enum PrefireGenerator {
     ) async throws {
         startTime = Date()
 
-        var swiftFiles: Set<Path> = []
+        var discovered: Set<Path> = []
         try sources.forEach { path in
             if path.isDirectory {
-                swiftFiles.formUnion(try path.recursiveChildren().filter { $0.extension == "swift" })
+                discovered.formUnion(try path.recursiveChildren().filter { $0.extension == "swift" })
             } else if path.extension == "swift" {
-                swiftFiles.insert(path)
+                discovered.insert(path)
             }
         }
 
-        guard !swiftFiles.isEmpty else {
+        guard !discovered.isEmpty else {
             Logger.info("No Swift sources found to process.")
             return
         }
 
+        // Sorted so the order of the generated declarations does not depend on set iteration order.
+        let swiftFiles = discovered.sorted { $0.string < $1.string }
         let fileContents: [(Path, String)] = try swiftFiles.map { ($0, try $0.read(.utf8)) }
 
         // If use grouped is false, we geneate one file per tests
@@ -44,18 +43,7 @@ public enum PrefireGenerator {
             template: inlineTemplate,
             parseTypes: {
                 Logger.info("🧩 Parsing Swift files...")
-                let results = try fileContents.map { (path, content) in
-                    let parser = try FileParserSyntax(
-                        contents: content,
-                        forceParse: [],
-                        parseDocumentation: false,
-                        path: path,
-                        module: nil
-                    )
-                    return try parser.parse()
-                }
-                let types = results.flatMap { $0.types }
-                return Types(types: types)
+                return TypeScanner.merge(fileContents.map { TypeScanner.scan(contents: $0.1) })
             },
             parsePreviews: {
                 Logger.info("🔍 Extracting #Preview bodies...")
@@ -83,8 +71,8 @@ public enum PrefireGenerator {
                 return dict
             }
 
-        let parserResult = FileParserResult(path: nil, module: nil, types: types.types, functions: [], typealiases: [])
-        
+        let graph = TypeGraph(types: types)
+
         if useGroupedSnapshots {
             // Generate one file with all previews
             var arguments = arguments
@@ -93,12 +81,12 @@ public enum PrefireGenerator {
             // For grouped snapshots, replace {PREVIEW_FILE_NAME} with "Preview" to maintain current class name
             let customizedTemplate = inlineTemplate.replacingOccurrences(of: "{PREVIEW_FILE_NAME}", with: "Preview")
             
-            try renderAndWrite(parserResult: parserResult, inlineTemplate: customizedTemplate, output: output, arguments: arguments)
+            try renderAndWrite(graph: graph, inlineTemplate: customizedTemplate, output: output, arguments: arguments)
         } else {
             // Generate one file per source file containing previews
             try generateUngroupedFiles(
                 previewModels: previewModels,
-                parserResult: parserResult,
+                graph: graph,
                 inlineTemplate: inlineTemplate,
                 output: output,
                 arguments: arguments
@@ -110,7 +98,7 @@ public enum PrefireGenerator {
     
     private static func generateUngroupedFiles(
         previewModels: [[String: Any?]],
-        parserResult: FileParserResult,
+        graph: TypeGraph,
         inlineTemplate: String,
         output: Path,
         arguments: [String: NSObject]
@@ -146,7 +134,7 @@ public enum PrefireGenerator {
             
             Logger.info("🖋 Rendering template for \(fileName)...")
             try renderAndWrite(
-                parserResult: parserResult,
+                graph: graph,
                 inlineTemplate: customizedTemplate,
                 output: outputPath,
                 arguments: fileArguments
@@ -174,22 +162,14 @@ public enum PrefireGenerator {
     }
 
     private static func renderAndWrite(
-        parserResult: FileParserResult,
+        graph: TypeGraph,
         inlineTemplate: String,
         output: Path,
         arguments: [String: NSObject]
     ) throws {
         Logger.info("🖋 Rendering template...")
-        let tpl = StencilTemplate(templateString: inlineTemplate)
-
-        let context = TemplateContext(
-            parserResult: parserResult,
-            types: Types(types: parserResult.types),
-            functions: parserResult.functions,
-            arguments: arguments
-        )
-
-        let rendered = try tpl.render(context.stencilContext)
+        let context = StencilContext.make(graph: graph, arguments: arguments)
+        let rendered = try TemplateRenderer.render(template: inlineTemplate, context: context)
 
         Logger.info("💾 Writing to file: \(output)")
         try output.parent().mkpath()

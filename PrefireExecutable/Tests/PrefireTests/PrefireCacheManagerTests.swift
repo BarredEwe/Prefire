@@ -1,7 +1,6 @@
 import XCTest
 import Foundation
 import PathKit
-import SourceryRuntime
 @testable import PrefireCore
 
 final class PrefireCacheManagerTests: XCTestCase {
@@ -30,7 +29,7 @@ final class PrefireCacheManagerTests: XCTestCase {
             template: template,
             parseTypes: {
                 parsed = true
-                return Types(types: [])
+                return [ParsedType(name: "Example", localName: "Example", kind: .struct)]
             },
             parsePreviews: {
                 previewsParsed = true
@@ -51,7 +50,7 @@ final class PrefireCacheManagerTests: XCTestCase {
             template: template,
             parseTypes: {
                 XCTFail("Should not re-parse types if cache is valid")
-                return Types(types: [])
+                return []
             },
             parsePreviews: {
                 XCTFail("Should not re-parse previews if cache is valid")
@@ -60,6 +59,8 @@ final class PrefireCacheManagerTests: XCTestCase {
         )
 
         XCTAssertEqual(cachedPreviews, firstPreviews)
+        XCTAssertEqual(cachedTypes, firstTypes)
+        XCTAssertEqual(cachedTypes.first?.name, "Example")
 
         // Touch the file (simulate source change)
         try file.write(try file.read(), encoding: .utf8)
@@ -68,7 +69,7 @@ final class PrefireCacheManagerTests: XCTestCase {
             sources: [file],
             template: template,
             parseTypes: {
-                Types(types: [])
+                []
             },
             parsePreviews: {
                 PreviewLoader.previewModels(from: """
@@ -80,5 +81,6 @@ final class PrefireCacheManagerTests: XCTestCase {
         )
 
         XCTAssertEqual(updatedPreviews["Example_0"]?.body, "Text(\"Updated\")")
+        XCTAssertTrue(updatedTypes.isEmpty)
     }
 }

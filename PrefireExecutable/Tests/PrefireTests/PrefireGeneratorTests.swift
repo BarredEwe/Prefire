@@ -114,6 +114,138 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits"))
     }
 
+    /// Conformance inherited through another protocol has to be detected, not just the one
+    /// written on the declaration.
+    func testProviderDetectedThroughIntermediateProtocol() async throws {
+        let file = Path("/tmp/PrefireIndirectProvider.swift")
+        let output = Path("/tmp/PrefireIndirectProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_indirect_provider/")
+        try file.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+        protocol TeamProvider: PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider, TeamProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+        XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertFalse(result.contains("TeamProvider._allPreviews"))
+    }
+
+    func testProviderDetectedThroughProtocolComposition() async throws {
+        let file = Path("/tmp/PrefireCompositionProvider.swift")
+        let output = Path("/tmp/PrefireCompositionProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_composition_provider/")
+        try file.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider & PrefireProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+    }
+
+    /// Conformance added by an extension in another file has to be detected too.
+    func testProviderDetectedThroughExtension() async throws {
+        let declaration = Path("/tmp/PrefireExtensionProviderDecl.swift")
+        let conformance = Path("/tmp/PrefireExtensionProviderConformance.swift")
+        let output = Path("/tmp/PrefireExtensionProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_extension_provider/")
+        try declaration.write("""
+        import SwiftUI
+
+        protocol PrefireProvider {}
+
+        struct Panel_Previews: PreviewProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        """)
+        try conformance.write("extension Panel_Previews: PrefireProvider {}\n")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [declaration, conformance],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+    }
+
+    /// The `annotated:` filter keeps working without Sourcery.
+    func testProviderDetectedThroughAnnotation() async throws {
+        let file = Path("/tmp/PrefireAnnotatedProvider.swift")
+        let output = Path("/tmp/PrefireAnnotatedProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_annotated_provider/")
+        try file.write("""
+        import SwiftUI
+
+        // sourcery: PrefireProvider
+        struct Panel_Previews: PreviewProvider {
+            static var previews: some View {
+                Text("Panel")
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+    }
+
     func testPrefireProviderTemplateUsesPreviewDeviceNotPreviewModel() async throws {
         let file = Path("/tmp/PrefireProviderPreview.swift")
         let output = Path("/tmp/PrefireProviderPreviewTests.generated.swift")
