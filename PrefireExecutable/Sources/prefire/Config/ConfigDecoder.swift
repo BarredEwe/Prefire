@@ -93,6 +93,8 @@ final class ConfigDecoder {
         switch key {
             case .targetPath:
                 config.playbook.targetPath = getValue(from: components.last, env: env)
+            case .sources:
+                config.playbook.sources = getValues(from: components, lines: lines, env: env)
             case .template:
                 config.playbook.template = getValue(from: components.last, env: env)
             case .previewDefaultEnabled:
