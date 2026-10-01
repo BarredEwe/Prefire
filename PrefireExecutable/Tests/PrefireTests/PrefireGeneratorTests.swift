@@ -215,6 +215,68 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
     }
 
+    /// `extension X: PrefireProvider` for a type declared outside the scanned sources still gets a test.
+    func testProviderDetectedThroughExtensionOfUndeclaredType() async throws {
+        let file = Path("/tmp/PrefireExternalExtensionProvider.swift")
+        let output = Path("/tmp/PrefireExternalExtensionProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_external_extension_provider/")
+        try file.write("""
+        import Prefire
+
+        extension ExternalPanel_Previews: PrefireProvider {}
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+        XCTAssertTrue(result.contains("func test_externalPanel()"))
+        XCTAssertTrue(result.contains("for preview in ExternalPanel_Previews._allPreviews"))
+    }
+
+    /// A nested provider must still produce a valid Swift function name.
+    func testNestedProviderGetsValidTestName() async throws {
+        let file = Path("/tmp/PrefireNestedProvider.swift")
+        let output = Path("/tmp/PrefireNestedProviderTests.generated.swift")
+        let cache = Path("/tmp/cache_prefire_nested_provider/")
+        try file.write("""
+        import SwiftUI
+
+        enum Feature {
+            struct Panel_Previews: PreviewProvider, PrefireProvider {
+                static var previews: some View {
+                    Text("Panel")
+                }
+            }
+        }
+
+        """)
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+        XCTAssertTrue(result.contains("func test_feature_Panel()"))
+        XCTAssertTrue(result.contains("for preview in Feature.Panel_Previews._allPreviews"))
+    }
+
     /// The `annotated:` filter keeps working without Sourcery.
     func testProviderDetectedThroughAnnotation() async throws {
         let file = Path("/tmp/PrefireAnnotatedProvider.swift")

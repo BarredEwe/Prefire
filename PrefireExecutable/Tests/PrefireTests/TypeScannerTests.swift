@@ -57,15 +57,42 @@ final class TypeScannerTests: XCTestCase {
         XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["Panel_Previews"])
     }
 
-    /// An extension of a type declared elsewhere is kept, but is not offered as a generatable type:
-    /// the generated code could not name it reliably.
-    func test_extensionOfUnknownTypeIsNotGeneratable() {
-        let graph = graph("extension SomeExternalView: PrefireProvider {}")
+    /// `extension SomeExternalView: PrefireProvider {}` for a type declared outside the scanned
+    /// sources is a supported way to opt a preview in.
+    func test_extensionOfUnknownTypeIsGeneratable() {
+        let graph = graph("extension SomeExternal_Previews: PrefireProvider {}")
 
         XCTAssertEqual(graph.types.count, 1)
         XCTAssertTrue(graph.types[0].isExtension)
         XCTAssertEqual(graph.types[0].kind, .extension)
-        XCTAssertTrue(graph.types(conformingTo: "PrefireProvider").isEmpty)
+        XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["SomeExternal_Previews"])
+    }
+
+    func test_extensionOfUnknownTypeThroughAnotherProtocol() {
+        let graph = graph(
+            """
+            protocol TeamProvider: PrefireProvider {}
+            extension SomeExternal_Previews: TeamProvider {}
+            """
+        )
+
+        XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["SomeExternal_Previews"])
+    }
+
+    func test_moduleQualifiedExtensionFoldsIntoDeclaration() throws {
+        let graph = graph(
+            "extension MyApp.Panel_Previews: PrefireProvider {}",
+            "struct Panel_Previews: PreviewProvider {}"
+        )
+
+        XCTAssertEqual(graph.types.map(\.name), ["Panel_Previews"])
+        XCTAssertTrue(graph.based(of: try type(named: "Panel_Previews", in: graph)).contains("PrefireProvider"))
+    }
+
+    func test_moduleQualifiedExtensionOfUnknownTypeIsKept() {
+        let graph = graph("extension SomeModule.Panel_Previews: PrefireProvider {}")
+
+        XCTAssertEqual(graph.types(conformingTo: "PrefireProvider").map(\.name), ["SomeModule.Panel_Previews"])
     }
 
     func test_moduleQualifiedConformanceMatchesUnqualifiedName() throws {
@@ -164,6 +191,23 @@ final class TypeScannerTests: XCTestCase {
         XCTAssertEqual(documented.annotations["userStory"], "Onboarding")
         XCTAssertTrue(documented.isAnnotated(with: "userStory = Onboarding"))
         XCTAssertFalse(documented.isAnnotated(with: "userStory = Checkout"))
+    }
+
+    func test_annotationValuesKeepSlashesAndQuotedCommas() throws {
+        let graph = graph(
+            """
+            // prefire: link = "https://example.com/a,b", PrefireProvider
+            struct Panel_Previews {}
+
+            /* sourcery: Legacy */
+            struct Block_Previews {}
+            """
+        )
+
+        let panel = try type(named: "Panel_Previews", in: graph)
+        XCTAssertEqual(panel.annotations["link"], "https://example.com/a,b")
+        XCTAssertTrue(panel.isAnnotated(with: "PrefireProvider"))
+        XCTAssertTrue(try type(named: "Block_Previews", in: graph).isAnnotated(with: "Legacy"))
     }
 
     func test_annotationOnDeclarationWithAttributes() throws {

@@ -46,8 +46,8 @@ import SnapshotTesting
 
     // MARK: - PreviewProvider
 
-    {% for type in types.types where type.kind != "protocol" and type.kind != "extension" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
-    func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
+    {% for type in types.types where type.kind != "protocol" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
+    func test_{{ type.name|lowerFirstLetter|replace:"_Previews", ""|replace:".", "_" }}() {
         for preview in {{ type.name }}._allPreviews {
             let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)
             if let failure = assertSnapshots(for: prefireSnapshot) {

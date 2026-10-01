@@ -20,10 +20,13 @@ enum TemplateRenderer {
             guard let annotation = arguments.first as? String else {
                 throw TemplateSyntaxError("'annotated' filter takes a single string argument")
             }
-            if let types = typeDictionaries(value) {
-                return types.filter { ParsedType.isAnnotated($0, with: annotation) }
+            func isAnnotated(_ type: [String: Any]) -> Bool {
+                ParsedType.annotations(type["annotations"] as? [String: String] ?? [:], match: annotation)
             }
-            return typeDictionary(value).map { ParsedType.isAnnotated($0, with: annotation) } ?? false
+            if let types = typeDictionaries(value) {
+                return types.filter(isAnnotated)
+            }
+            return typeDictionary(value).map(isAnnotated) ?? false
         }
 
         registerConformanceFilter(on: ext, named: "based")
@@ -129,20 +132,5 @@ private final class BlankLineCollapsingTemplate: Template {
         string
             .replacingOccurrences(of: "\n\(marker)\n", with: "\n\n")
             .replacingOccurrences(of: "\n\(marker)\n", with: "\n\n")
-    }
-}
-
-private extension ParsedType {
-    /// Annotation matching for values already flattened into the template context.
-    static func isAnnotated(_ type: [String: Any], with annotation: String) -> Bool {
-        let annotations = type["annotations"] as? [String: String] ?? [:]
-
-        guard let equalsIndex = annotation.firstIndex(of: "=") else {
-            return annotations[annotation] != nil
-        }
-
-        let key = annotation[annotation.startIndex ..< equalsIndex].trimmingCharacters(in: .whitespaces)
-        let value = annotation[annotation.index(after: equalsIndex)...].trimmingCharacters(in: .whitespaces)
-        return annotations[key] == value
     }
 }

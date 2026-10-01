@@ -69,6 +69,12 @@ extension ParsedType {
 
     /// Matches Sourcery's `annotated:` filter, including its `key = value` form.
     func isAnnotated(with annotation: String) -> Bool {
+        Self.annotations(annotations, match: annotation)
+    }
+
+    /// Shared with the `annotated:` template filter, which sees annotations already flattened into
+    /// the template context.
+    static func annotations(_ annotations: [String: String], match annotation: String) -> Bool {
         guard let equalsIndex = annotation.firstIndex(of: "=") else {
             return annotations[annotation] != nil
         }

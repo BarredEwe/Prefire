@@ -26,23 +26,51 @@ enum TypeScanner {
                     types.append(type)
                     continue
                 }
-
-                var existing = types[existingIndex]
-                for inherited in type.inherits where !existing.inherits.contains(inherited) {
-                    existing.inherits.append(inherited)
-                }
-                existing.annotations.merge(type.annotations) { current, _ in current }
-                // A real declaration always wins over the placeholder an extension produces.
-                if existing.isExtension, !type.isExtension {
-                    existing.kind = type.kind
-                    existing.accessLevel = type.accessLevel
-                    existing.isExtension = false
-                }
-                types[existingIndex] = existing
+                fold(type, into: &types[existingIndex])
             }
         }
 
-        return types
+        // `extension MyApp.Panel_Previews` extends the `Panel_Previews` declared in the sources:
+        // fold it in, or the template would emit a second, uncompilable `MyApp.Panel_Previews` test.
+        var folded = IndexSet()
+        for (index, type) in types.enumerated() where type.isExtension {
+            guard let targetIndex = moduleQualifiedTarget(of: type.name, in: types, indexByName: indexByName) else {
+                continue
+            }
+            fold(type, into: &types[targetIndex])
+            folded.insert(index)
+        }
+
+        return types.enumerated().filter { !folded.contains($0.offset) }.map(\.element)
+    }
+
+    private static func fold(_ type: ParsedType, into existing: inout ParsedType) {
+        for inherited in type.inherits where !existing.inherits.contains(inherited) {
+            existing.inherits.append(inherited)
+        }
+        existing.annotations.merge(type.annotations) { current, _ in current }
+        // A real declaration always wins over the placeholder an extension produces.
+        if existing.isExtension, !type.isExtension {
+            existing.kind = type.kind
+            existing.accessLevel = type.accessLevel
+            existing.isExtension = false
+        }
+    }
+
+    /// Index of the declared type `name` refers to once its leading module name is dropped.
+    private static func moduleQualifiedTarget(
+        of name: String,
+        in types: [ParsedType],
+        indexByName: [String: Int]
+    ) -> Int? {
+        var components = name.split(separator: ".")
+        while components.count > 1 {
+            components.removeFirst()
+            if let index = indexByName[components.joined(separator: ".")], !types[index].isExtension {
+                return index
+            }
+        }
+        return nil
     }
 }
 
@@ -177,8 +205,8 @@ enum AnnotationParser {
             }
 
             guard let body = annotationBody(in: text) else { continue }
-            for entry in body.split(separator: ",") {
-                let (key, value) = keyValue(from: String(entry))
+            for entry in entries(in: body) {
+                let (key, value) = keyValue(from: entry)
                 guard !key.isEmpty else { continue }
                 annotations[key] = value
             }
@@ -187,18 +215,42 @@ enum AnnotationParser {
         return annotations
     }
 
-    /// Strips comment delimiters and the `sourcery:`/`prefire:` marker.
+    /// Strips the comment delimiters and the `sourcery:`/`prefire:` marker.
+    ///
+    /// Only the delimiters around the comment are removed, so a value such as `"https://..."` keeps
+    /// its own slashes.
     private static func annotationBody(in comment: String) -> String? {
-        var text = comment
-        for delimiter in ["///", "//", "/**", "/*", "*/"] {
-            text = text.replacingOccurrences(of: delimiter, with: " ")
+        var text = Substring(comment)
+        for opening in ["///", "//", "/**", "/*"] where text.hasPrefix(opening) {
+            text = text.dropFirst(opening.count)
+            break
         }
-        text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.hasSuffix("*/") { text = text.dropLast(2) }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        for prefix in prefixes where text.lowercased().hasPrefix(prefix) {
-            return String(text.dropFirst(prefix.count))
+        for prefix in prefixes where trimmed.lowercased().hasPrefix(prefix) {
+            return String(trimmed.dropFirst(prefix.count))
         }
         return nil
+    }
+
+    /// Splits `a, b = "x, y"` on the commas outside quotes.
+    private static func entries(in body: String) -> [String] {
+        var entries: [String] = []
+        var current = ""
+        var isQuoted = false
+
+        for character in body {
+            if character == "\"" { isQuoted.toggle() }
+            if character == ",", !isQuoted {
+                entries.append(current)
+                current = ""
+            } else {
+                current.append(character)
+            }
+        }
+        entries.append(current)
+        return entries
     }
 
     private static func keyValue(from entry: String) -> (key: String, value: String) {

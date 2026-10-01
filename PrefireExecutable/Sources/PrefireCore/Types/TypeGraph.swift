@@ -52,11 +52,11 @@ struct TypeGraph {
 
     /// Types conforming to `protocolName`, directly or through another protocol.
     ///
-    /// Extension-only placeholders are excluded: the conforming type has to be declared in the
-    /// scanned sources for the generated code to be able to name it.
+    /// Mirrors the default templates: protocols are skipped, extension-only types are kept, since
+    /// `extension SomePreviews: PrefireProvider {}` is a supported way to opt a preview in.
     func types(conformingTo protocolName: String) -> [ParsedType] {
         types.filter { type in
-            guard !type.isExtension, type.kind != .protocol else { return false }
+            guard type.kind != .protocol else { return false }
             return based(of: type).contains(protocolName)
         }
     }

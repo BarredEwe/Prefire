@@ -70,8 +70,8 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 `types` comes from Prefire's own scan of the sources. The default templates iterate over it to generate one `func test_*()` per `PreviewProvider`/`PrefireProvider` type:
 
 ```stencil
-{% for type in types.types where type.kind != "protocol" and type.kind != "extension" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
-func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
+{% for type in types.types where type.kind != "protocol" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
+func test_{{ type.name|lowerFirstLetter|replace:"_Previews", ""|replace:".", "_" }}() {
     for preview in {{ type.name }}._allPreviews {
         // ...
     }
@@ -79,7 +79,7 @@ func test_{{ type.name|lowerFirstLetter|replace:"_Previews", "" }}() {
 {% endfor %}
 ```
 
-Skip `protocol` and `extension` kinds: an intermediate `protocol TeamProvider: PrefireProvider` is itself "based on" `PrefireProvider`, but `TeamProvider._allPreviews` does not compile.
+Skip the `protocol` kind: an intermediate `protocol TeamProvider: PrefireProvider` is itself "based on" `PrefireProvider`, but `TeamProvider._allPreviews` does not compile. Keep the `extension` kind: `extension SomePreviews: PrefireProvider {}` for a type declared outside the scanned sources is a supported way to opt a preview in.
 
 Fields on a `type`:
 
