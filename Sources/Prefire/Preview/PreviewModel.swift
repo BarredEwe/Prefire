@@ -71,6 +71,7 @@ public struct PreviewModel: Identifiable {
         self.deviceConfig = deviceConfig
     }
 
+    #if os(iOS) || os(tvOS) || os(macOS)
     @MainActor
     public init<T: PrefireNativeView>(
         id: String? = nil,
@@ -94,4 +95,5 @@ public struct PreviewModel: Identifiable {
     ) {
         self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
+    #endif
 }

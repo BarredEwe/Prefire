@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Prefire",
-    platforms: [.iOS(.v14), .macOS(.v13)],
+    platforms: [.iOS(.v14), .macOS(.v13), .watchOS(.v7)],
     products: [
         .library(
             name: "Prefire",
