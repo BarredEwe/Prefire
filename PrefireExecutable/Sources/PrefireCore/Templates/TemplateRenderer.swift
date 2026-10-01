@@ -26,7 +26,7 @@ enum TemplateRenderer {
             if let types = typeDictionaries(value) {
                 return types.filter(isAnnotated)
             }
-            return typeDictionary(value).map(isAnnotated) ?? false
+            return (value as? [String: Any]).map(isAnnotated) ?? false
         }
 
         registerConformanceFilter(on: ext, named: "based")
@@ -48,16 +48,16 @@ enum TemplateRenderer {
         }
 
         ext.registerFilter("toArray") { value in
-            if let array = asArray(value) { return array }
+            if let array = value as? [Any] { return array }
             return value.map { [$0] }
         }
 
         ext.registerFilter("last") { value in
-            asArray(value)?.last
+            (value as? [Any])?.last
         }
 
         ext.registerFilter("reversed") { value in
-            asArray(value).map { Array($0.reversed()) }
+            (value as? [Any]).map { Array($0.reversed()) }
         }
 
         return ext
@@ -75,25 +75,17 @@ enum TemplateRenderer {
                     return names[expected] != nil
                 }
             }
-            guard let type = typeDictionary(value), let names = type[name] as? [String: String] else {
+            guard let type = value as? [String: Any], let names = type[name] as? [String: String] else {
                 return false
             }
             return names[expected] != nil
         }
     }
 
-    private static func typeDictionary(_ value: Any?) -> [String: Any]? {
-        value as? [String: Any]
-    }
-
     private static func typeDictionaries(_ value: Any?) -> [[String: Any]]? {
         guard let array = value as? [Any] else { return nil }
         let types = array.compactMap { $0 as? [String: Any] }
         return types.count == array.count ? types : nil
-    }
-
-    private static func asArray(_ value: Any?) -> [Any]? {
-        value as? [Any]
     }
 }
 
@@ -107,6 +99,9 @@ private final class BlankLineCollapsingTemplate: Template {
 
     private static let blankLineRuns = try! NSRegularExpression(pattern: "\\n([ \\t]*\\n)+")
 
+    /// A newline directly followed by another one; the lookahead keeps runs from overlapping.
+    private static let intentionalBlankLines = try! NSRegularExpression(pattern: "\\n(?=\\n)")
+
     required init(templateString: String, environment: Environment? = nil, name: String? = nil) {
         super.init(templateString: Self.markIntentionalBlankLines(templateString), environment: environment, name: name)
     }
@@ -118,19 +113,15 @@ private final class BlankLineCollapsingTemplate: Template {
             range: NSRange(location: 0, length: rendered.utf16.count),
             withTemplate: "\n"
         )
-        return Self.unmarkBlankLines(collapsed)
+        // A marked line holds nothing but the marker, so dropping it restores the blank line.
+        return collapsed.replacingOccurrences(of: Self.marker, with: "")
     }
 
-    /// Applied twice: overlapping matches mean a single pass misses every other blank line.
     private static func markIntentionalBlankLines(_ string: String) -> String {
-        string
-            .replacingOccurrences(of: "\n\n", with: "\n\(marker)\n")
-            .replacingOccurrences(of: "\n\n", with: "\n\(marker)\n")
-    }
-
-    private static func unmarkBlankLines(_ string: String) -> String {
-        string
-            .replacingOccurrences(of: "\n\(marker)\n", with: "\n\n")
-            .replacingOccurrences(of: "\n\(marker)\n", with: "\n\n")
+        intentionalBlankLines.stringByReplacingMatches(
+            in: string,
+            range: NSRange(location: 0, length: string.utf16.count),
+            withTemplate: "\n\(marker)"
+        )
     }
 }

@@ -3,10 +3,8 @@ import XCTest
 
 final class TemplateRendererTests: XCTestCase {
     private func context(from source: String) -> [String: Any] {
-        StencilContext.make(
-            graph: TypeGraph(types: TypeScanner.merge([TypeScanner.scan(contents: source)])),
-            arguments: [:]
-        )
+        StencilContext(graph: TypeGraph(types: TypeScanner.merge([TypeScanner.scan(contents: source)])))
+            .dictionary(arguments: [:])
     }
 
     func testAnnotatedFilterBooleanAndCollectionForms() throws {

@@ -14,9 +14,6 @@ struct ParsedType: Codable, Equatable {
     /// Fully-qualified name, e.g. `Outer.Inner`.
     var name: String
 
-    /// Unqualified name, e.g. `Inner`.
-    var localName: String
-
     var kind: Kind
 
     /// `open`, `public`, `package`, `internal`, `fileprivate` or `private`.
@@ -31,30 +28,33 @@ struct ParsedType: Codable, Equatable {
     /// Annotations from `// prefire:` / `// sourcery:` comments preceding the declaration.
     var annotations: [String: String]
 
-    /// True when the type itself was not declared in the scanned sources and is only known
-    /// through an `extension`.
-    var isExtension: Bool
-
     init(
         name: String,
-        localName: String,
         kind: Kind,
         accessLevel: String = "internal",
         inherits: [String] = [],
-        annotations: [String: String] = [:],
-        isExtension: Bool = false
+        annotations: [String: String] = [:]
     ) {
         self.name = name
-        self.localName = localName
         self.kind = kind
         self.accessLevel = accessLevel
         self.inherits = inherits
         self.annotations = annotations
-        self.isExtension = isExtension
     }
 }
 
 extension ParsedType {
+    /// Unqualified name, e.g. `Inner`.
+    var localName: String {
+        name.split(separator: ".").last.map(String.init) ?? name
+    }
+
+    /// True when the type itself was not declared in the scanned sources and is only known
+    /// through an `extension`.
+    var isExtension: Bool {
+        kind == .extension
+    }
+
     /// Directly inherited names, both as written and unqualified.
     var inheritedNames: Set<String> {
         var names = Set<String>()

@@ -1,32 +1,40 @@
 import Foundation
 
-enum StencilContext {
-    static func make(graph: TypeGraph, arguments: [String: NSObject]) -> [String: Any] {
-        let dictionaries = graph.types.map { dictionary(for: $0, graph: graph) }
+/// Template context in the shape Sourcery provided (`types`, `type`, `argument`), so custom
+/// templates keep working.
+///
+/// The type part depends only on the scanned sources, so it is built once and reused for every
+/// rendered file.
+struct StencilContext {
+    private let types: [String: Any]
+    private let typesByName: [String: [String: Any]]
 
-        var typesByName: [String: [String: Any]] = [:]
-        for dictionary in dictionaries {
-            guard let name = dictionary["name"] as? String else { continue }
-            typesByName[name] = dictionary
+    init(graph: TypeGraph) {
+        let entries = graph.types.map { (type: $0, dictionary: Self.dictionary(for: $0, graph: graph)) }
+
+        func dictionaries(where isIncluded: (ParsedType) -> Bool) -> [[String: Any]] {
+            entries.filter { isIncluded($0.type) }.map(\.dictionary)
         }
 
-        let declared = dictionaries.filter { $0["isExtension"] as? Bool == false }
-        // Sourcery's `types.all` excludes protocols (and protocol compositions).
-        let all = declared.filter { $0["kind"] as? String != "protocol" }
+        types = [
+            "types": entries.map(\.dictionary),
+            // Sourcery's `types.all` excludes protocols (and protocol compositions).
+            "all": dictionaries { !$0.isExtension && $0.kind != .protocol },
+            "protocols": dictionaries { $0.kind == .protocol },
+            "classes": dictionaries { $0.kind == .class },
+            "structs": dictionaries { $0.kind == .struct },
+            "enums": dictionaries { $0.kind == .enum },
+            "extensions": dictionaries(where: \.isExtension),
+            "based": Self.group(entries, by: graph.based(of:)),
+            "implementing": Self.group(entries, by: graph.implements(of:)),
+            "inheriting": Self.group(entries, by: graph.inherits(of:))
+        ]
+        typesByName = Dictionary(entries.map { ($0.type.name, $0.dictionary) }) { first, _ in first }
+    }
 
-        return [
-            "types": [
-                "types": dictionaries,
-                "all": all,
-                "protocols": declared.filter { $0["kind"] as? String == "protocol" },
-                "classes": declared.filter { $0["kind"] as? String == "class" },
-                "structs": declared.filter { $0["kind"] as? String == "struct" },
-                "enums": declared.filter { $0["kind"] as? String == "enum" },
-                "extensions": dictionaries.filter { $0["isExtension"] as? Bool == true },
-                "based": group(dictionaries, by: "based"),
-                "implementing": group(dictionaries, by: "implements"),
-                "inheriting": group(dictionaries, by: "inherits")
-            ],
+    func dictionary(arguments: [String: NSObject]) -> [String: Any] {
+        [
+            "types": types,
             "type": typesByName,
             "argument": arguments,
             "functions": [Any]()
@@ -53,12 +61,14 @@ enum StencilContext {
         Dictionary(uniqueKeysWithValues: names.map { ($0, $0) })
     }
 
-    private static func group(_ dictionaries: [[String: Any]], by key: String) -> [String: [[String: Any]]] {
+    private static func group(
+        _ entries: [(type: ParsedType, dictionary: [String: Any])],
+        by names: (ParsedType) -> Set<String>
+    ) -> [String: [[String: Any]]] {
         var grouped: [String: [[String: Any]]] = [:]
-        for dictionary in dictionaries {
-            guard let names = dictionary[key] as? [String: String] else { continue }
-            for name in names.keys {
-                grouped[name, default: []].append(dictionary)
+        for entry in entries {
+            for name in names(entry.type) {
+                grouped[name, default: []].append(entry.dictionary)
             }
         }
         return grouped

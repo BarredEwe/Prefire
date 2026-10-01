@@ -242,7 +242,7 @@ final class TypeScannerTests: XCTestCase {
             struct Panel_Previews: TeamProvider {}
             """
         )
-        let context = StencilContext.make(graph: graph, arguments: [:])
+        let context = StencilContext(graph: graph).dictionary(arguments: [:])
         let types = context["types"] as? [String: Any]
 
         let allNames = ((types?["all"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }

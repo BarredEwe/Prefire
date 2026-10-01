@@ -71,7 +71,7 @@ public enum PrefireGenerator {
                 return dict
             }
 
-        let graph = TypeGraph(types: types)
+        let context = StencilContext(graph: TypeGraph(types: types))
 
         if useGroupedSnapshots {
             // Generate one file with all previews
@@ -81,12 +81,12 @@ public enum PrefireGenerator {
             // For grouped snapshots, replace {PREVIEW_FILE_NAME} with "Preview" to maintain current class name
             let customizedTemplate = inlineTemplate.replacingOccurrences(of: "{PREVIEW_FILE_NAME}", with: "Preview")
             
-            try renderAndWrite(graph: graph, inlineTemplate: customizedTemplate, output: output, arguments: arguments)
+            try renderAndWrite(context: context, inlineTemplate: customizedTemplate, output: output, arguments: arguments)
         } else {
             // Generate one file per source file containing previews
             try generateUngroupedFiles(
                 previewModels: previewModels,
-                graph: graph,
+                context: context,
                 inlineTemplate: inlineTemplate,
                 output: output,
                 arguments: arguments
@@ -98,7 +98,7 @@ public enum PrefireGenerator {
     
     private static func generateUngroupedFiles(
         previewModels: [[String: Any?]],
-        graph: TypeGraph,
+        context: StencilContext,
         inlineTemplate: String,
         output: Path,
         arguments: [String: NSObject]
@@ -134,7 +134,7 @@ public enum PrefireGenerator {
             
             Logger.info("🖋 Rendering template for \(fileName)...")
             try renderAndWrite(
-                graph: graph,
+                context: context,
                 inlineTemplate: customizedTemplate,
                 output: outputPath,
                 arguments: fileArguments
@@ -162,14 +162,16 @@ public enum PrefireGenerator {
     }
 
     private static func renderAndWrite(
-        graph: TypeGraph,
+        context: StencilContext,
         inlineTemplate: String,
         output: Path,
         arguments: [String: NSObject]
     ) throws {
         Logger.info("🖋 Rendering template...")
-        let context = StencilContext.make(graph: graph, arguments: arguments)
-        let rendered = try TemplateRenderer.render(template: inlineTemplate, context: context)
+        let rendered = try TemplateRenderer.render(
+            template: inlineTemplate,
+            context: context.dictionary(arguments: arguments)
+        )
 
         Logger.info("💾 Writing to file: \(output)")
         try output.parent().mkpath()

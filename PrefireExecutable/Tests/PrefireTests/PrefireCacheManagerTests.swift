@@ -29,7 +29,7 @@ final class PrefireCacheManagerTests: XCTestCase {
             template: template,
             parseTypes: {
                 parsed = true
-                return [ParsedType(name: "Example", localName: "Example", kind: .struct)]
+                return [ParsedType(name: "Example", kind: .struct)]
             },
             parsePreviews: {
                 previewsParsed = true
