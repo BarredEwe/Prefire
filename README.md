@@ -261,6 +261,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Group in a flow | `.previewUserStory(.auth)` |
 | Mark a UI state | `.previewState(.error)` |
 | Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
+| Snapshot light & dark, Dynamic Type, RTL, locale | `.snapshotVariants([.light, .dark])` |
 | Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---
