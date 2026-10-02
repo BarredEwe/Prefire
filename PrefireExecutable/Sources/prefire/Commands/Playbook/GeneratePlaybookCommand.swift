@@ -18,6 +18,7 @@ struct GeneratedPlaybookOptions {
 
     init(targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
         self.targetPath = config?.playbook.targetPath ?? targetPath
+        let sources = config?.playbook.sources ?? sources
         self.sources = sources.isEmpty ? [.current] : sources.compactMap({ Path($0) })
 
         self.output = (output.flatMap({ Path($0) }) ?? .current) + Constants.defaultOutputName

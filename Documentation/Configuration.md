@@ -28,6 +28,9 @@ test_configuration:
 
 playbook_configuration:
   preview_default_enabled: true
+  sources:
+    - ${PACKAGE_DIR}/Sources/
+    - ${PACKAGE_DIR}/../UIComponents/Sources/
   template_file_path: CustomModels.stencil
   imports:
     - UIKit
@@ -53,6 +56,7 @@ playbook_configuration:
 | `use_grouped_snapshots`                        | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true`                                         |
 | `split_snapshot_directories`                   | When `use_grouped_snapshots: false`, also write snapshots into a separate `__Snapshots__/<File>Tests.generated/` folder per source file instead of one shared `__Snapshots__/PreviewTests.generated/` folder. Closes [#80](https://github.com/BarredEwe/Prefire/issues/80). Default: `false` to keep existing snapshot layouts working — opt in once you're ready to move the files.                |
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
+| `sources` (playbook)                           | Swift files or folders to scan for Playbook previews. Replaces the files of the target the plugin is attached to, so list that target too. Use it to build one catalog from several local packages. Preview code is compiled in the Playbook target, so the target must depend on those modules and everything a preview uses must be `public`. This includes `PreviewProvider` types (`public struct Foo_Previews: PreviewProvider, PrefireProvider`); `#Preview` blocks need no extra changes. |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |

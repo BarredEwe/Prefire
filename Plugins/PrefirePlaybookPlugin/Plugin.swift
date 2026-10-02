@@ -22,11 +22,17 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
         let sources = (target as? SwiftSourceModuleTarget)?.sourceFiles.filter { $0.type == .source }.map(\.url.path)
         arguments.append(contentsOf: sources ?? [targetPath])
 
+        let environment = [
+            "TARGET_DIR": targetPath,
+            "PACKAGE_DIR": context.package.directoryURL.path(percentEncoded: false),
+        ]
+
         return [
             .prebuildCommand(
                 displayName: "Running Prefire",
                 executable: executable,
                 arguments: arguments,
+                environment: environment,
                 outputFilesDirectory: outputPath
             ),
         ]
@@ -56,11 +62,16 @@ struct PrefirePlaybookPlugin: BuildToolPlugin {
             let sources = target.inputFiles.filter { $0.type == .source }.map { $0.url.path }
             arguments.append(contentsOf: sources)
 
+            let environment = [
+                "PROJECT_DIR": context.xcodeProject.directoryURL.path(percentEncoded: false),
+            ]
+
             return [
                 .prebuildCommand(
                     displayName: "Running Prefire Playbook",
                     executable: executable,
                     arguments: arguments,
+                    environment: environment,
                     outputFilesDirectory: outputPath
                 ),
             ]
