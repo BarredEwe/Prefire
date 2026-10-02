@@ -5,6 +5,8 @@ import PathKit
 private enum Constants {
     static let snapshotFileName = "PreviewTests.generated.swift"
     static let snapshotFileTemplated = "{PREVIEW_FILE_NAME}Tests.generated.swift"
+    static let snapshotsFolderName = "__Snapshots__"
+    static let previewFileNamePlaceholder = "{PREVIEW_FILE_NAME}"
 }
 
 struct GeneratedTestsOptions {
@@ -23,6 +25,7 @@ struct GeneratedTestsOptions {
     var testableImports: [String]?
     var useGroupedSnapshots: Bool
     var splitSnapshotDirectories: Bool
+    var deleteUnusedSnapshots: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
 
     init(
@@ -57,6 +60,7 @@ struct GeneratedTestsOptions {
         self.osVersion = config?.tests.osVersion ?? osVersion
         useGroupedSnapshots = config?.tests.useGroupedSnapshots ?? true
         splitSnapshotDirectories = config?.tests.splitSnapshotDirectories ?? false
+        deleteUnusedSnapshots = config?.tests.deleteUnusedSnapshots ?? false
         snapshotDevices = config?.tests.snapshotDevices
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
@@ -85,7 +89,7 @@ enum GenerateTestsCommand {
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
-        try await PrefireGenerator.generate(
+        let result = try await PrefireGenerator.generate(
             version: Prefire.Version.value,
             sources: options.sources,
             output: options.output + (options.useGroupedSnapshots ? Constants.snapshotFileName : Constants.snapshotFileTemplated),
@@ -94,6 +98,134 @@ enum GenerateTestsCommand {
             defaultEnabled: options.prefireEnabledMarker,
             cacheDir: options.cacheBasePath,
             useGroupedSnapshots: options.useGroupedSnapshots
+        )
+
+        // Nothing was parsed, so nothing was learned. Leaving the previous manifest untouched
+        // keeps a misconfigured `sources` from looking like "every preview was deleted".
+        guard result.parsedSourceCount > 0 else {
+            Logger.warning("⚠️ No Swift sources were parsed — the snapshot manifest was left unchanged.")
+            return
+        }
+
+        let manifest = makeManifest(for: options, result: result, previous: readManifest(for: options))
+        writeManifest(manifest, for: options)
+
+        guard options.deleteUnusedSnapshots else { return }
+
+        let orphans = SnapshotPruner.orphans(for: manifest)
+        guard !orphans.isEmpty else { return }
+
+        let deleted = try SnapshotPruner.delete(orphans)
+        Logger.warning("🗑 Deleted \(deleted.count) unused snapshot(s):" + deleted.map({ "\n  - " + $0 }).joined())
+    }
+
+    /// Where the manifest is looked for, most specific first.
+    ///
+    /// It belongs next to the snapshots it describes: a plugin build generates the tests into its
+    /// work directory inside DerivedData, which a standalone `prefire prune` cannot guess, while
+    /// `test_target_path` resolves the same way for both. The generated tests folder stays as a
+    /// fallback for setups without `test_target_path` — and for SwiftPM plugins, which are
+    /// sandboxed out of the package sources.
+    static func possibleManifestPaths(for options: GeneratedTestsOptions) -> [Path] {
+        [options.testTargetPath, options.output]
+            .compactMap({ $0.map({ $0 + SnapshotManifest.fileName }) })
+            .reduce(into: [Path]()) { paths, path in
+                guard !paths.contains(path) else { return }
+                paths.append(path)
+            }
+    }
+
+    /// The manifest of a previous run, or `nil` when none is readable.
+    static func readManifest(for options: GeneratedTestsOptions) -> SnapshotManifest? {
+        for path in possibleManifestPaths(for: options) where path.exists {
+            guard let manifest = try? SnapshotManifest.read(from: path.string) else {
+                Logger.warning("⚠️ Ignoring the unreadable snapshot manifest at \(path).")
+                continue
+            }
+            guard manifest.version == SnapshotManifest.currentVersion else {
+                Logger.warning("⚠️ Ignoring the snapshot manifest at \(path): it was written by another Prefire version.")
+                continue
+            }
+            return manifest
+        }
+
+        return nil
+    }
+
+    /// Writes the manifest to the first location that accepts it, dropping stale copies from the
+    /// others so `prune` can never read an outdated one. A failed write is reported, never fatal:
+    /// the manifest is a convenience, not part of the generated tests.
+    @discardableResult
+    static func writeManifest(_ manifest: SnapshotManifest, for options: GeneratedTestsOptions) -> Path? {
+        let paths = possibleManifestPaths(for: options)
+
+        for path in paths {
+            do {
+                try manifest.write(to: path.string)
+                Logger.info("💾 Writing snapshot manifest: \(path)")
+                paths.filter({ $0 != path }).forEach({ try? $0.delete() })
+                return path
+            } catch {
+                Logger.warning("⚠️ Could not write the snapshot manifest to \(path): \(error)")
+            }
+        }
+
+        return nil
+    }
+
+    /// Describes the snapshots the generated tests will record.
+    ///
+    /// SnapshotTesting derives a folder from each test file: `<file's folder>/__Snapshots__/<file
+    /// name>`. The generated tests pass `file` explicitly whenever `test_target_path` is set;
+    /// otherwise the generated file's own `#file` is used, which already splits the folders when
+    /// `use_grouped_snapshots: false`.
+    ///
+    /// Folders of `previous` that this run no longer produces are carried over with no expected
+    /// snapshots: deleting the last preview of a source file is exactly the case `prune` exists
+    /// for, and a folder missing from the manifest would never be looked at again.
+    static func makeManifest(
+        for options: GeneratedTestsOptions,
+        result: GenerationResult,
+        previous: SnapshotManifest? = nil
+    ) -> SnapshotManifest {
+        let splitDirectories = options.splitSnapshotDirectories && !options.useGroupedSnapshots
+        let perSourceDirectories = options.testTargetPath != nil ? splitDirectories : !options.useGroupedSnapshots
+        let base = options.testTargetPath ?? options.output
+
+        // The manifest only knows the display names the parser found. A custom template is free to
+        // rename or add snapshots, and `PrefireProvider` previews are named at runtime, so in both
+        // cases the folder is described for information only and never pruned.
+        let complete = options.template == nil && !result.hasPreviewProviders
+        if options.template != nil {
+            Logger.warning("⚠️ A custom template is in use, so `prefire prune` will not touch the recorded snapshots.")
+        }
+
+        var grouped: [String: [SnapshotManifest.Snapshot]] = [:]
+
+        for preview in result.previews {
+            let testFileName = perSourceDirectories
+                ? Constants.snapshotFileTemplated.replacingOccurrences(of: Constants.previewFileNamePlaceholder, with: preview.sourceFileName)
+                : Constants.snapshotFileName
+            let directory = (base + Constants.snapshotsFolderName + Path(testFileName).lastComponentWithoutExtension).string
+
+            grouped[directory, default: []].append(
+                SnapshotManifest.Snapshot(name: preview.displayName, parameterized: preview.isParameterized)
+            )
+        }
+
+        var directories = grouped.map { path, snapshots in
+            SnapshotManifest.Directory(path: path, snapshots: snapshots.sorted(by: { $0.name < $1.name }), complete: complete)
+        }
+
+        for directory in previous?.directories ?? [] where grouped[directory.path] == nil {
+            directories.append(
+                SnapshotManifest.Directory(path: directory.path, snapshots: [], complete: directory.complete && complete)
+            )
+        }
+
+        return SnapshotManifest(
+            snapshotDevices: options.snapshotDevices ?? [],
+            directories: directories.sorted(by: { $0.path < $1.path })
         )
     }
 
