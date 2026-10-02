@@ -4,6 +4,8 @@ import PrefireCore
 struct Config {
     var tests = TestsConfig()
     var playbook = PlaybookConfig()
+    /// Directory containing the loaded `.prefire` file. Used to resolve relative paths.
+    var configDirectory: String?
 
     enum CodingKeys: String, CodingKey {
         case tests = "test_configuration"
@@ -74,11 +76,30 @@ extension Config {
 
             Logger.info("🟢 The '.prefire' file is used on the path: \(configUrl.path)")
 
-            return ConfigDecoder().decode(from: configDataString, env: env)
+            var config = ConfigDecoder().decode(from: configDataString, env: env)
+            config.configDirectory = configUrl.deletingLastPathComponent().path(percentEncoded: false)
+            return config
         }
 
         Logger.verbose("🟡 The '.prefire' file was not found by paths:" + possibleConfigPaths.map({ "\n  - " + $0 }).joined())
 
         return nil
+    }
+}
+
+extension Config {
+    /// Resolves a template path from the config.
+    ///
+    /// Absolute paths are used as is. Relative paths are looked up relative to `targetPath`
+    /// (legacy behavior), then relative to the `.prefire` file directory, then the current directory.
+    /// The first existing file wins; if none exists, the first candidate is returned so the error shows a full path.
+    func resolveTemplatePath(_ template: String, targetPath: String?) -> String {
+        guard !template.hasPrefix("/") else { return template }
+
+        let candidates = [targetPath, configDirectory, FileManager.default.currentDirectoryPath]
+            .compactMap { $0 }
+            .map { URL(filePath: $0).appending(path: template).standardizedFileURL.path(percentEncoded: false) }
+
+        return candidates.first(where: { FileManager.default.fileExists(atPath: $0) }) ?? candidates.first ?? template
     }
 }
