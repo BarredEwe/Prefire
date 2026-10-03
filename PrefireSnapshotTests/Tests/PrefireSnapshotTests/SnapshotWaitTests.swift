@@ -9,6 +9,11 @@ import XCTest
 ///
 /// Every image a wait captures is compared with what `Snapshotting<AnyView, UIImage>.image` renders
 /// for a preview already showing the state that was waited for: they have to match pixel for pixel.
+///
+/// Sized to fit, SnapshotTesting measures the preview outside of a window, so how the height is
+/// rounded depends on the simulator. Prefire measures it in place with the snapshot traits, so there
+/// the reference is rendered at the size of the captured image, and only the heights are compared
+/// with some tolerance.
 @MainActor
 final class SnapshotWaitTests: XCTestCase {
     /// Dark, so a trait override that does not reach the preview shows up in the comparison.
@@ -34,7 +39,7 @@ final class SnapshotWaitTests: XCTestCase {
             let image = try XCTUnwrap(preferences.settledImage)
 
             try assertImage(image, matches: Phase("done"), isScreen: isScreen)
-            XCTAssertNotNil(diff(image, try reference(Phase("loading"), isScreen: isScreen)))
+            XCTAssertNotNil(diff(image, try reference(Phase("loading"), isScreen: isScreen, size: image.size)))
         }
     }
 
@@ -44,7 +49,8 @@ final class SnapshotWaitTests: XCTestCase {
         let (view, preferences) = snapshot.loadViewWithPreferences()
 
         XCTAssertNotNil(preferences.settledImage)
-        XCTAssertNil(diff(try render(view, isScreen: false), try reference(Phase("loading"), isScreen: false)))
+        let fresh = try render(view, layout: .sizeThatFits)
+        XCTAssertNil(diff(fresh, try reference(Phase("loading"), isScreen: false, size: fresh.size)))
     }
 
     func testWaitUntilConditionCapturesStateReachedInTask() throws {
@@ -116,24 +122,38 @@ final class SnapshotWaitTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) throws {
-        let expected = try reference(view, isScreen: isScreen)
+        let expected = try reference(view, isScreen: isScreen, size: image.size)
 
-        XCTAssertEqual(image.size, expected.size, "isScreen: \(isScreen)", file: file, line: line)
+        if isScreen {
+            XCTAssertEqual(image.size, expected.size, file: file, line: line)
+        } else {
+            let measured = try reference(view, isScreen: false).size
+            XCTAssertEqual(image.size.width, measured.width, file: file, line: line)
+            XCTAssertEqual(image.size.height, measured.height, accuracy: 1, file: file, line: line)
+        }
+
         XCTAssertEqual(image.scale, expected.scale, "isScreen: \(isScreen)", file: file, line: line)
         XCTAssertNil(diff(image, expected), "isScreen: \(isScreen)", file: file, line: line)
     }
 
     /// `view` rendered the way the generated tests render a preview that does not wait.
-    private func reference(_ view: some View, isScreen: Bool) throws -> UIImage {
+    ///
+    /// - Parameter size: Canvas of a preview that is not a screen, instead of measuring it.
+    private func reference(_ view: some View, isScreen: Bool, size: CGSize? = nil) throws -> UIImage {
         let snapshot = PrefireSnapshot({ view }, name: "Reference", isScreen: isScreen, device: device, traits: traits)
-        return try render(snapshot.loadViewWithPreferences().0, isScreen: isScreen)
+        let layout: SwiftUISnapshotLayout = if isScreen {
+            .device(config: .iPhoneX)
+        } else if let size {
+            .fixed(width: size.width, height: size.height)
+        } else {
+            .sizeThatFits
+        }
+
+        return try render(snapshot.loadViewWithPreferences().0, layout: layout)
     }
 
-    private func render(_ view: AnyView, isScreen: Bool) throws -> UIImage {
-        let strategy: Snapshotting<AnyView, UIImage> = .image(
-            layout: isScreen ? .device(config: .iPhoneX) : .sizeThatFits,
-            traits: traits
-        )
+    private func render(_ view: AnyView, layout: SwiftUISnapshotLayout) throws -> UIImage {
+        let strategy: Snapshotting<AnyView, UIImage> = .image(layout: layout, traits: traits)
 
         var image: UIImage?
         strategy.snapshot(view).run { image = $0 }

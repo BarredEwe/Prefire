@@ -78,6 +78,9 @@ final class SnapshotCanvas {
     }
 
     /// Follows the content when the canvas is sized to fit it, since a preview may grow while it loads.
+    ///
+    /// Measured in place, with the snapshot traits. SnapshotTesting measures outside of a window, where
+    /// rounding to the pixel grid depends on the simulator, so heights may differ by a fraction of a point.
     func layout() {
         guard isSizedToFit else { return }
 
