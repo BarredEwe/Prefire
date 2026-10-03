@@ -486,4 +486,64 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try expectedOutput.read(.utf8)
         XCTAssertTrue(result.contains("class TestPreviewTests: XCTestCase"), "Should use source file name as class name for ungrouped snapshots")
     }
+
+    func testTemplateWaitsForPreviewBeforeCapturing() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("if let waitFailure = preferences.waitFailure {"))
+        // macOS captures the view that was waited on, which already spent `delay`.
+        XCTAssertTrue(result.contains("for: preferences.resolvedDelay,"))
+        // iOS/tvOS compare the image captured where the preview settled, rendering it again would start it over.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false\n        )"))
+        XCTAssertTrue(result.contains("if let settledImage = preferences.settledImage {"))
+        // Waiting is off by default, but the suite still may not inherit another suite's defaults.
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
+        XCTAssertFalse(result.contains("SnapshotWaitDefaults.waitForIdle"))
+        XCTAssertFalse(result.contains("SnapshotWaitDefaults.timeout"))
+    }
+
+    func testTemplateAppliesWaitConfiguration() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_configuration_preview/")
+        let args: [String: NSObject] = [
+            "snapshotWaitForIdle": "true" as NSString,
+            "snapshotWaitTimeout": "2.5" as NSString,
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
+        ]
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: args,
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.waitForIdle = true"))
+        XCTAssertTrue(result.contains("SnapshotWaitDefaults.timeout = 2.5"))
+        // A preview that is waited on is captured the way the snapshot strategy would capture it.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: true\n        )"))
+    }
 }

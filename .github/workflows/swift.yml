@@ -13,7 +13,7 @@ jobs:
   build:
     name: Run ${{ matrix.xcode }}
     runs-on: ${{ matrix.runsOn }}
-    timeout-minutes: 10
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +36,9 @@ jobs:
 
       - name: Run PrefireExecutable Tests
         run: make test
+
+      - name: Run Prefire iOS Snapshot Tests
+        run: make test-ios
 
       - name: Build prefire CLI wrapper
         run: swift build -c release --product prefire
