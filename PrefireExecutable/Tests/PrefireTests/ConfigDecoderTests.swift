@@ -108,4 +108,18 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
     }
+
+    func test_snapshotWaitTimeout_ignoresValuesThatAreNotPositive() {
+        for value in ["0", "-1", "soon"] {
+            let config = ConfigDecoder().decode(
+                from: """
+                test_configuration:
+                  - snapshot_wait_timeout: \(value)
+                """,
+                env: env
+            )
+
+            XCTAssertNil(config.tests.snapshotWaitTimeout, value)
+        }
+    }
 }

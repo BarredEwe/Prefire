@@ -506,9 +506,11 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("if let waitFailure = preferences.waitFailure {"))
-        // The measured settle time is used as the delay, the explicit `delay` keeps working.
+        // macOS captures the view that was waited on, which already spent `delay`.
         XCTAssertTrue(result.contains("for: preferences.resolvedDelay,"))
-        XCTAssertFalse(result.contains("for: preferences.delay,"))
+        // iOS/tvOS compare the image captured where the preview settled, rendering it again would start it over.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false\n        )"))
+        XCTAssertTrue(result.contains("if let settledImage = preferences.settledImage {"))
         // Waiting is off by default, but the suite still may not inherit another suite's defaults.
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
         XCTAssertFalse(result.contains("SnapshotWaitDefaults.waitForIdle"))
@@ -522,6 +524,7 @@ final class PrefireGeneratorTests: XCTestCase {
         let args: [String: NSObject] = [
             "snapshotWaitForIdle": "true" as NSString,
             "snapshotWaitTimeout": "2.5" as NSString,
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
         ]
 
         try await PrefireGenerator.generate(
@@ -540,5 +543,7 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.reset()"))
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.waitForIdle = true"))
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.timeout = 2.5"))
+        // A preview that is waited on is captured the way the snapshot strategy would capture it.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: true\n        )"))
     }
 }

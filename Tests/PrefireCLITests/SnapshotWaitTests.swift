@@ -39,8 +39,6 @@ final class SnapshotWaitTests: XCTestCase {
 
         XCTAssertNil(preferences.waitFailure)
         XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.2)
-        // The wait happens on the captured view itself, so nothing is replayed as a delay.
-        XCTAssertEqual(preferences.settleDelay, 0)
     }
 
     func testWaitForIdleFailsWithTimeoutMessage() throws {
@@ -67,6 +65,25 @@ final class SnapshotWaitTests: XCTestCase {
         // The delay was spent on the view being captured, so the strategy must not spend it again.
         XCTAssertTrue(preferences.isDelayApplied)
         XCTAssertEqual(preferences.resolvedDelay, 0)
+    }
+
+    func testTimeoutFallsBackToProjectWideDefault() {
+        SnapshotWaitDefaults.timeout = 0.3
+
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitForIdle: true) }.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitTimeout)
+        XCTAssertEqual(preferences.resolvedTimeout, 0.3)
+    }
+
+    /// An explicit timeout is used as is, even `0`, rather than being taken for "not set".
+    func testExplicitZeroTimeoutIsNotReplacedByDefault() throws {
+        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { false }, timeout: 0) }
+            .loadViewWithPreferences()
+
+        XCTAssertEqual(preferences.resolvedTimeout, 0)
+        let failure = try XCTUnwrap(preferences.waitFailure)
+        XCTAssertTrue(failure.contains("was still false after 0s"), failure)
     }
 
     func testDefaultsAreRestoredForEverySuite() {

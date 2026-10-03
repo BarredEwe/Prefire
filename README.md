@@ -208,10 +208,11 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     taken once the same frame comes back twice in a row, so about 100 ms of no change. A preview
     that never settles fails with a message instead of hanging, after `timeout` (5 seconds by default).
 
-    Waiting for idle only knows about changes that already started, so a preview that begins loading
-    later still needs a `delay` as a floor: Prefire spends it before it starts comparing frames, and
-    does not wait it out a second time when capturing. Both modifiers can be combined, since they
-    configure different things:
+    Waiting for idle only sees what is drawn: a preview that shows the same frame while it loads,
+    or runs a Core Animation animation such as a `ProgressView` spinner, looks idle after 100 ms. Use
+    `.snapshotWait(until:)` for those, or a `delay` as a floor: Prefire spends it before it starts
+    comparing frames, and does not wait it out a second time when capturing. Both modifiers can be
+    combined, since they configure different things:
 
     ```swift
     static var previews: some View {
@@ -233,6 +234,10 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 
     The condition is checked on the main thread while the preview keeps rendering, and the test
     fails with the call site of the modifier when it is still `false` after `timeout`.
+
+    The preview is captured right where it was waited on, so state it reached in `.onAppear` or
+    `.task` is kept. Accessibility snapshots are the exception: they render the preview anew and
+    only honor `delay`.
 
 - Function for connecting preview together in one **Flow**:
 

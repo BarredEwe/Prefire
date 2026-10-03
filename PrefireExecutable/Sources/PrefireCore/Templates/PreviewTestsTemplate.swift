@@ -150,7 +150,13 @@ import SnapshotTesting
     }
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
+        #if os(macOS)
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
+        #else
+        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences(
+            drawHierarchyInKeyWindow: {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}{{ argument.drawHierarchyInKeyWindowDefaultEnabled }}{% else %}false{% endif %}
+        )
+        #endif
 
         // Waiting for `.snapshot(waitForIdle:)` or `.snapshotWait(until:)` ran out of time.
         if let waitFailure = preferences.waitFailure {
@@ -166,6 +172,14 @@ import SnapshotTesting
                 size: prefireSnapshot.device.size
             )
         )
+
+        let failure = verifySnapshot(
+            of: previewView,
+            as: strategy,
+            record: preferences.record ? .all : nil{% if argument.file %},
+            file: file{% endif %},
+            testName: prefireSnapshot.name
+        )
         #else
         let strategy: Snapshotting<AnyView, UIImage> = .wait(
             for: preferences.resolvedDelay,
@@ -179,23 +193,42 @@ import SnapshotTesting
                 traits: prefireSnapshot.traits
             )
         )
+
+        let failure: String?
+
+        if let settledImage = preferences.settledImage {
+            // The preview was waited on and is compared as captured once it settled: `strategy` would
+            // host it in a new window and start it over.
+            failure = verifySnapshot(
+                of: settledImage,
+                as: .image(
+                    precision: preferences.precision,
+                    perceptualPrecision: preferences.perceptualPrecision,
+                    scale: prefireSnapshot.traits.displayScale
+                ),
+                record: preferences.record ? .all : nil{% if argument.file %},
+                file: file{% endif %},
+                testName: prefireSnapshot.name
+            )
+        } else {
+            failure = verifySnapshot(
+                of: previewView,
+                as: strategy,
+                record: preferences.record ? .all : nil{% if argument.file %},
+                file: file{% endif %},
+                testName: prefireSnapshot.name
+            )
+        }
         #endif
 
-        let failure = verifySnapshot(
-            of: previewView,
-            as: strategy,
-            record: preferences.record ? .all : nil{% if argument.file %},
-            file: file{% endif %},
-            testName: prefireSnapshot.name
-        )
-
         #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
+            // Renders the preview anew, so a waited on preview is captured as it starts, after `delay`.
             let vc = UIHostingController(rootView: previewView)
             vc.view.frame = UIScreen.main.bounds
 
             SnapshotTesting.assertSnapshot(
                 matching: vc,
-                as: .wait(for: preferences.resolvedDelay, on: .accessibilityImage(showActivationPoints: .always)),
+                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)),
                 record: preferences.record ? .all : nil{% if argument.file %},
                 file: file{% endif %},
                 testName: prefireSnapshot.name + ".accessibility"

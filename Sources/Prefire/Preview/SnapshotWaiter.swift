@@ -22,16 +22,22 @@ enum SnapshotWaiter {
     /// How many times in a row a frame has to repeat itself to count as idle.
     static let requiredStableFrames = 2
 
-    /// Waits for `preferences.resolvedWait` and returns how long it took, `delay` included.
+    /// Waits for `preferences.resolvedWait`, spending `delay` first.
     ///
     /// A timeout is reported through `preferences.waitFailure` instead of an assertion,
     /// so the generated test decides how to fail.
-    @discardableResult
-    static func wait(for preferences: PreferenceKeys, in view: SnapshotWaitView, name: String) -> TimeInterval {
-        guard let wait = preferences.resolvedWait else { return 0 }
+    ///
+    /// - Parameter layout: Called before every frame is compared, to let a canvas that is sized to
+    ///                     fit its content follow it.
+    static func wait(
+        for preferences: PreferenceKeys,
+        in view: SnapshotWaitView,
+        name: String,
+        layout: () -> Void = {}
+    ) {
+        guard let wait = preferences.resolvedWait else { return }
 
         let timeout = preferences.resolvedTimeout
-        let start = Date()
 
         // `delay` is the floor of the wait: a preview that only starts working after it would
         // otherwise look idle right away. The timeout covers the checks that follow it.
@@ -43,10 +49,12 @@ enum SnapshotWaiter {
             var stableFrames = 0
 
             let isIdle = poll(timeout: timeout) {
+                layout()
+
                 let frame = frameData(of: view)
                 defer { previousFrame = frame }
 
-                guard let frame, frame == previousFrame else {
+                guard frame == previousFrame else {
                     stableFrames = 0
                     return false
                 }
@@ -74,8 +82,6 @@ enum SnapshotWaiter {
             // Never returned by `resolvedWait`.
             break
         }
-
-        return Date().timeIntervalSince(start)
     }
 
     // MARK: - Private functions
@@ -100,28 +106,39 @@ enum SnapshotWaiter {
         }
     }
 
-    /// Rendered content of `view`, or `nil` while it has nothing to render.
-    private static func frameData(of view: SnapshotWaitView) -> Data? {
-        let bounds = view.bounds
-        guard bounds.width > 0, bounds.height > 0 else { return nil }
-
+    /// Pixels of `view`, compared as is: encoding them would cost more than the comparison.
+    private static func frameData(of view: SnapshotWaitView) -> Data {
         #if os(iOS) || os(tvOS)
         view.layoutIfNeeded()
 
         // Scale 1 is enough to spot changes and keeps the comparison cheap.
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1
+        let width = Int(view.bounds.width.rounded(.up))
+        let height = Int(view.bounds.height.rounded(.up))
 
-        return UIGraphicsImageRenderer(bounds: bounds, format: format)
-            .image { view.layer.render(in: $0.cgContext) }
-            .pngData()
+        guard width > 0, height > 0, let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return Data() }
+
+        view.layer.render(in: context)
+
+        guard let pixels = context.data else { return Data() }
+        return Data(bytes: pixels, count: context.bytesPerRow * height)
         #elseif os(macOS)
         view.layoutSubtreeIfNeeded()
 
-        guard let representation = view.bitmapImageRepForCachingDisplay(in: bounds) else { return nil }
+        let bounds = view.bounds
+        guard bounds.width > 0, bounds.height > 0,
+              let representation = view.bitmapImageRepForCachingDisplay(in: bounds) else { return Data() }
         view.cacheDisplay(in: bounds, to: representation)
 
-        return representation.representation(using: .png, properties: [:])
+        guard let pixels = representation.bitmapData else { return Data() }
+        return Data(bytes: pixels, count: representation.bytesPerRow * representation.pixelsHigh)
         #endif
     }
 
