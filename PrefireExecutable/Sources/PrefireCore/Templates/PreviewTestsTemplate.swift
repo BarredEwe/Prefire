@@ -128,7 +128,7 @@ import SnapshotTesting
         for deviceName in snapshotDevices {
             var snapshot = prefireSnapshot
             guard let device = PreviewDevice(rawValue: deviceName).snapshotDeviceConfig() else {
-                fatalError("Unknown device name from configuration file: \(deviceName)")
+                fatalError("Unknown device name from configuration file: \(deviceName). Supported devices: \(PreviewDevice.supportedSnapshotDeviceNames.joined(separator: ", "))")
             }
 
             snapshot.name = "\(prefireSnapshot.name)-\(deviceName)"
@@ -228,38 +228,44 @@ private extension DeviceConfig {
 
 private extension ViewImageConfig {
     var deviceConfig: DeviceConfig { DeviceConfig(safeArea: safeArea, size: size, traits: traits) }
+
+    /// Portrait iPhone config for devices without a matching SnapshotTesting preset.
+    static func iPhone(width: CGFloat, height: CGFloat, top: CGFloat, traits: UITraitCollection) -> ViewImageConfig {
+        ViewImageConfig(safeArea: UIEdgeInsets(top: top, left: 0, bottom: 34, right: 0), size: CGSize(width: width, height: height), traits: traits)
+    }
 }
 
 private extension PreviewDevice {
-    func snapshotDevice() -> ViewImageConfig? {
-        switch rawValue {
+    static var snapshotDeviceGroups: [(names: [String], config: ViewImageConfig)] {
         #if os(iOS)
-        case "iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 13 Pro Max", "iPhone 12 Pro Max":
-            return .iPhone13ProMax
-        case "iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro":
-            return .iPhone13Pro
-        case "iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10", "iPhone X":
-            return .iPhoneX
-        case "iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8", "iPhone SE (2nd generation)", "iPhone SE (3rd generation)":
-            return .iPhone8
-        case "iPhone 6 Plus", "iPhone 6s Plus", "iPhone 8 Plus":
-            return .iPhone8Plus
-        case "iPhone SE (1st generation)":
-            return .iPhoneSe
-        case "iPad":
-            return .iPad10_2
-        case "iPad Mini":
-            return .iPadMini
-        case "iPad Pro 11":
-            return .iPadPro11
-        case "iPad Pro 12.9":
-            return .iPadPro12_9
+        [
+            (["iPhone 17 Pro Max"], .iPhone(width: 440, height: 956, top: 62, traits: .iPhone13ProMax(.portrait))),
+            (["iPhone 17", "iPhone 17 Pro"], .iPhone(width: 402, height: 874, top: 62, traits: .iPhone13(.portrait))),
+            (["iPhone Air"], .iPhone(width: 420, height: 912, top: 68, traits: .iPhone13ProMax(.portrait))),
+            (["iPhone 16 Plus", "iPhone 15 Plus"], .iPhone(width: 430, height: 932, top: 59, traits: .iPhone13ProMax(.portrait))),
+            (["iPhone 17e", "iPhone 16e"], .iPhone13),
+            (["iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 14 Plus", "iPhone 13 Pro Max", "iPhone 12 Pro Max"], .iPhone13ProMax),
+            (["iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro"], .iPhone13Pro),
+            (["iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10", "iPhone X"], .iPhoneX),
+            (["iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8", "iPhone SE (2nd generation)", "iPhone SE (3rd generation)"], .iPhone8),
+            (["iPhone 6 Plus", "iPhone 6s Plus", "iPhone 8 Plus"], .iPhone8Plus),
+            (["iPhone SE (1st generation)"], .iPhoneSe),
+            (["iPad"], .iPad10_2),
+            (["iPad Mini"], .iPadMini),
+            (["iPad Pro 11"], .iPadPro11),
+            (["iPad Pro 12.9"], .iPadPro12_9),
+        ]
         #elseif os(tvOS)
-        case "Apple TV":
-            return .tv
+        [(["Apple TV"], .tv)]
         #endif
-        default: return nil
-        }
+    }
+
+    static var supportedSnapshotDeviceNames: [String] {
+        snapshotDeviceGroups.flatMap(\.names)
+    }
+
+    func snapshotDevice() -> ViewImageConfig? {
+        Self.snapshotDeviceGroups.first { $0.names.contains(rawValue) }?.config
     }
 
     func snapshotDeviceConfig() -> DeviceConfig? {
