@@ -21,6 +21,7 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports:
               - Prefire
           - draw_hierarchy_in_key_window_default_enabled: true
+          - full_page_snapshots: true
         playbook_configuration:
           - template_file_path: CustomModels.stencil
           - imports:
@@ -75,6 +76,7 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config.tests.drawHierarchyInKeyWindowDefaultEnabled, true)
+        XCTAssertEqual(config.tests.fullPageSnapshots, true)
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")

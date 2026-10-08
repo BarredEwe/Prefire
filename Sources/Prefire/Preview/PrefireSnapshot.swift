@@ -297,6 +297,94 @@ public extension PrefireSnapshot {
         self.init(viewController, name: name, isScreen: isScreen, device: device, fixedLayoutSize: fixedLayoutSize)
         self.traits = traits
     }
+
+    /// `device` with its height stretched until no vertical scroll view in the content clips anything,
+    /// so the snapshot shows the whole scrollable content instead of the first screen.
+    ///
+    /// Returns `device` unchanged for non-screen previews and devices without a fixed size.
+    func fullPageDevice() -> DeviceConfig {
+        guard isScreen, let size = device.size else { return device }
+
+        let hostingController = UIHostingController(rootView: content)
+        let window = FullPageMeasuringWindow(frame: CGRect(origin: .zero, size: size), safeArea: device.safeArea)
+        window.rootViewController = hostingController
+        window.isHidden = false
+        defer {
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+
+        var height = size.height
+        var overflow = verticalOverflow(of: hostingController, in: window, height: height)
+
+        for _ in 0..<fullPageMaxIterations where overflow > 0 {
+            let candidate = min(height + overflow, fullPageMaxHeight)
+            guard candidate > height else { break }
+
+            let remaining = verticalOverflow(of: hostingController, in: window, height: candidate)
+            // A scroll view with a fixed height (e.g. nested in another one) does not grow with the
+            // canvas. Stretching further would only add empty space below the content.
+            guard remaining < overflow else { break }
+
+            height = candidate
+            overflow = remaining
+        }
+
+        var config = device
+        config.size = CGSize(width: size.width, height: height.rounded(.up))
+        return config
+    }
+}
+
+/// Window reporting the device's safe area, the way SnapshotTesting's own window does.
+///
+/// A plain `UIWindow` takes the safe area of the simulator running the tests, even off-screen,
+/// which would leave the snapshot that much taller than its content.
+private final class FullPageMeasuringWindow: UIWindow {
+    private let safeArea: UIEdgeInsets
+
+    init(frame: CGRect, safeArea: UIEdgeInsets) {
+        self.safeArea = safeArea
+        super.init(frame: frame)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var safeAreaInsets: UIEdgeInsets { safeArea }
+}
+
+/// Upper bound for `fullPageDevice()`, in points. The image is held in memory at the device scale.
+private let fullPageMaxHeight: CGFloat = 10_000
+
+/// Lazy stacks report an estimated content size, so the height may need a few rounds to settle.
+private let fullPageMaxIterations = 10
+
+@MainActor
+private func verticalOverflow(of hostingController: UIViewController, in window: UIWindow, height: CGFloat) -> CGFloat {
+    window.frame.size.height = height
+    hostingController.view.frame = window.bounds
+    hostingController.view.setNeedsLayout()
+    hostingController.view.layoutIfNeeded()
+    // SwiftUI updates lazy content after the first pass, so settle the layout once more.
+    hostingController.view.layoutIfNeeded()
+
+    let overflows = scrollViews(in: hostingController.view).map { scrollView in
+        let insets = scrollView.adjustedContentInset
+        return scrollView.contentSize.height + insets.top + insets.bottom - scrollView.bounds.height
+    }
+    return max(overflows.max() ?? 0, 0)
+}
+
+@MainActor
+private func scrollViews(in view: UIView) -> [UIScrollView] {
+    guard !view.isHidden, view.alpha > 0 else { return [] }
+
+    let nested = view.subviews.flatMap(scrollViews(in:))
+    guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
+    return [scrollView] + nested
 }
 #endif
 #endif

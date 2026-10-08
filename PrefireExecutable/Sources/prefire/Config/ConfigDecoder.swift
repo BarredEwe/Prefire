@@ -76,6 +76,8 @@ final class ConfigDecoder {
             config.tests.splitSnapshotDirectories = getValue(from: components.last, env: env) == "true"
         case .drawHierarchyInKeyWindowDefaultEnabled:
             config.tests.drawHierarchyInKeyWindowDefaultEnabled = getValue(from: components.last, env: env) == "true"
+        case .fullPageSnapshots:
+            config.tests.fullPageSnapshots = getValue(from: components.last, env: env) == "true"
         }
     }
 
