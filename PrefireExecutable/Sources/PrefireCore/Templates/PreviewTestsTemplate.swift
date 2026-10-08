@@ -234,11 +234,12 @@ private extension PreviewDevice {
     func snapshotDevice() -> ViewImageConfig? {
         switch rawValue {
         #if os(iOS)
-        case "iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 13 Pro Max", "iPhone 12 Pro Max":
+        case "iPhone 18 Pro Max", "iPhone 17 Pro Max", "iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 13 Pro Max", "iPhone 12 Pro Max",
+             "iPhone Air", "iPhone 16 Plus", "iPhone 15 Plus", "iPhone 14 Plus":
             return .iPhone13ProMax
-        case "iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro":
+        case "iPhone 18 Pro", "iPhone 17 Pro", "iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro":
             return .iPhone13Pro
-        case "iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10", "iPhone X":
+        case "iPhone 18", "iPhone 17", "iPhone 16e", "iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10", "iPhone X":
             return .iPhoneX
         case "iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8", "iPhone SE (2nd generation)", "iPhone SE (3rd generation)":
             return .iPhone8
