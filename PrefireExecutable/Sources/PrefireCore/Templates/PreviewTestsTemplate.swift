@@ -170,7 +170,11 @@ import SnapshotTesting
                 {% endif %}
                 precision: preferences.precision,
                 perceptualPrecision: preferences.perceptualPrecision,
+                {% if argument.fullPageSnapshots %}
+                layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.fullPageDevice(delay: preferences.delay).imageConfig) : .sizeThatFits,
+                {% else %}
                 layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
+                {% endif %}
                 traits: prefireSnapshot.traits
             )
         )

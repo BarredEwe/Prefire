@@ -15,6 +15,7 @@ test_configuration:
   preview_default_enabled: true
   use_grouped_snapshots: true
   split_snapshot_directories: false
+  full_page_snapshots: false
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -56,6 +57,7 @@ playbook_configuration:
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
+| `full_page_snapshots` | Stretch the canvas of screen previews (the default `#Preview` layout) vertically until no vertical scroll view clips its content, so `ScrollView` and `List` are captured to the bottom instead of only the first screen. Previews using `.sizeThatFitsLayout` or a fixed layout are not affected. The height is capped at 10,000 pt. iOS/tvOS only. Default: `false` |
 
 ---
 
