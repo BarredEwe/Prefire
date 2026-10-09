@@ -298,41 +298,105 @@ public extension PrefireSnapshot {
         self.traits = traits
     }
 
-    /// `device` with its height stretched until no vertical scroll view in the content clips anything,
-    /// so the snapshot shows the whole scrollable content instead of the first screen.
+    /// `device` with its height fitted to the content of the page's scroll view, so the snapshot
+    /// shows the whole scrollable content instead of the first screen.
     ///
-    /// Returns `device` unchanged for non-screen previews and devices without a fixed size.
-    func fullPageDevice() -> DeviceConfig {
+    /// Returns `device` unchanged for non-screen previews, devices without a fixed size, and content
+    /// that fits on one screen.
+    ///
+    /// - Parameter delay: Time to let the content settle before measuring, as `.snapshot(delay:)`
+    ///                    does before taking the image.
+    func fullPageDevice(delay: TimeInterval = 0) -> DeviceConfig {
         guard isScreen, let size = device.size else { return device }
 
-        let hostingController = UIHostingController(rootView: content)
-        let window = FullPageMeasuringWindow(frame: CGRect(origin: .zero, size: size), safeArea: device.safeArea)
-        window.rootViewController = hostingController
-        window.isHidden = false
-        defer {
-            window.isHidden = true
-            window.rootViewController = nil
+        let host = FullPageMeasuringHost(
+            content: content,
+            size: size,
+            safeArea: device.safeArea,
+            traits: UITraitCollection(traitsFrom: [device.traits, traits])
+        )
+        defer { host.tearDown() }
+
+        host.layout(height: size.height)
+        if delay > 0 {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: delay))
+            host.layout(height: size.height)
+        }
+
+        // Only the page's scroll view decides the height. Other scroll views (carousels, fixed-height
+        // ones nested in the page) do not grow with the canvas, so following them would only add empty
+        // space below the content.
+        guard let scrollView = host.scrollViews().max(by: { verticalOverflow(of: $0) < verticalOverflow(of: $1) }),
+              verticalOverflow(of: scrollView) > 0 else {
+            return device
         }
 
         var height = size.height
-        var overflow = verticalOverflow(of: hostingController, in: window, height: height)
+        for _ in 0..<fullPageMaxIterations {
+            // Signed: lazy stacks estimate the size of rows they have not laid out yet, so the content
+            // may turn out shorter as well as longer once the canvas is stretched.
+            let candidate = min(max(height + verticalOverflow(of: scrollView), size.height), fullPageMaxHeight)
+            guard abs(candidate - height) >= 0.5 else { break }
 
-        for _ in 0..<fullPageMaxIterations where overflow > 0 {
-            let candidate = min(height + overflow, fullPageMaxHeight)
-            guard candidate > height else { break }
-
-            let remaining = verticalOverflow(of: hostingController, in: window, height: candidate)
-            // A scroll view with a fixed height (e.g. nested in another one) does not grow with the
-            // canvas. Stretching further would only add empty space below the content.
-            guard remaining < overflow else { break }
+            let viewportHeight = scrollView.bounds.height
+            host.layout(height: candidate)
+            guard scrollView.bounds.height != viewportHeight else { break }
 
             height = candidate
-            overflow = remaining
         }
 
         var config = device
         config.size = CGSize(width: size.width, height: height.rounded(.up))
         return config
+    }
+}
+
+/// Lays the content out the way SnapshotTesting's `.device` layout does: the device's safe area and the
+/// snapshot's traits, at a canvas height that can be changed.
+@MainActor
+private final class FullPageMeasuringHost {
+    private let window: FullPageMeasuringWindow
+    private let container = UIViewController()
+    private let hostingController: UIHostingController<AnyView>
+
+    init(content: AnyView, size: CGSize, safeArea: UIEdgeInsets, traits: UITraitCollection) {
+        window = FullPageMeasuringWindow(frame: CGRect(origin: .zero, size: size), safeArea: safeArea)
+        hostingController = UIHostingController(rootView: content)
+
+        container.addChild(hostingController)
+        container.view.addSubview(hostingController.view)
+        hostingController.didMove(toParent: container)
+        container.setOverrideTraitCollection(traits, forChild: hostingController)
+
+        window.rootViewController = container
+        window.isHidden = false
+    }
+
+    func layout(height: CGFloat) {
+        window.frame.size.height = height
+        container.view.frame = window.bounds
+        hostingController.view.frame = container.view.bounds
+        hostingController.view.setNeedsLayout()
+        hostingController.view.layoutIfNeeded()
+        // SwiftUI updates lazy content after the first pass, so settle the layout once more.
+        hostingController.view.layoutIfNeeded()
+    }
+
+    func scrollViews() -> [UIScrollView] {
+        visibleScrollViews(in: hostingController.view)
+    }
+
+    func tearDown() {
+        window.isHidden = true
+        window.rootViewController = nil
+    }
+
+    private func visibleScrollViews(in view: UIView) -> [UIScrollView] {
+        guard !view.isHidden, view.alpha > 0 else { return [] }
+
+        let nested = view.subviews.flatMap(visibleScrollViews(in:))
+        guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
+        return [scrollView] + nested
     }
 }
 
@@ -362,29 +426,11 @@ private let fullPageMaxHeight: CGFloat = 10_000
 /// Lazy stacks report an estimated content size, so the height may need a few rounds to settle.
 private let fullPageMaxIterations = 10
 
+/// How much taller the content of `scrollView` is than its viewport. Negative when it is shorter.
 @MainActor
-private func verticalOverflow(of hostingController: UIViewController, in window: UIWindow, height: CGFloat) -> CGFloat {
-    window.frame.size.height = height
-    hostingController.view.frame = window.bounds
-    hostingController.view.setNeedsLayout()
-    hostingController.view.layoutIfNeeded()
-    // SwiftUI updates lazy content after the first pass, so settle the layout once more.
-    hostingController.view.layoutIfNeeded()
-
-    let overflows = scrollViews(in: hostingController.view).map { scrollView in
-        let insets = scrollView.adjustedContentInset
-        return scrollView.contentSize.height + insets.top + insets.bottom - scrollView.bounds.height
-    }
-    return max(overflows.max() ?? 0, 0)
-}
-
-@MainActor
-private func scrollViews(in view: UIView) -> [UIScrollView] {
-    guard !view.isHidden, view.alpha > 0 else { return [] }
-
-    let nested = view.subviews.flatMap(scrollViews(in:))
-    guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
-    return [scrollView] + nested
+private func verticalOverflow(of scrollView: UIScrollView) -> CGFloat {
+    let insets = scrollView.adjustedContentInset
+    return scrollView.contentSize.height + insets.top + insets.bottom - scrollView.bounds.height
 }
 #endif
 #endif
