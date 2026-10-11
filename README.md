@@ -329,6 +329,9 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
 - iOS 14 or higher; macOS 13 or higher (macOS: snapshot tests only, see [Configuration](Documentation/Configuration.md#macos-snapshot-tests))
 
 ## Troubleshooting
+A snapshot test fails and you need the images, or the run stops on the wrong simulator
+- Failures name the expected and the running device, and link the reference and recorded images as `file://` paths. See [Reading a failing test](Documentation/Configuration.md#-reading-a-failing-test).
+
 `NavigationView` in Preview not supported for Playbook
 - Consider using other views or layouts for your Playbook needs.
 
