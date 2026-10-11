@@ -119,6 +119,8 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
     public var name: String
     public var isScreen: Bool
     public var device: DeviceConfig
+    /// Environment variation applied while rendering. `nil` renders the preview as is.
+    public var variant: SnapshotVariant?
 
     #if os(iOS) || os(tvOS)
     public var traits: UITraitCollection = .init()
@@ -199,6 +201,10 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
         let view = AnyView(
             content
+                .snapshotVariant(variant)
+                .onPreferenceChange(SnapshotVariantsPreferenceKey.self) {
+                    preferences.variants = $0
+                }
                 .onPreferenceChange(DelayPreferenceKey.self) {
                     preferences.delay = $0
                 }

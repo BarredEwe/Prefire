@@ -20,6 +20,7 @@ struct TestsConfig {
     var device: String?
     var osVersion: String?
     var snapshotDevices: [String]?
+    var snapshotVariants: [String]?
     var previewDefaultEnabled: Bool?
     var imports: [String]?
     var testableImports: [String]?
@@ -36,6 +37,7 @@ struct TestsConfig {
         case device = "simulator_device"
         case osVersion = "required_os"
         case snapshotDevices = "snapshot_devices"
+        case snapshotVariants = "snapshot_variants"
         case previewDefaultEnabled = "preview_default_enabled"
         case imports = "imports"
         case testableImports = "testable_imports"

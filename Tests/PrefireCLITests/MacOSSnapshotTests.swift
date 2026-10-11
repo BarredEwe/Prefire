@@ -88,6 +88,48 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertTrue(preferences.record)
     }
 
+    /// Variants are applied through the SwiftUI environment while hosting.
+    ///
+    /// Only the probed flag is asserted: the rest of the environment comes from the host machine.
+    func testVariantIsAppliedToTheHostedView() {
+        func flags(for variant: SnapshotVariant?) -> Int {
+            var snapshot = PrefireSnapshot({ VariantProbe() }, name: "Variant", isScreen: false, device: DeviceConfig())
+            snapshot.variant = variant
+            return Int(snapshot.loadViewWithPreferences().0.frame.width - VariantProbe.baseWidth)
+        }
+
+        XCTAssertEqual(flags(for: .light) & VariantProbe.dark, 0)
+        XCTAssertEqual(flags(for: .dark) & VariantProbe.dark, VariantProbe.dark)
+        XCTAssertEqual(flags(for: .rightToLeft) & VariantProbe.rightToLeft, VariantProbe.rightToLeft)
+        XCTAssertEqual(
+            flags(for: .sizeCategory(.accessibilityExtraExtraExtraLarge)) & VariantProbe.sizeCategory,
+            VariantProbe.sizeCategory
+        )
+        XCTAssertEqual(flags(for: .locale(VariantProbe.probedLocale)) & VariantProbe.locale, VariantProbe.locale)
+        XCTAssertEqual(flags(for: .locale(Locale(identifier: "en_US"))) & VariantProbe.locale, 0)
+    }
+
+    func testSnapshotVariantsModifierIsPickedUpDuringHosting() {
+        let snapshot = PrefireSnapshot(
+            { Text("Prefire").snapshotVariants([.light, .dark]) },
+            name: "Variants",
+            isScreen: false,
+            device: DeviceConfig()
+        )
+
+        let (_, preferences) = snapshot.loadViewWithPreferences()
+
+        XCTAssertEqual(preferences.variants, [.light, .dark])
+    }
+
+    func testWithoutModifierNoVariantsAreRequested() {
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Plain", isScreen: false, device: DeviceConfig())
+
+        let (_, preferences) = snapshot.loadViewWithPreferences()
+
+        XCTAssertNil(preferences.variants)
+    }
+
     func testSnapshotAppliesFixedLayoutSize() {
         let snapshot = PrefireSnapshot(
             { Text("Prefire") },
@@ -150,6 +192,35 @@ final class MacOSSnapshotTests: XCTestCase {
         XCTAssertNotNil(PreviewModel(content: { NSView() }, name: "View"))
         XCTAssertNotNil(PreviewModel(content: { NSViewController() }, name: "Controller"))
         XCTAssertNotNil(UnqualifiedNSViewRepresentable())
+    }
+}
+
+/// Reports the environment it was rendered with as a bit mask encoded in its own width.
+private struct VariantProbe: View {
+    static let baseWidth: CGFloat = 100
+    static let dark = 1
+    static let rightToLeft = 2
+    static let sizeCategory = 4
+    static let locale = 8
+
+    static let probedLocale = Locale(identifier: "th_TH")
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.layoutDirection) private var layoutDirection
+    @Environment(\.sizeCategory) private var sizeCategory
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        Color.clear.frame(width: Self.baseWidth + CGFloat(flags), height: 10)
+    }
+
+    private var flags: Int {
+        var flags = 0
+        if colorScheme == .dark { flags |= Self.dark }
+        if layoutDirection == .rightToLeft { flags |= Self.rightToLeft }
+        if sizeCategory == .accessibilityExtraExtraExtraLarge { flags |= Self.sizeCategory }
+        if locale.identifier == Self.probedLocale.identifier { flags |= Self.locale }
+        return flags
     }
 }
 

@@ -62,6 +62,8 @@ final class ConfigDecoder {
             config.tests.osVersion = getValue(from: components.last, env: env)
         case .snapshotDevices:
             config.tests.snapshotDevices = getValues(from: components, lines: lines, env: env)
+        case .snapshotVariants:
+            config.tests.snapshotVariants = getValues(from: components, lines: lines, env: env)
         case .previewDefaultEnabled:
             config.tests.previewDefaultEnabled = getValue(from: components.last, env: env) == "true"
         case .imports:
