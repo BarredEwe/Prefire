@@ -195,6 +195,13 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
     }
 
     public func loadViewWithPreferences() -> (PrefireSnapshotView, PreferenceKeys) {
+        loadViewWithPreferences(drawHierarchyInKeyWindow: false)
+    }
+
+    /// - Parameter drawHierarchyInKeyWindow: How a preview that is waited on is captured into
+    ///                                       `PreferenceKeys.settledImage` on iOS/tvOS. Pass the
+    ///                                       value given to the snapshot strategy.
+    public func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
         let preferences = PreferenceKeys()
 
         let view = AnyView(
@@ -211,18 +218,25 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 .onPreferenceChange(RecordPreferenceKey.self) {
                     preferences.record = $0
                 }
+                .onPreferenceChange(WaitPreferenceKey.self) {
+                    preferences.wait = $0
+                }
+                .onPreferenceChange(WaitTimeoutPreferenceKey.self) {
+                    preferences.waitTimeout = $0
+                }
         )
 
-        return (render(view: view), preferences)
+        return (render(view: view, preferences: preferences, drawHierarchyInKeyWindow: drawHierarchyInKeyWindow), preferences)
     }
 
     // MARK: - Private functions
 
-    /// Renders the view once so `onPreferenceChange` has fired, and returns the value to snapshot.
+    /// Renders the view once so `onPreferenceChange` has fired, waits until it is ready,
+    /// and returns the value to snapshot.
     ///
     /// On macOS the result is hosted in a shared window and stays valid only until the next
     /// `loadViewWithPreferences()` call.
-    private func render(view: AnyView) -> PrefireSnapshotView {
+    private func render(view: AnyView, preferences: PreferenceKeys, drawHierarchyInKeyWindow: Bool) -> PrefireSnapshotView {
         #if os(iOS) || os(tvOS)
         let hostingController = UIHostingController(rootView: view)
         let window = UIWindow(frame: .init())
@@ -232,10 +246,43 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
+
+        // The snapshot strategy would host `view` in a window of its own, starting it over. So a preview
+        // that is waited on is captured right where it settled, and the test compares that image.
+        if preferences.resolvedWait != nil {
+            // Keeps the preview from running twice while it is waited on.
+            window.rootViewController = nil
+            window.isHidden = true
+
+            let canvas = SnapshotCanvas(
+                view: view,
+                isScreen: isScreen,
+                device: device,
+                traits: traits,
+                drawHierarchyInKeyWindow: drawHierarchyInKeyWindow
+            )
+            defer { canvas.dispose() }
+
+            SnapshotWaiter.wait(for: preferences, in: canvas.view, name: name, layout: canvas.layout)
+            preferences.isDelayApplied = true
+
+            if preferences.waitFailure == nil {
+                preferences.settledImage = canvas.capture()
+            }
+        }
+
         return view
         #elseif os(macOS)
         let hostingView = SnapshotHostingContainer(rootView: view, scale: device.scale)
         hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
+
+        // SnapshotTesting captures this view where it is, so it can be waited on directly. The `delay`
+        // the wait spent on it must not be spent again by the snapshot strategy.
+        if preferences.resolvedWait != nil {
+            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name)
+            preferences.isDelayApplied = true
+        }
+
         return hostingView
         #endif
     }

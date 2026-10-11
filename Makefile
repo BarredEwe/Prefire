@@ -17,7 +17,11 @@ BUNDLE_BIN = $(BUNDLE_DIR)/bin
 # Override for other platforms: make build DESTINATION='generic/platform=iOS'
 DESTINATION ?= generic/platform=iOS Simulator
 
-.PHONY: help build binary cli test test-cli update archive clean
+# Simulator for `make test-ios`: the first available iPhone, whatever the selected Xcode ships.
+# Override with a destination of your own: make test-ios IOS_TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16'
+IOS_TEST_DESTINATION ?= id=$(shell xcrun simctl list devices available | grep -m1 'iPhone' | grep -oE '[0-9A-F-]{36}')
+
+.PHONY: help build binary cli test test-cli test-ios update archive clean
 
 ##@ General
 
@@ -73,6 +77,14 @@ test: ## Run PrefireExecutable unit tests
 
 test-cli: ## Run PrefireCLI unit tests
 	swift test --filter PrefireCLITests
+
+test-ios: ## Run snapshot tests of the Prefire library on the iOS Simulator
+	cd PrefireSnapshotTests && xcodebuild \
+		-scheme PrefireSnapshotTests-Package \
+		-destination '$(IOS_TEST_DESTINATION)' \
+		-skipMacroValidation \
+		-skipPackagePluginValidation \
+		test
 
 ##@ Release
 
