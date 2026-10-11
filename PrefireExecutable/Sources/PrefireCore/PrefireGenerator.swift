@@ -1,9 +1,48 @@
 import Foundation
 import PathKit
 
+/// A `#Preview` the generator turned into a test, described in terms callers need to
+/// predict the snapshot files it records.
+public struct GeneratedPreview: Equatable, Sendable {
+    /// Swift file the preview lives in, without extension.
+    public let sourceFileName: String
+    /// `#Preview` display name, used verbatim as the snapshot name.
+    public let displayName: String
+    /// `#Preview(arguments:)` expands into one snapshot per argument.
+    public let isParameterized: Bool
+
+    public init(sourceFileName: String, displayName: String, isParameterized: Bool) {
+        self.sourceFileName = sourceFileName
+        self.displayName = displayName
+        self.isParameterized = isParameterized
+    }
+}
+
+/// What a generation run produced, beyond the files it wrote.
+public struct GenerationResult: Equatable, Sendable {
+    public let previews: [GeneratedPreview]
+    /// `PrefireProvider` conformances found in the sources. Their snapshots are named from
+    /// `previewDisplayName` at runtime, so they cannot be listed up front.
+    public let hasPreviewProviders: Bool
+    /// Swift files the run actually looked at. Zero means the sources were empty or
+    /// misconfigured — no preview was seen, and nothing can be concluded from that.
+    public let parsedSourceCount: Int
+
+    public init(previews: [GeneratedPreview], hasPreviewProviders: Bool, parsedSourceCount: Int) {
+        self.previews = previews
+        self.hasPreviewProviders = hasPreviewProviders
+        self.parsedSourceCount = parsedSourceCount
+    }
+}
+
 public enum PrefireGenerator {
+    private enum Constants {
+        static let prefireProvider = "PrefireProvider"
+    }
+
     nonisolated(unsafe) static var startTime = Date()
 
+    @discardableResult
     public static func generate(
         version: String,
         sources: [Path],
@@ -13,7 +52,7 @@ public enum PrefireGenerator {
         defaultEnabled: Bool,
         cacheDir: Path? = nil,
         useGroupedSnapshots: Bool
-    ) async throws {
+    ) async throws -> GenerationResult {
         startTime = Date()
 
         var discovered: Set<Path> = []
@@ -27,7 +66,7 @@ public enum PrefireGenerator {
 
         guard !discovered.isEmpty else {
             Logger.info("No Swift sources found to process.")
-            return
+            return GenerationResult(previews: [], hasPreviewProviders: false, parsedSourceCount: 0)
         }
 
         // Sorted so the order of the generated declarations does not depend on set iteration order.
@@ -62,8 +101,9 @@ public enum PrefireGenerator {
             }
         )
 
-        let previewModels = previews
-            .sorted { $0.key > $1.key }
+        let sortedPreviews = previews.sorted { $0.key > $1.key }
+
+        let previewModels = sortedPreviews
             .compactMap { entry -> [String: Any?]? in
                 var dict = entry.value.makeStencilDict()
                 // Add the source filename for ungrouped generation
@@ -94,8 +134,28 @@ public enum PrefireGenerator {
         }
 
         Logger.info("✅ Generation completed in \(startTime.distance(to: Date()).formatted())")
+
+        return GenerationResult(
+            previews: sortedPreviews.map { entry in
+                GeneratedPreview(
+                    sourceFileName: extractFileNameFromKey(entry.key),
+                    displayName: entry.value.displayName,
+                    isParameterized: entry.value.hasArguments
+                )
+            },
+            hasPreviewProviders: types.types.contains(where: isPreviewProvider),
+            parsedSourceCount: swiftFiles.count
+        )
     }
-    
+
+    /// Mirrors the template's `type.implements.PrefireProvider or type.based.PrefireProvider
+    /// or type|annotated:"PrefireProvider"` filter.
+    private static func isPreviewProvider(_ type: Type) -> Bool {
+        type.implements[Constants.prefireProvider] != nil
+            || type.based[Constants.prefireProvider] != nil
+            || type.annotations[Constants.prefireProvider] != nil
+    }
+
     private static func generateUngroupedFiles(
         previewModels: [[String: Any?]],
         context: StencilContext,

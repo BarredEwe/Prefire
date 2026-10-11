@@ -25,6 +25,7 @@ struct TestsConfig {
     var testableImports: [String]?
     var useGroupedSnapshots: Bool?
     var splitSnapshotDirectories: Bool?
+    var deleteUnusedSnapshots: Bool?
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
 
     enum CodingKeys: String, CodingKey {
@@ -41,6 +42,7 @@ struct TestsConfig {
         case testableImports = "testable_imports"
         case useGroupedSnapshots = "use_grouped_snapshots"
         case splitSnapshotDirectories = "split_snapshot_directories"
+        case deleteUnusedSnapshots = "delete_unused_snapshots"
         case drawHierarchyInKeyWindowDefaultEnabled = "draw_hierarchy_in_key_window_default_enabled"
     }
 }

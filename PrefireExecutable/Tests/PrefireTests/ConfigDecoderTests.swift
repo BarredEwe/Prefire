@@ -100,4 +100,17 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
     }
+
+    func test_successDecodeConfig_deleteUnusedSnapshots() {
+        let config = ConfigDecoder().decode(
+            from: """
+                test_configuration:
+                  - target: PrefireExample
+                  - delete_unused_snapshots: true
+            """,
+            env: env
+        )
+
+        XCTAssertEqual(config.tests.deleteUnusedSnapshots, true)
+    }
 }
