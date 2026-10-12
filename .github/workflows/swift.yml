@@ -34,6 +34,9 @@ jobs:
       - name: Run Prefire macOS Tests
         run: swift test
 
+      - name: Run Prefire iOS Tests
+        run: make test-ios
+
       - name: Run PrefireExecutable Tests
         run: make test
 
