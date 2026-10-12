@@ -135,9 +135,8 @@ private struct DelayedRowsView: View {
 
     var body: some View {
         RowsScrollView(count: count)
-            .task {
-                try? await Task.sleep(nanoseconds: 100_000_000)
-                count = 40
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { count = 40 }
             }
     }
 }
