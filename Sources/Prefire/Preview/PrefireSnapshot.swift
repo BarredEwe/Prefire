@@ -309,12 +309,8 @@ public extension PrefireSnapshot {
     func fullPageDevice(delay: TimeInterval = 0) -> DeviceConfig {
         guard isScreen, let size = device.size else { return device }
 
-        let host = FullPageMeasuringHost(
-            content: content,
-            size: size,
-            safeArea: device.safeArea,
-            traits: UITraitCollection(traitsFrom: [device.traits, traits])
-        )
+        let snapshotTraits = UITraitCollection(traitsFrom: [device.traits, traits])
+        let host = FullPageMeasuringHost(content: content, size: size, safeArea: device.safeArea, traits: snapshotTraits)
         defer { host.tearDown() }
 
         host.layout(height: size.height)
@@ -323,19 +319,16 @@ public extension PrefireSnapshot {
             host.layout(height: size.height)
         }
 
-        // Only the page's scroll view decides the height. Other scroll views (carousels, fixed-height
-        // ones nested in the page) do not grow with the canvas, so following them would only add empty
-        // space below the content.
-        guard let scrollView = host.scrollViews().max(by: { verticalOverflow(of: $0) < verticalOverflow(of: $1) }),
-              verticalOverflow(of: scrollView) > 0 else {
-            return device
-        }
+        guard let scrollView = host.pageScrollView(height: size.height) else { return device }
+
+        let scale = snapshotTraits.displayScale > 0 ? snapshotTraits.displayScale : host.screenScale
+        let maxHeight = max(size.height, (fullPageMaxPixelHeight / scale).rounded(.down))
 
         var height = size.height
         for _ in 0..<fullPageMaxIterations {
             // Signed: lazy stacks estimate the size of rows they have not laid out yet, so the content
             // may turn out shorter as well as longer once the canvas is stretched.
-            let candidate = min(max(height + verticalOverflow(of: scrollView), size.height), fullPageMaxHeight)
+            let candidate = min(max(height + verticalOverflow(of: scrollView), size.height), maxHeight)
             guard abs(candidate - height) >= 0.5 else { break }
 
             let viewportHeight = scrollView.bounds.height
@@ -382,11 +375,33 @@ private final class FullPageMeasuringHost {
         hostingController.view.layoutIfNeeded()
     }
 
-    func scrollViews() -> [UIScrollView] {
-        visibleScrollViews(in: hostingController.view)
+    var screenScale: CGFloat { window.screen.scale }
+
+    /// The scroll view that clips the most content among those whose viewport follows the canvas.
+    ///
+    /// The one that overflows the most is not enough on its own: a scroll view with a fixed height
+    /// nested in the page (e.g. `.frame(height: 200)`) can overflow more, but stretching the canvas
+    /// never shows more of it, so following it would stop at the first screen.
+    func pageScrollView(height: CGFloat) -> UIScrollView? {
+        let candidates = visibleScrollViews(in: hostingController.view).filter { verticalOverflow(of: $0) > 0 }
+        guard !candidates.isEmpty else { return nil }
+
+        let viewportHeights = candidates.map(\.bounds.height)
+        layout(height: height + fullPageProbeHeight)
+        let followingCanvas = zip(candidates, viewportHeights)
+            .filter { scrollView, viewportHeight in scrollView.bounds.height > viewportHeight }
+            .map(\.0)
+        layout(height: height)
+
+        return followingCanvas.max { verticalOverflow(of: $0) < verticalOverflow(of: $1) }
     }
 
     func tearDown() {
+        // Representables hand back the same view and view controller every time they are made, and
+        // the snapshot hosts them next. Emptying the content dismantles them here, so they leave this
+        // hierarchy instead of being taken over while still attached to it.
+        hostingController.rootView = AnyView(EmptyView())
+        hostingController.view.layoutIfNeeded()
         window.isHidden = true
         window.rootViewController = nil
     }
@@ -420,8 +435,12 @@ private final class FullPageMeasuringWindow: UIWindow {
     override var safeAreaInsets: UIEdgeInsets { safeArea }
 }
 
-/// Upper bound for `fullPageDevice()`, in points. The image is held in memory at the device scale.
-private let fullPageMaxHeight: CGFloat = 10_000
+/// Upper bound for the height of a full-page snapshot, in pixels. The image is held in memory, so the
+/// limit applies to pixels rather than points, which would allow three times as much at 3x.
+private let fullPageMaxPixelHeight: CGFloat = 16_384
+
+/// How much `pageScrollView(height:)` stretches the canvas to see which scroll views follow it.
+private let fullPageProbeHeight: CGFloat = 100
 
 /// Lazy stacks report an estimated content size, so the height may need a few rounds to settle.
 private let fullPageMaxIterations = 10
