@@ -162,6 +162,11 @@ import SnapshotTesting
             )
         )
         #else
+        {% if argument.fullPageSnapshots %}
+        let snapshotDevice = prefireSnapshot.fullPageDevice(delay: preferences.delay)
+        {% else %}
+        let snapshotDevice = prefireSnapshot.device
+        {% endif %}
         let strategy: Snapshotting<AnyView, UIImage> = .wait(
             for: preferences.delay,
             on: .image(
@@ -170,11 +175,7 @@ import SnapshotTesting
                 {% endif %}
                 precision: preferences.precision,
                 perceptualPrecision: preferences.perceptualPrecision,
-                {% if argument.fullPageSnapshots %}
-                layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.fullPageDevice(delay: preferences.delay).imageConfig) : .sizeThatFits,
-                {% else %}
-                layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits,
-                {% endif %}
+                layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits,
                 traits: prefireSnapshot.traits
             )
         )
@@ -191,6 +192,11 @@ import SnapshotTesting
         #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
             let vc = UIHostingController(rootView: previewView)
             vc.view.frame = UIScreen.main.bounds
+            {% if argument.fullPageSnapshots %}
+            if prefireSnapshot.isScreen, let height = snapshotDevice.size?.height {
+                vc.view.frame.size.height = height
+            }
+            {% endif %}
 
             SnapshotTesting.assertSnapshot(
                 of: vc,

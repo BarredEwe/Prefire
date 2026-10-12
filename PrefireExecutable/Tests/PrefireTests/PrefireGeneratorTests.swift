@@ -111,7 +111,8 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
         XCTAssertTrue(result.contains("isScreen: false,"))
         // On iOS/tvOS the layout follows `isScreen` only.
-        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits"))
+        XCTAssertTrue(result.contains("let snapshotDevice = prefireSnapshot.device"))
+        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits"))
     }
 
     /// Conformance inherited through another protocol has to be detected, not just the one
