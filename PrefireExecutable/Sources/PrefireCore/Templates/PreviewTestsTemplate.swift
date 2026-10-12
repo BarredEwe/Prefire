@@ -193,7 +193,7 @@ import SnapshotTesting
             vc.view.frame = UIScreen.main.bounds
 
             SnapshotTesting.assertSnapshot(
-                matching: vc,
+                of: vc,
                 as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)),
                 record: preferences.record ? .all : nil{% if argument.file %},
                 file: file{% endif %},
