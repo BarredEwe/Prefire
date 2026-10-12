@@ -79,9 +79,8 @@ test-cli: ## Run PrefireCLI unit tests
 
 test-ios: ## Run the Prefire library tests on an iPhone simulator
 	xcodebuild test \
-		-scheme Prefire-Package \
+		-scheme PrefireTests \
 		-destination 'platform=iOS Simulator,id=$(IOS_SIMULATOR_ID)' \
-		-only-testing:PrefireTests \
 		-skipMacroValidation \
 		-skipPackagePluginValidation
 
