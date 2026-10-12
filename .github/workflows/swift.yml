@@ -13,7 +13,7 @@ jobs:
   build:
     name: Run ${{ matrix.xcode }}
     runs-on: ${{ matrix.runsOn }}
-    timeout-minutes: 20
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:

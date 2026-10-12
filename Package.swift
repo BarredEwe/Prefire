@@ -37,11 +37,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PrefireCLITests",
-            dependencies: [
-                // The CLI is macOS-only, and building it for iOS fails when the package's tests run there.
-                .target(name: "PrefireCLI", condition: .when(platforms: [.macOS])),
-                "Prefire",
-            ]
+            dependencies: ["PrefireCLI", "Prefire"]
         ),
         .testTarget(
             name: "PrefireTests",

@@ -1,4 +1,3 @@
-#if os(macOS)
 import XCTest
 @testable import PrefireCLI
 
@@ -54,4 +53,3 @@ final class BinaryLocatorTests: XCTestCase {
         XCTAssertEqual(urls[0].path, "/tmp/Binaries/\(BinaryLocator.bundleName)")
     }
 }
-#endif
