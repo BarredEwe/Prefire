@@ -23,6 +23,9 @@ class ConfigDecoderTests: XCTestCase {
           - draw_hierarchy_in_key_window_default_enabled: true
           - full_page_snapshots: true
         playbook_configuration:
+          - sources:
+              - ${TARGET_DIR}/UIComponents
+              - ${TARGET_DIR}/DesignSystem
           - template_file_path: CustomModels.stencil
           - imports:
               - UIKit
@@ -81,6 +84,7 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
+        XCTAssertEqual(config.playbook.sources, ["/User/Tests/UIComponents", "/User/Tests/DesignSystem"])
     }
     
     func test_successDecodeConfig_with_whiteSpaces() {
@@ -101,5 +105,20 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
+    }
+
+    func test_playbookSources_overrideCommandLineSources() throws {
+        var config = Config()
+        config.playbook.sources = ["/User/Tests/UIComponents"]
+
+        let options = try GeneratedPlaybookOptions(targetPath: nil, sources: ["/User/Tests/App"], output: nil, template: nil, cacheBasePath: nil, config: config)
+
+        XCTAssertEqual(options.sources.map(\.string), ["/User/Tests/UIComponents"])
+    }
+
+    func test_playbookSources_fallBackToCommandLineSources() throws {
+        let options = try GeneratedPlaybookOptions(targetPath: nil, sources: ["/User/Tests/App"], output: nil, template: nil, cacheBasePath: nil, config: Config())
+
+        XCTAssertEqual(options.sources.map(\.string), ["/User/Tests/App"])
     }
 }

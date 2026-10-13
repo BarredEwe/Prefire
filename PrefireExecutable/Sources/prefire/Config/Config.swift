@@ -49,6 +49,7 @@ struct TestsConfig {
 
 struct PlaybookConfig {
     var targetPath: String?
+    var sources: [String]?
     var template: String?
     var previewDefaultEnabled: Bool?
     var imports: [String]?
@@ -56,6 +57,7 @@ struct PlaybookConfig {
 
     enum CodingKeys: String, CodingKey {
         case targetPath = "target"
+        case sources = "sources"
         case template = "template_file_path"
         case previewDefaultEnabled = "preview_default_enabled"
         case imports = "imports"
