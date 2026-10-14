@@ -24,10 +24,8 @@ struct GeneratedPlaybookOptions {
 
         previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
 
-        if let template = config?.playbook.template, let targetPath {
-            let targetURL = URL(filePath: targetPath)
-            let templateURL = targetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
+        if let config, let template = config.playbook.template {
+            self.template = Path(config.resolveTemplatePath(template, targetPath: targetPath))
         } else if let template {
             self.template = Path(template)
         }
