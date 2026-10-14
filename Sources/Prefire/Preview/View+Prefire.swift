@@ -19,4 +19,13 @@ public extension View {
     func prefireEnabled() -> some View {
         self
     }
+
+    /// Snapshot this preview once per variant, instead of the variants from the configuration file.
+    ///
+    /// Every variant but `.light` adds its name as a suffix, e.g. `MyView-dark`.
+    /// - Parameter variants: Environment variations to snapshot
+    @inlinable
+    func snapshotVariants(_ variants: [SnapshotVariant]) -> some View {
+        preference(key: SnapshotVariantsPreferenceKey.self, value: variants)
+    }
 }

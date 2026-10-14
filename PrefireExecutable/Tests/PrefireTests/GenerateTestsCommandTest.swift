@@ -49,6 +49,20 @@ class GenerateTestsCommandTests: XCTestCase {
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
     
+    func test_makeArguments_snapshot_variants() async {
+        options.snapshotVariants = ["light", "dark", "accessibilityXXXL"]
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
+            "snapshotVariants": "light|dark|accessibilityXXXL" as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
     func test_makeArguments_split_snapshot_directories_uses_templated_file_name() async {
         options.useGroupedSnapshots = false
         options.splitSnapshotDirectories = true

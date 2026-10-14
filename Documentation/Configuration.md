@@ -21,6 +21,9 @@ test_configuration:
   snapshot_devices:
     - iPhone 14
     - iPad
+  snapshot_variants:
+    - light
+    - dark
   imports:
     - UIKit
     - SwiftUI
@@ -50,6 +53,7 @@ playbook_configuration:
 | `simulator_device`                             | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                                                                                                                         |
 | `required_os`                                  | Minimal iOS version required for preview rendering. Optional                                                                                                                                                                              |
 | `snapshot_devices`                             | List of logical snapshot "targets" (used as trait collections). Each will snapshot separately. Optional                                                                                                                                   |
+| `snapshot_variants`                            | List of environment variations to snapshot, see [Snapshot variants](#-snapshot-variants). Each one is snapshotted separately. Optional. Default: every preview is snapshotted once                                                        |
 | `preview_default_enabled`                      | Should all detected previews be included by default? Set `false` if you want to require `.prefireEnabled()` manually. Default: `true`                                                                                                     |
 | `use_grouped_snapshots`                        | Generate a single test file with all previews (`true`) or separate test files per source file (`false`). When `false`, use `{PREVIEW_FILE_NAME}` placeholder in `test_file_path`. Default: `true`                                         |
 | `split_snapshot_directories`                   | When `use_grouped_snapshots: false`, also write snapshots into a separate `__Snapshots__/<File>Tests.generated/` folder per source file instead of one shared `__Snapshots__/PreviewTests.generated/` folder. Closes [#80](https://github.com/BarredEwe/Prefire/issues/80). Default: `false` to keep existing snapshot layouts working — opt in once you're ready to move the files.                |
@@ -71,6 +75,36 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 - The `.accessibility` image from `AccessibilitySnapshot` uses the same height.
 - The image is at most 16,384 px tall, which is about 5,461 pt at 3x.
 - Previews using `.sizeThatFitsLayout` or a fixed layout are not affected.
+
+---
+
+### 🎨 Snapshot variants
+
+`snapshot_variants` renders every preview once per variant, so light and dark, Dynamic Type, RTL and localized snapshots come from the same preview. Closes [#99](https://github.com/BarredEwe/Prefire/issues/99).
+
+| Name                                                     | Applies                                        | Snapshot name  |
+| -------------------------------------------------------- | ---------------------------------------------- | -------------- |
+| `light`                                                  | `colorScheme` = `.light`                       | _unchanged_    |
+| `dark`                                                   | `colorScheme` = `.dark`                        | `-dark`        |
+| `XS` `S` `M` `L` `XL` `XXL` `XXXL`                       | `sizeCategory`                                 | `-XXXL`        |
+| `accessibilityM` … `accessibilityXXXL`                   | `sizeCategory`                                 | `-accessibilityXXXL` |
+| `rtl`                                                    | `layoutDirection` = `.rightToLeft`             | `-rtl`         |
+| `locale_<identifier>`, e.g. `locale_ru_RU`               | `locale`                                       | `-locale_ru_RU` |
+
+The SwiftUI case names (`extraExtraExtraLarge`, `rightToLeft`) are accepted as well.
+
+`light` keeps the snapshot name unsuffixed, so listing `light` next to `dark` reuses the references you already recorded and only adds the dark ones. Variants compose with `snapshot_devices`: `MyView-iPhone 14-dark`.
+
+Variants are applied through the SwiftUI environment, so they work on iOS, tvOS and macOS alike.
+
+To override the list for a single preview, use `.snapshotVariants(_:)`:
+
+```swift
+#Preview {
+    ThemedView()
+        .snapshotVariants([.light, .dark])
+}
+```
 
 ---
 
