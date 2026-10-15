@@ -49,8 +49,40 @@ final class SnapshotWaitTests: XCTestCase {
         let (view, preferences) = snapshot.loadViewWithPreferences()
 
         XCTAssertNotNil(preferences.settledImage)
+        // Both measured by SnapshotTesting: re-rendered at a fixed size, a height that is not a whole
+        // number of pixels would be rounded differently.
         let fresh = try render(view, layout: .sizeThatFits)
-        XCTAssertNil(diff(fresh, try reference(Phase("loading"), isScreen: false, size: fresh.size)))
+        XCTAssertNil(diff(fresh, try reference(Phase("loading"), isScreen: false)))
+    }
+
+    /// Rows loaded while the preview is waited on make the page taller, and it is captured at that height.
+    func testFullPageMeasuresContentLoadedWhileWaiting() throws {
+        let snapshot = snapshot(isScreen: true) {
+            let viewModel = LoadingViewModel()
+            LoadingList(viewModel: viewModel).snapshotWait(until: { viewModel.isLoaded }, timeout: 3)
+        }
+        let (_, preferences) = snapshot.loadViewWithPreferences(drawHierarchyInKeyWindow: false, fullPage: true)
+
+        XCTAssertNil(preferences.waitFailure)
+        let image = try XCTUnwrap(preferences.settledImage)
+        let height = LoadingList.rowHeight * CGFloat(LoadingList.loadedRows) + device.safeArea.top + device.safeArea.bottom
+        XCTAssertEqual(image.size.width, device.size?.width)
+        XCTAssertEqual(image.size.height, height)
+
+        // What the strategy renders for the loaded list on a device that tall.
+        var expected = device
+        expected.size?.height = height
+        let reference = PrefireSnapshot({ LoadingList.Rows(count: LoadingList.loadedRows) }, name: "Reference", isScreen: true, device: expected, traits: traits)
+        let config = ViewImageConfig(safeArea: expected.safeArea, size: expected.size, traits: expected.traits)
+        XCTAssertNil(diff(image, try render(reference.loadViewWithPreferences().0, layout: .device(config: config))))
+    }
+
+    func testFullPageKeepsDeviceForContentFittingOneScreen() throws {
+        let (_, preferences) = snapshot(isScreen: true) {
+            CountingLoader().snapshot(waitForIdle: true, timeout: 3)
+        }.loadViewWithPreferences(drawHierarchyInKeyWindow: false, fullPage: true)
+
+        XCTAssertEqual(try XCTUnwrap(preferences.settledImage).size, device.size)
     }
 
     func testWaitUntilConditionCapturesStateReachedInTask() throws {
@@ -210,6 +242,34 @@ private struct LoadingScreen: View {
     var body: some View {
         Phase(viewModel.phase)
             .task { await viewModel.load() }
+    }
+}
+
+/// One row while loading, `loadedRows` once loaded: far more than a screen holds.
+private struct LoadingList: View {
+    static let rowHeight: CGFloat = 50
+    static let loadedRows = 40
+
+    @ObservedObject var viewModel: LoadingViewModel
+
+    var body: some View {
+        Rows(count: viewModel.isLoaded ? Self.loadedRows : 1)
+            .task { await viewModel.load() }
+    }
+
+    struct Rows: View {
+        let count: Int
+
+        var body: some View {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(0..<count, id: \.self) { index in
+                        Text("Row \(index)")
+                            .frame(maxWidth: .infinity, minHeight: LoadingList.rowHeight, maxHeight: LoadingList.rowHeight)
+                    }
+                }
+            }
+        }
     }
 }
 

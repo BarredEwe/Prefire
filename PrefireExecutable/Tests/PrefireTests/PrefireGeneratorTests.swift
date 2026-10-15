@@ -111,7 +111,8 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
         XCTAssertTrue(result.contains("isScreen: false,"))
         // On iOS/tvOS the layout follows `isScreen` only.
-        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: prefireSnapshot.device.imageConfig) : .sizeThatFits"))
+        XCTAssertTrue(result.contains("let snapshotDevice = prefireSnapshot.device"))
+        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits"))
     }
 
     /// Conformance inherited through another protocol has to be detected, not just the one
@@ -545,5 +546,29 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertTrue(result.contains("SnapshotWaitDefaults.timeout = 2.5"))
         // A preview that is waited on is captured the way the snapshot strategy would capture it.
         XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: true\n        )"))
+    }
+
+    func testTemplateCapturesWaitedPreviewAtFullPageHeight() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitFullPagePreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_full_page_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["fullPageSnapshots": "true" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        // A preview that is waited on is measured where it settled, the others before the strategy renders them.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false,\n            fullPage: true\n        )"))
+        XCTAssertTrue(result.contains("preferences.settledImage == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device"))
+        XCTAssertTrue(result.contains("let height = preferences.settledImage?.size.height ?? snapshotDevice.size?.height"))
     }
 }

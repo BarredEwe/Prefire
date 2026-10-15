@@ -21,6 +21,7 @@ final class SnapshotCanvas {
     private let window: UIWindow
     private let safeArea: UIEdgeInsets
     private let traits: UITraitCollection
+    private let combinedTraits: UITraitCollection
     private let drawHierarchyInKeyWindow: Bool
 
     /// Whether the canvas follows the size of its content, like `SwiftUISnapshotLayout.sizeThatFits`.
@@ -56,6 +57,7 @@ final class SnapshotCanvas {
 
         let size = isScreen ? device.size ?? controller.view.frame.size : controller.sizeThatFits(in: .zero)
         let combinedTraits = UITraitCollection(traitsFrom: [isScreen ? device.traits : traits, traits])
+        self.combinedTraits = combinedTraits
 
         if drawHierarchyInKeyWindow {
             guard let keyWindow = Self.keyWindow else {
@@ -91,6 +93,17 @@ final class SnapshotCanvas {
         rootViewController.view.frame.size = size
         view.frame.size = size
         rootViewController.view.layoutIfNeeded()
+    }
+
+    /// Stretches a screen canvas until the page's scroll view shows all of its content, as
+    /// `PrefireSnapshot.fullPageDevice(delay:)` does before the snapshot strategy renders a preview.
+    ///
+    /// The preview stays hosted, so what it loaded while it was waited on is measured and kept.
+    func stretchToFullPage() {
+        guard !isSizedToFit else { return }
+
+        let scale = combinedTraits.displayScale > 0 ? combinedTraits.displayScale : window.screen.scale
+        _ = fullPageHeight(from: window.frame.height, scale: scale)
     }
 
     /// Renders the preview the way SnapshotTesting renders a view.
@@ -183,6 +196,20 @@ private final class SnapshotCanvasWindow: UIWindow {
         }
         #endif
         return safeArea
+    }
+}
+
+extension SnapshotCanvas: FullPageCanvas {
+    var contentView: UIView { view }
+
+    func layout(height: CGFloat) {
+        window.frame.size.height = height
+        rootViewController.view.frame.size.height = height
+        view.frame.size.height = height
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        // SwiftUI updates lazy content after the first pass, so settle the layout once more.
+        view.layoutIfNeeded()
     }
 }
 #endif

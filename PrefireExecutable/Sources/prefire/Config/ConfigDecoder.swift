@@ -86,6 +86,8 @@ final class ConfigDecoder {
             } else {
                 Logger.warning("⚠️ `snapshot_wait_timeout` must be a positive number of seconds, ignoring '\(value ?? "")'")
             }
+        case .fullPageSnapshots:
+            config.tests.fullPageSnapshots = getValue(from: components.last, env: env) == "true"
         }
     }
 

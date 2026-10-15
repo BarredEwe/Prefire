@@ -26,6 +26,7 @@ struct GeneratedTestsOptions {
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
     var snapshotWaitForIdle: Bool?
     var snapshotWaitTimeout: Double?
+    var fullPageSnapshots: Bool
 
     init(
         target: String?,
@@ -65,6 +66,7 @@ struct GeneratedTestsOptions {
         drawHierarchyInKeyWindowDefaultEnabled = config?.tests.drawHierarchyInKeyWindowDefaultEnabled
         snapshotWaitForIdle = config?.tests.snapshotWaitForIdle
         snapshotWaitTimeout = config?.tests.snapshotWaitTimeout
+        fullPageSnapshots = config?.tests.fullPageSnapshots ?? false
     }
 }
 
@@ -88,6 +90,7 @@ enum GenerateTestsCommand {
         static let drawHierarchyInKeyWindowDefaultEnabled = "drawHierarchyInKeyWindowDefaultEnabled"
         static let snapshotWaitForIdle = "snapshotWaitForIdle"
         static let snapshotWaitTimeout = "snapshotWaitTimeout"
+        static let fullPageSnapshots = "fullPageSnapshots"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -127,6 +130,7 @@ enum GenerateTestsCommand {
                 ➜ drawHierarchyInKeyWindow default enabled: \(options.drawHierarchyInKeyWindowDefaultEnabled?.description ?? "nil")
                 ➜ Wait for idle by default: \(options.snapshotWaitForIdle?.description ?? "nil")
                 ➜ Wait timeout: \(options.snapshotWaitTimeout?.description ?? "nil")
+                ➜ Full page snapshots: \(options.fullPageSnapshots)
             """
         )
 
@@ -141,6 +145,7 @@ enum GenerateTestsCommand {
             Keys.drawHierarchyInKeyWindowDefaultEnabled: options.drawHierarchyInKeyWindowDefaultEnabled?.description as? NSString,
             Keys.snapshotWaitForIdle: options.snapshotWaitForIdle?.description as? NSString,
             Keys.snapshotWaitTimeout: options.snapshotWaitTimeout?.description as? NSString,
+            Keys.fullPageSnapshots: options.fullPageSnapshots ? "true" as NSString : nil,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }
