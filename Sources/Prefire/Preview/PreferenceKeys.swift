@@ -234,8 +234,8 @@ public extension View {
     /// - Parameters:
     ///   - waitForIdle: Whether to wait for the rendered frame to stabilize. `false` also opts the
     ///                  preview out of the `snapshot_wait_for_idle` configuration key.
-    ///   - timeout: How long to wait before the test fails. `nil` uses `snapshot_wait_timeout`
-    ///              from the configuration, 5 seconds unless set.
+    ///   - timeout: How long to wait before the test fails, counted once `delay` is spent. `nil` uses
+    ///              `snapshot_wait_timeout` from the configuration, 5 seconds unless set.
     @inlinable
     func snapshot(waitForIdle: Bool, timeout: TimeInterval? = nil) -> some View {
         preference(key: WaitPreferenceKey.self, value: waitForIdle ? .idle : .disabled)
@@ -249,8 +249,8 @@ public extension View {
     ///
     /// - Parameters:
     ///   - condition: Returns `true` once the preview is ready to be captured.
-    ///   - timeout: How long to wait before the test fails. `nil` uses `snapshot_wait_timeout`
-    ///              from the configuration, 5 seconds unless set.
+    ///   - timeout: How long to wait before the test fails, counted once `delay` is spent. `nil` uses
+    ///              `snapshot_wait_timeout` from the configuration, 5 seconds unless set.
     @inlinable
     func snapshotWait(
         until condition: @escaping @MainActor () -> Bool,

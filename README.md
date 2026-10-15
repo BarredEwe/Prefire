@@ -208,6 +208,9 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     taken once the same frame comes back twice in a row, so about 100 ms of no change. A preview
     that never settles fails with a message instead of hanging, after `timeout` (5 seconds by default).
 
+    Put the modifier on the preview itself: Prefire reads it from the first render, so one inside
+    content that only shows up later, such as an `if isLoaded` branch, is not seen.
+
     Waiting for idle only sees what is drawn: a preview that shows the same frame while it loads,
     or runs a Core Animation animation such as a `ProgressView` spinner, looks idle after 100 ms. Use
     `.snapshotWait(until:)` for those, or a `delay` as a floor: Prefire spends it before it starts
