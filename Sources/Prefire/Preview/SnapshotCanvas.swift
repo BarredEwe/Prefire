@@ -81,13 +81,15 @@ final class SnapshotCanvas {
 
     /// Follows the content when the canvas is sized to fit it, since a preview may grow while it loads.
     ///
-    /// Measured in place, with the snapshot traits. SnapshotTesting measures outside of a window, where
-    /// rounding to the pixel grid depends on the simulator, so heights may differ by a fraction of a point.
+    /// `init` measures the content outside of the window, as SnapshotTesting does. Measured in place,
+    /// the size is rounded to the pixels of the snapshot traits instead of those of the screen, so it
+    /// is only taken when the content changed size by a point or more: otherwise an image of a preview
+    /// that did not change size would not match one the strategy renders.
     func layout() {
         guard isSizedToFit else { return }
 
         let size = controller.sizeThatFits(in: .zero)
-        guard size != view.frame.size else { return }
+        guard abs(size.width - view.frame.width) >= 1 || abs(size.height - view.frame.height) >= 1 else { return }
 
         window.frame.size = size
         rootViewController.view.frame.size = size

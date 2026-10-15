@@ -111,8 +111,8 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
     }
 
-    func test_snapshotWaitTimeout_ignoresValuesThatAreNotPositive() {
-        for value in ["0", "-1", "soon"] {
+    func test_snapshotWaitTimeout_ignoresValuesThatAreNotAPositiveNumber() {
+        for value in ["0", "-1", "soon", "inf", "nan"] {
             let config = ConfigDecoder().decode(
                 from: """
                 test_configuration:

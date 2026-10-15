@@ -136,6 +136,19 @@ final class SnapshotWaitTests: XCTestCase {
         XCTAssertNil(preferences.waitFailure)
     }
 
+    /// A canvas that fits the content follows it while it loads, instead of keeping its first size.
+    func testCanvasFittingContentGrowsWithIt() {
+        let (view, preferences) = PrefireSnapshot(
+            { Growing().snapshot(waitForIdle: true, timeout: 3) },
+            name: "Growing",
+            isScreen: false,
+            device: DeviceConfig()
+        ).loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitFailure)
+        XCTAssertEqual(view.frame.height, Growing.loadedHeight)
+    }
+
     // MARK: Private
 
     private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
@@ -161,6 +174,22 @@ private struct Ticking: View {
             .task {
                 try? await Task.sleep(nanoseconds: UInt64(startsAfter * 1_000_000_000))
                 isStarted = true
+            }
+    }
+}
+
+/// Short at first, then as tall as the content it loads in `.task`.
+private struct Growing: View {
+    static let loadedHeight: CGFloat = 200
+
+    @State private var height: CGFloat = 20
+
+    var body: some View {
+        Color.red
+            .frame(width: 100, height: height)
+            .task {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                height = Self.loadedHeight
             }
     }
 }

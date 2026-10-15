@@ -81,7 +81,7 @@ final class ConfigDecoder {
         case .snapshotWaitTimeout:
             let value = getValue(from: components.last, env: env)
 
-            if let timeout = value.flatMap(Double.init), timeout > 0 {
+            if let timeout = value.flatMap(Double.init), timeout.isFinite, timeout > 0 {
                 config.tests.snapshotWaitTimeout = timeout
             } else {
                 Logger.warning("⚠️ `snapshot_wait_timeout` must be a positive number of seconds, ignoring '\(value ?? "")'")

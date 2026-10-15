@@ -307,7 +307,16 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         // SnapshotTesting captures this view where it is, so it can be waited on directly. The `delay`
         // the wait spent on it must not be spent again by the snapshot strategy.
         if preferences.resolvedWait != nil {
-            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name)
+            // A canvas that fits the content follows it, since a preview may grow while it loads.
+            let layout: () -> Void = {
+                guard device.size == nil else { return }
+
+                let size = hostingView.fittingContentSize
+                if size != hostingView.frame.size {
+                    hostingView.applyCanvasSize(size)
+                }
+            }
+            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name, layout: layout)
             preferences.isDelayApplied = true
         }
 

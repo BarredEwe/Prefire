@@ -10,10 +10,8 @@ import XCTest
 /// Every image a wait captures is compared with what `Snapshotting<AnyView, UIImage>.image` renders
 /// for a preview already showing the state that was waited for: they have to match pixel for pixel.
 ///
-/// Sized to fit, SnapshotTesting measures the preview outside of a window, so how the height is
-/// rounded depends on the simulator. Prefire measures it in place with the snapshot traits, so there
-/// the reference is rendered at the size of the captured image, and only the heights are compared
-/// with some tolerance.
+/// Sized to fit, both measure the preview the same way, so the images also have the same size on
+/// simulators whose screen scale differs from the one of the snapshot traits.
 @MainActor
 final class SnapshotWaitTests: XCTestCase {
     /// Dark, so a trait override that does not reach the preview shows up in the comparison.
@@ -39,7 +37,7 @@ final class SnapshotWaitTests: XCTestCase {
             let image = try XCTUnwrap(preferences.settledImage)
 
             try assertImage(image, matches: Phase("done"), isScreen: isScreen)
-            XCTAssertNotNil(diff(image, try reference(Phase("loading"), isScreen: isScreen, size: image.size)))
+            XCTAssertNotNil(diff(image, try reference(Phase("loading"), isScreen: isScreen)))
         }
     }
 
@@ -49,8 +47,6 @@ final class SnapshotWaitTests: XCTestCase {
         let (view, preferences) = snapshot.loadViewWithPreferences()
 
         XCTAssertNotNil(preferences.settledImage)
-        // Both measured by SnapshotTesting: re-rendered at a fixed size, a height that is not a whole
-        // number of pixels would be rounded differently.
         let fresh = try render(view, layout: .sizeThatFits)
         XCTAssertNil(diff(fresh, try reference(Phase("loading"), isScreen: false)))
     }
@@ -154,32 +150,17 @@ final class SnapshotWaitTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) throws {
-        let expected = try reference(view, isScreen: isScreen, size: image.size)
+        let expected = try reference(view, isScreen: isScreen)
 
-        if isScreen {
-            XCTAssertEqual(image.size, expected.size, file: file, line: line)
-        } else {
-            let measured = try reference(view, isScreen: false).size
-            XCTAssertEqual(image.size.width, measured.width, file: file, line: line)
-            XCTAssertEqual(image.size.height, measured.height, accuracy: 1, file: file, line: line)
-        }
-
+        XCTAssertEqual(image.size, expected.size, "isScreen: \(isScreen)", file: file, line: line)
         XCTAssertEqual(image.scale, expected.scale, "isScreen: \(isScreen)", file: file, line: line)
         XCTAssertNil(diff(image, expected), "isScreen: \(isScreen)", file: file, line: line)
     }
 
     /// `view` rendered the way the generated tests render a preview that does not wait.
-    ///
-    /// - Parameter size: Canvas of a preview that is not a screen, instead of measuring it.
-    private func reference(_ view: some View, isScreen: Bool, size: CGSize? = nil) throws -> UIImage {
+    private func reference(_ view: some View, isScreen: Bool) throws -> UIImage {
         let snapshot = PrefireSnapshot({ view }, name: "Reference", isScreen: isScreen, device: device, traits: traits)
-        let layout: SwiftUISnapshotLayout = if isScreen {
-            .device(config: .iPhoneX)
-        } else if let size {
-            .fixed(width: size.width, height: size.height)
-        } else {
-            .sizeThatFits
-        }
+        let layout: SwiftUISnapshotLayout = isScreen ? .device(config: .iPhoneX) : .sizeThatFits
 
         return try render(snapshot.loadViewWithPreferences().0, layout: layout)
     }
