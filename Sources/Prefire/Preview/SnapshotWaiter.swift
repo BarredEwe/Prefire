@@ -27,8 +27,8 @@ enum SnapshotWaiter {
     /// A timeout is reported through `preferences.waitFailure` instead of an assertion,
     /// so the generated test decides how to fail.
     ///
-    /// - Parameter layout: Called before every frame is compared, to let a canvas that is sized to
-    ///                     fit its content follow it.
+    /// - Parameter layout: Called before every check and once the wait is over, to let a canvas that
+    ///                     is sized to fit its content follow it.
     static func wait(
         for preferences: PreferenceKeys,
         in view: SnapshotWaitView,
@@ -71,7 +71,16 @@ enum SnapshotWaiter {
                 """
             }
         case let .condition(id, condition):
-            if !poll(timeout: timeout, until: condition) {
+            let isMet = poll(timeout: timeout) {
+                layout()
+                return condition()
+            }
+
+            if isMet {
+                // The state the condition saw is drawn on a later pass of the run loop.
+                spinRunLoop(for: pollInterval)
+                layout()
+            } else {
                 preferences.waitFailure = """
                 Prefire: the condition of "\(name)" (\(id)) was still false after \(formatted(timeout))s. \
                 Raise the timeout of `.snapshotWait(until:timeout:)`, \

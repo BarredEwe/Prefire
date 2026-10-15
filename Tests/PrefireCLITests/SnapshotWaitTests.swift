@@ -137,16 +137,31 @@ final class SnapshotWaitTests: XCTestCase {
     }
 
     /// A canvas that fits the content follows it while it loads, instead of keeping its first size.
-    func testCanvasFittingContentGrowsWithIt() {
+    func testCanvasFittingContentGrowsWithItWhileWaitingForIdle() {
         let (view, preferences) = PrefireSnapshot(
-            { Growing().snapshot(waitForIdle: true, timeout: 3) },
+            { Growing(model: GrowingModel()).snapshot(waitForIdle: true, timeout: 3) },
             name: "Growing",
             isScreen: false,
             device: DeviceConfig()
         ).loadViewWithPreferences()
 
         XCTAssertNil(preferences.waitFailure)
-        XCTAssertEqual(view.frame.height, Growing.loadedHeight)
+        XCTAssertEqual(view.frame.height, GrowingModel.loadedHeight)
+    }
+
+    func testCanvasFittingContentGrowsWithItWhileWaitingForCondition() {
+        let (view, preferences) = PrefireSnapshot(
+            {
+                let model = GrowingModel()
+                Growing(model: model).snapshotWait(until: { model.isLoaded }, timeout: 3)
+            },
+            name: "Growing",
+            isScreen: false,
+            device: DeviceConfig()
+        ).loadViewWithPreferences()
+
+        XCTAssertNil(preferences.waitFailure)
+        XCTAssertEqual(view.frame.height, GrowingModel.loadedHeight)
     }
 
     // MARK: Private
@@ -178,19 +193,31 @@ private struct Ticking: View {
     }
 }
 
-/// Short at first, then as tall as the content it loads in `.task`.
-private struct Growing: View {
+/// Grows in steps once loading starts, faster than frames are compared, until it is loaded.
+@MainActor
+private final class GrowingModel: ObservableObject {
     static let loadedHeight: CGFloat = 200
 
-    @State private var height: CGFloat = 20
+    @Published private(set) var height: CGFloat = 20
+
+    var isLoaded: Bool { height == Self.loadedHeight }
+
+    func load() async {
+        for step in 1...6 {
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            height = 20 + CGFloat(step) * 30
+        }
+    }
+}
+
+/// Short at first, then as tall as what `model` loads in `.task`.
+private struct Growing: View {
+    @ObservedObject var model: GrowingModel
 
     var body: some View {
         Color.red
-            .frame(width: 100, height: height)
-            .task {
-                try? await Task.sleep(nanoseconds: 100_000_000)
-                height = Self.loadedHeight
-            }
+            .frame(width: 100, height: model.height)
+            .task { await model.load() }
     }
 }
 #endif
