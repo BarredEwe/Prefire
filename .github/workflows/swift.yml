@@ -28,10 +28,6 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/${{ matrix.xcode }}.app
 
-      # Booting takes about a minute on CI, so it runs alongside the build until the iOS tests need it.
-      - name: Boot iOS simulator
-        run: nohup make boot-ios > /dev/null 2>&1 &
-
       # SnapshotTesting brings swift-syntax along, which takes long to clone.
       - name: Cache iOS test packages
         uses: actions/cache@v4
