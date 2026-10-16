@@ -195,6 +195,32 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
     }
 
     public func loadViewWithPreferences() -> (PrefireSnapshotView, PreferenceKeys) {
+        loadViewWithPreferences(drawHierarchyInKeyWindow: false)
+    }
+
+    /// - Parameter drawHierarchyInKeyWindow: How a preview that is waited on is captured into
+    ///                                       `PreferenceKeys.settledImage` on iOS/tvOS. Pass the
+    ///                                       value given to the snapshot strategy.
+    public func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
+        loadViewWithPreferences(drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: false)
+    }
+
+    #if os(iOS) || os(tvOS)
+    /// - Parameters:
+    ///   - drawHierarchyInKeyWindow: How a preview that is waited on is captured into
+    ///                               `PreferenceKeys.settledImage`. Pass the value given to the
+    ///                               snapshot strategy.
+    ///   - fullPage: Whether a screen preview that is waited on is captured at the height of its
+    ///               whole scrollable content, as `fullPageDevice(delay:)` measures it. It is measured
+    ///               once it settled, so content loaded while waiting counts.
+    public func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool, fullPage: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
+        loadViewWithPreferences(drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: fullPage)
+    }
+    #endif
+
+    // MARK: - Private functions
+
+    private func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool, isFullPage: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
         let preferences = PreferenceKeys()
 
         let view = AnyView(
@@ -211,18 +237,31 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 .onPreferenceChange(RecordPreferenceKey.self) {
                     preferences.record = $0
                 }
+                .onPreferenceChange(WaitPreferenceKey.self) {
+                    preferences.wait = $0
+                }
+                .onPreferenceChange(WaitTimeoutPreferenceKey.self) {
+                    preferences.waitTimeout = $0
+                }
         )
 
-        return (render(view: view), preferences)
+        return (
+            render(view: view, preferences: preferences, drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: isFullPage),
+            preferences
+        )
     }
 
-    // MARK: - Private functions
-
-    /// Renders the view once so `onPreferenceChange` has fired, and returns the value to snapshot.
+    /// Renders the view once so `onPreferenceChange` has fired, waits until it is ready,
+    /// and returns the value to snapshot.
     ///
     /// On macOS the result is hosted in a shared window and stays valid only until the next
     /// `loadViewWithPreferences()` call.
-    private func render(view: AnyView) -> PrefireSnapshotView {
+    private func render(
+        view: AnyView,
+        preferences: PreferenceKeys,
+        drawHierarchyInKeyWindow: Bool,
+        isFullPage: Bool
+    ) -> PrefireSnapshotView {
         #if os(iOS) || os(tvOS)
         let hostingController = UIHostingController(rootView: view)
         let window = UIWindow(frame: .init())
@@ -232,10 +271,55 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
+
+        // The snapshot strategy would host `view` in a window of its own, starting it over. So a preview
+        // that is waited on is captured right where it settled, and the test compares that image.
+        if preferences.resolvedWait != nil {
+            // Keeps the preview from running twice while it is waited on.
+            window.rootViewController = nil
+            window.isHidden = true
+
+            let canvas = SnapshotCanvas(
+                view: view,
+                isScreen: isScreen,
+                device: device,
+                traits: traits,
+                drawHierarchyInKeyWindow: drawHierarchyInKeyWindow
+            )
+            defer { canvas.dispose() }
+
+            SnapshotWaiter.wait(for: preferences, in: canvas.view, name: name, layout: canvas.layout)
+            preferences.isDelayApplied = true
+
+            if preferences.waitFailure == nil {
+                if isFullPage {
+                    canvas.stretchToFullPage()
+                }
+                preferences.settledImage = canvas.capture()
+            }
+        }
+
         return view
         #elseif os(macOS)
         let hostingView = SnapshotHostingContainer(rootView: view, scale: device.scale)
         hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
+
+        // SnapshotTesting captures this view where it is, so it can be waited on directly. The `delay`
+        // the wait spent on it must not be spent again by the snapshot strategy.
+        if preferences.resolvedWait != nil {
+            // A canvas that fits the content follows it, since a preview may grow while it loads.
+            let layout: () -> Void = {
+                guard device.size == nil else { return }
+
+                let size = hostingView.fittingContentSize
+                if size != hostingView.frame.size {
+                    hostingView.applyCanvasSize(size)
+                }
+            }
+            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name, layout: layout)
+            preferences.isDelayApplied = true
+        }
+
         return hostingView
         #endif
     }
@@ -319,38 +403,95 @@ public extension PrefireSnapshot {
             host.layout(height: size.height)
         }
 
-        guard let scrollView = host.pageScrollView(height: size.height) else { return device }
-
         let scale = snapshotTraits.displayScale > 0 ? snapshotTraits.displayScale : host.screenScale
-        let maxHeight = max(size.height, (fullPageMaxPixelHeight / scale).rounded(.down))
+        guard let height = host.fullPageHeight(from: size.height, scale: scale) else { return device }
 
-        var height = size.height
+        var config = device
+        config.size = CGSize(width: size.width, height: height)
+        return config
+    }
+}
+
+/// Canvas whose height can be changed while its content stays hosted, to fit a page to its content.
+@MainActor
+protocol FullPageCanvas: AnyObject {
+    /// Root of the hosted content.
+    var contentView: UIView { get }
+
+    /// Lays the content out on a canvas `height` points tall.
+    func layout(height: CGFloat)
+}
+
+extension FullPageCanvas {
+    /// Height that shows all of the content of the page's scroll view, rounded up to a point, or `nil`
+    /// when the page does not scroll. The canvas is left laid out at the returned height.
+    ///
+    /// - Parameters:
+    ///   - height: Height of the canvas, which the content is laid out at.
+    ///   - scale: Display scale of the image, which caps the height in pixels.
+    func fullPageHeight(from height: CGFloat, scale: CGFloat) -> CGFloat? {
+        guard let scrollView = pageScrollView(height: height) else { return nil }
+
+        let maxHeight = max(height, (fullPageMaxPixelHeight / scale).rounded(.down))
+
+        var fittedHeight = height
         for _ in 0..<fullPageMaxIterations {
             // Signed: lazy stacks estimate the size of rows they have not laid out yet, so the content
             // may turn out shorter as well as longer once the canvas is stretched.
-            let candidate = min(max(height + verticalOverflow(of: scrollView), size.height), maxHeight)
-            guard abs(candidate - height) >= 0.5 else { break }
+            let candidate = min(max(fittedHeight + verticalOverflow(of: scrollView), height), maxHeight)
+            guard abs(candidate - fittedHeight) >= 0.5 else { break }
 
             let viewportHeight = scrollView.bounds.height
-            host.layout(height: candidate)
+            layout(height: candidate)
             guard scrollView.bounds.height != viewportHeight else { break }
 
-            height = candidate
+            fittedHeight = candidate
         }
 
-        var config = device
-        config.size = CGSize(width: size.width, height: height.rounded(.up))
-        return config
+        let roundedHeight = fittedHeight.rounded(.up)
+        if roundedHeight != fittedHeight {
+            layout(height: roundedHeight)
+        }
+        return roundedHeight
+    }
+
+    /// The scroll view that clips the most content among those whose viewport follows the canvas.
+    ///
+    /// The one that overflows the most is not enough on its own: a scroll view with a fixed height
+    /// nested in the page (e.g. `.frame(height: 200)`) can overflow more, but stretching the canvas
+    /// never shows more of it, so following it would stop at the first screen.
+    private func pageScrollView(height: CGFloat) -> UIScrollView? {
+        let candidates = visibleScrollViews(in: contentView).filter { verticalOverflow(of: $0) > 0 }
+        guard !candidates.isEmpty else { return nil }
+
+        let viewportHeights = candidates.map(\.bounds.height)
+        layout(height: height + fullPageProbeHeight)
+        let followingCanvas = zip(candidates, viewportHeights)
+            .filter { scrollView, viewportHeight in scrollView.bounds.height > viewportHeight }
+            .map(\.0)
+        layout(height: height)
+
+        return followingCanvas.max { verticalOverflow(of: $0) < verticalOverflow(of: $1) }
+    }
+
+    private func visibleScrollViews(in view: UIView) -> [UIScrollView] {
+        guard !view.isHidden, view.alpha > 0 else { return [] }
+
+        let nested = view.subviews.flatMap(visibleScrollViews(in:))
+        guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
+        return [scrollView] + nested
     }
 }
 
 /// Lays the content out the way SnapshotTesting's `.device` layout does: the device's safe area and the
 /// snapshot's traits, at a canvas height that can be changed.
 @MainActor
-private final class FullPageMeasuringHost {
+private final class FullPageMeasuringHost: FullPageCanvas {
     private let window: FullPageMeasuringWindow
     private let container = UIViewController()
     private let hostingController: UIHostingController<AnyView>
+
+    var contentView: UIView { hostingController.view }
 
     init(content: AnyView, size: CGSize, safeArea: UIEdgeInsets, traits: UITraitCollection) {
         window = FullPageMeasuringWindow(frame: CGRect(origin: .zero, size: size), safeArea: safeArea)
@@ -377,25 +518,6 @@ private final class FullPageMeasuringHost {
 
     var screenScale: CGFloat { window.screen.scale }
 
-    /// The scroll view that clips the most content among those whose viewport follows the canvas.
-    ///
-    /// The one that overflows the most is not enough on its own: a scroll view with a fixed height
-    /// nested in the page (e.g. `.frame(height: 200)`) can overflow more, but stretching the canvas
-    /// never shows more of it, so following it would stop at the first screen.
-    func pageScrollView(height: CGFloat) -> UIScrollView? {
-        let candidates = visibleScrollViews(in: hostingController.view).filter { verticalOverflow(of: $0) > 0 }
-        guard !candidates.isEmpty else { return nil }
-
-        let viewportHeights = candidates.map(\.bounds.height)
-        layout(height: height + fullPageProbeHeight)
-        let followingCanvas = zip(candidates, viewportHeights)
-            .filter { scrollView, viewportHeight in scrollView.bounds.height > viewportHeight }
-            .map(\.0)
-        layout(height: height)
-
-        return followingCanvas.max { verticalOverflow(of: $0) < verticalOverflow(of: $1) }
-    }
-
     func tearDown() {
         // Representables hand back the same view and view controller every time they are made, and
         // the snapshot hosts them next. Emptying the content dismantles them here, so they leave this
@@ -404,14 +526,6 @@ private final class FullPageMeasuringHost {
         hostingController.view.layoutIfNeeded()
         window.isHidden = true
         window.rootViewController = nil
-    }
-
-    private func visibleScrollViews(in view: UIView) -> [UIScrollView] {
-        guard !view.isHidden, view.alpha > 0 else { return [] }
-
-        let nested = view.subviews.flatMap(visibleScrollViews(in:))
-        guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
-        return [scrollView] + nested
     }
 }
 

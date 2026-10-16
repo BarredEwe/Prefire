@@ -26,6 +26,8 @@ struct TestsConfig {
     var useGroupedSnapshots: Bool?
     var splitSnapshotDirectories: Bool?
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    var snapshotWaitForIdle: Bool?
+    var snapshotWaitTimeout: Double?
     var fullPageSnapshots: Bool?
 
     enum CodingKeys: String, CodingKey {
@@ -43,6 +45,8 @@ struct TestsConfig {
         case useGroupedSnapshots = "use_grouped_snapshots"
         case splitSnapshotDirectories = "split_snapshot_directories"
         case drawHierarchyInKeyWindowDefaultEnabled = "draw_hierarchy_in_key_window_default_enabled"
+        case snapshotWaitForIdle = "snapshot_wait_for_idle"
+        case snapshotWaitTimeout = "snapshot_wait_timeout"
         case fullPageSnapshots = "full_page_snapshots"
     }
 }

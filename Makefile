@@ -34,7 +34,7 @@ help: ## Show this help
 	@echo
 
 clean: ## Remove local SwiftPM build products and prefire.tar.gz
-	rm -rf PrefireExecutable/.build .build prefire.tar.gz
+	rm -rf PrefireExecutable/.build PrefireSnapshotTests/.build .build prefire.tar.gz
 
 ##@ Build
 
@@ -78,9 +78,13 @@ test-cli: ## Run PrefireCLI unit tests
 	swift test --filter PrefireCLITests
 
 test-ios: ## Run the Prefire library tests on an iPhone simulator
-	xcodebuild test \
-		-scheme PrefireTests \
+	cd PrefireSnapshotTests && xcodebuild test \
+		-scheme PrefireSnapshotTests-Package \
 		-destination 'platform=iOS Simulator,id=$(IOS_SIMULATOR_ID)' \
+		-clonedSourcePackagesDirPath .build/SourcePackages \
+		-parallel-testing-enabled NO \
+		-test-timeouts-enabled YES \
+		-default-test-execution-time-allowance 60 \
 		-skipMacroValidation \
 		-skipPackagePluginValidation
 
