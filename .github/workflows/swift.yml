@@ -28,14 +28,17 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/${{ matrix.xcode }}.app
 
-      # Building swift-syntax takes most of `make test`. Sources checked out anew are newer than the
-      # cache, so they are rebuilt; only the dependencies are reused.
-      - name: Cache PrefireExecutable build
+      # Booting takes about a minute on CI, so it runs alongside the build until the iOS tests need it.
+      - name: Boot iOS simulator
+        run: nohup make boot-ios > /dev/null 2>&1 &
+
+      # SnapshotTesting brings swift-syntax along, which takes long to clone.
+      - name: Cache iOS test packages
         uses: actions/cache@v4
         with:
-          path: PrefireExecutable/.build
-          key: prefire-executable-${{ matrix.xcode }}-${{ hashFiles('PrefireExecutable/Package.resolved') }}
-          restore-keys: prefire-executable-${{ matrix.xcode }}-
+          path: PrefireSnapshotTests/.build/SourcePackages
+          key: ios-test-packages-${{ matrix.xcode }}-${{ hashFiles('PrefireSnapshotTests/Package.resolved') }}
+          restore-keys: ios-test-packages-${{ matrix.xcode }}-
         
       - name: Build Prefire
         run: make build
@@ -43,8 +46,8 @@ jobs:
       - name: Run Prefire macOS Tests
         run: swift test
 
-      - name: Run PrefireExecutable Tests
-        run: make test
+      - name: Run Prefire iOS Tests
+        run: make test-ios
 
       - name: Build prefire CLI wrapper
         run: swift build -c release --product prefire
@@ -64,8 +67,8 @@ jobs:
             exit 1
           fi
 
-  ios-tests:
-    name: iOS tests ${{ matrix.xcode }}
+  executable-tests:
+    name: PrefireExecutable tests ${{ matrix.xcode }}
     runs-on: ${{ matrix.runsOn }}
     timeout-minutes: 10
     strategy:
@@ -82,13 +85,14 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/${{ matrix.xcode }}.app
 
-      # SnapshotTesting brings swift-syntax along, which takes long to clone.
-      - name: Cache iOS test packages
+      # Building swift-syntax takes most of `make test`. Sources checked out anew are newer than the
+      # cache, so they are rebuilt; only the dependencies are reused.
+      - name: Cache PrefireExecutable build
         uses: actions/cache@v4
         with:
-          path: PrefireSnapshotTests/.build/SourcePackages
-          key: ios-test-packages-${{ matrix.xcode }}-${{ hashFiles('PrefireSnapshotTests/Package.resolved') }}
-          restore-keys: ios-test-packages-${{ matrix.xcode }}-
+          path: PrefireExecutable/.build
+          key: prefire-executable-${{ matrix.xcode }}-${{ hashFiles('PrefireExecutable/Package.resolved') }}
+          restore-keys: prefire-executable-${{ matrix.xcode }}-
 
-      - name: Run Prefire iOS Tests
-        run: make test-ios
+      - name: Run PrefireExecutable Tests
+        run: make test
