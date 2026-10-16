@@ -20,7 +20,7 @@ DESTINATION ?= generic/platform=iOS Simulator
 # Simulator for `make test-ios`. Picked by UDID: device names differ between Xcode versions.
 IOS_SIMULATOR_ID ?= $(shell xcrun simctl list devices available iPhone | grep -oE '[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}' | head -1)
 
-.PHONY: help build binary cli test test-cli test-ios update archive clean
+.PHONY: help build binary cli test test-cli test-ios boot-ios update archive clean
 
 ##@ General
 
@@ -77,9 +77,7 @@ test: ## Run PrefireExecutable unit tests
 test-cli: ## Run PrefireCLI unit tests
 	swift test --filter PrefireCLITests
 
-test-ios: ## Run the Prefire library tests on an iPhone simulator
-	@# Returns before the simulator is up, so it boots while the tests are built.
-	xcrun simctl boot $(IOS_SIMULATOR_ID) 2>/dev/null || true
+test-ios: boot-ios ## Run the Prefire library tests on an iPhone simulator
 	cd PrefireSnapshotTests && xcodebuild test \
 		-scheme PrefireSnapshotTests-Package \
 		-destination 'platform=iOS Simulator,id=$(IOS_SIMULATOR_ID)' \
@@ -87,6 +85,9 @@ test-ios: ## Run the Prefire library tests on an iPhone simulator
 		-parallel-testing-enabled NO \
 		-skipMacroValidation \
 		-skipPackagePluginValidation
+
+boot-ios: ## Boot the simulator of `make test-ios`, if it is not booted yet
+	xcrun simctl boot $(IOS_SIMULATOR_ID) 2>/dev/null || true
 
 ##@ Release
 
