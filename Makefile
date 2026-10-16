@@ -34,7 +34,7 @@ help: ## Show this help
 	@echo
 
 clean: ## Remove local SwiftPM build products and prefire.tar.gz
-	rm -rf PrefireExecutable/.build .build prefire.tar.gz
+	rm -rf PrefireExecutable/.build PrefireSnapshotTests/.build .build prefire.tar.gz
 
 ##@ Build
 
@@ -77,15 +77,14 @@ test: ## Run PrefireExecutable unit tests
 test-cli: ## Run PrefireCLI unit tests
 	swift test --filter PrefireCLITests
 
-test-ios: ## Run the Prefire library tests and its snapshot tests on an iPhone simulator
-	xcodebuild test \
-		-scheme PrefireTests \
-		-destination 'platform=iOS Simulator,id=$(IOS_SIMULATOR_ID)' \
-		-skipMacroValidation \
-		-skipPackagePluginValidation
+test-ios: ## Run the Prefire library tests on an iPhone simulator
+	@# Returns before the simulator is up, so it boots while the tests are built.
+	xcrun simctl boot $(IOS_SIMULATOR_ID) 2>/dev/null || true
 	cd PrefireSnapshotTests && xcodebuild test \
 		-scheme PrefireSnapshotTests-Package \
 		-destination 'platform=iOS Simulator,id=$(IOS_SIMULATOR_ID)' \
+		-clonedSourcePackagesDirPath .build/SourcePackages \
+		-parallel-testing-enabled NO \
 		-skipMacroValidation \
 		-skipPackagePluginValidation
 

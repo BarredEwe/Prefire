@@ -3,7 +3,8 @@
 
 import PackageDescription
 
-/// Renders previews on the iOS Simulator and compares them with what SnapshotTesting renders.
+/// Tests of the Prefire library on the iOS Simulator: rendering previews, and comparing them with what
+/// SnapshotTesting renders.
 ///
 /// A package of its own, so SnapshotTesting stays out of the dependencies of the Prefire library.
 /// Run it with `make test-ios`.
