@@ -204,15 +204,15 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     .snapshot(waitForIdle: true, timeout: 2.0)
     ```
 
-    Prefire renders the preview and compares frames captured at least 50 ms apart: the snapshot is
-    taken once the same frame comes back twice in a row, so about 100 ms of no change. A preview
-    that never settles fails with a message instead of hanging, after `timeout` (5 seconds by default).
+    Prefire renders the preview, compares the frames it would capture every 50 ms, and takes the
+    snapshot once nothing changed for 300 ms. A preview that never settles fails with a message
+    instead of hanging, after `timeout` (5 seconds by default).
 
-    Put the modifier on the preview itself: Prefire reads it from the first render, so one inside
-    content that only shows up later, such as an `if isLoaded` branch, is not seen.
+    Put the modifier on content that is there from the first render: one inside content that only
+    shows up later, such as an `if isLoaded` branch or a `List` row, is not seen.
 
-    Waiting for idle only sees what is drawn: a preview that shows the same frame while it loads,
-    or runs a Core Animation animation such as a `ProgressView` spinner, looks idle after 100 ms. Use
+    Waiting for idle only sees what is drawn: a preview that shows the same frame for longer while
+    it loads, or runs a Core Animation animation such as a `ProgressView` spinner, looks idle. Use
     `.snapshot(waitUntil:)` for those, or a `delay` as a floor: Prefire spends it before it starts
     comparing frames, and does not wait it out a second time when capturing. Both modifiers can be
     combined, since they configure different things:
@@ -238,11 +238,17 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     The condition is checked on the main thread while the preview keeps rendering, and the test
     fails with the call site of the modifier when it is still `false` after `timeout`.
 
-    A preview waits one way: with both `waitForIdle:` and `waitUntil:`, the outer modifier applies.
+    When several views of a preview wait, a condition is waited for over idle, every condition has
+    to be met, `.snapshot(waitForIdle: false)` of one view does not cancel the wait of another, and
+    the longest timeout applies.
 
-    The preview is captured right where it was waited on, so state it reached in `.onAppear` or
-    `.task` is kept. Accessibility snapshots are the exception: they render the preview anew and
-    only honor `delay`.
+    The preview is hosted once, waited on and captured in the same window, so state it reached in
+    `.onAppear` or `.task` is kept. Accessibility snapshots are the exception: they render the
+    preview anew and only honor `delay`.
+
+    Waiting runs the main run loop in place, so snapshots that wait have to be taken from a
+    synchronous test method, as the generated tests do. From `async` code `.task` never runs, and
+    the timeout message says so.
 
 - Function for connecting preview together in one **Flow**:
 

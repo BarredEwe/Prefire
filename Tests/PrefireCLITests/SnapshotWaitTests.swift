@@ -6,29 +6,13 @@ import XCTest
 /// Waiting is exercised on macOS, where the view Prefire waits on is the one being captured.
 @MainActor
 final class SnapshotWaitTests: XCTestCase {
-    override func tearDown() {
-        SnapshotWaitDefaults.reset()
-        super.tearDown()
-    }
-
     func testPreviewWithoutWaitIsCapturedImmediately() {
         let start = Date()
         let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(delay: 0.3) }.loadViewWithPreferences()
 
-        XCTAssertNil(preferences.wait)
-        XCTAssertNil(preferences.waitFailure)
+        XCTAssertNil(preferences.waitResult)
         XCTAssertEqual(preferences.delay, 0.3)
-        XCTAssertEqual(preferences.resolvedDelay, 0.3)
         XCTAssertLessThan(Date().timeIntervalSince(start), 0.3)
-    }
-
-    func testWaitForIdleReadsPreferences() {
-        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitForIdle: true, timeout: 2) }.loadViewWithPreferences()
-
-        XCTAssertEqual(preferences.wait, .idle)
-        XCTAssertEqual(preferences.waitTimeout, 2)
-        XCTAssertEqual(preferences.resolvedTimeout, 2)
-        XCTAssertNil(preferences.waitFailure)
     }
 
     /// A preview that keeps changing is captured once it stops, not after a fixed delay.
@@ -37,43 +21,43 @@ final class SnapshotWaitTests: XCTestCase {
         let (_, preferences) = snapshot { Ticking(interval: 0.02, ticks: 10).snapshot(waitForIdle: true, timeout: 5) }
             .loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
-        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.2)
+        XCTAssertTrue(preferences.isSettled)
+        // It changes for 0.2s, then has to stay the same for 0.3s.
+        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.5)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 2)
     }
 
     func testWaitForIdleFailsWithTimeoutMessage() throws {
         let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: true, timeout: 0.3) }
             .loadViewWithPreferences()
 
-        let failure = try XCTUnwrap(preferences.waitFailure)
+        let failure = try XCTUnwrap(preferences.failure)
         XCTAssertTrue(failure.contains("\"Endless\""), failure)
         XCTAssertTrue(failure.contains("never stopped changing within 0.3s"), failure)
+        XCTAssertFalse(failure.contains("asynchronous code"), failure)
     }
 
     /// `delay` is the floor of the wait: work starting after it is still waited for.
     func testDelayIsSpentBeforeFramesAreCompared() {
         let start = Date()
         let (_, preferences) = snapshot {
-            Ticking(interval: 0.02, ticks: 10, startsAfter: 0.25)
-                .snapshot(delay: 0.3)
+            Ticking(interval: 0.02, ticks: 10, startsAfter: 0.5)
+                .snapshot(delay: 0.6)
                 .snapshot(waitForIdle: true, timeout: 5)
         }.loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
-        // Without the floor the preview looks idle after ~0.1s, before it starts changing at 0.25s.
-        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.45)
-        // The delay was spent on the view being captured, so the strategy must not spend it again.
-        XCTAssertTrue(preferences.isDelayApplied)
-        XCTAssertEqual(preferences.resolvedDelay, 0)
+        XCTAssertTrue(preferences.isSettled)
+        // Without the floor the preview looks idle after 0.3s, before it starts changing at 0.5s. With
+        // it, it changes until 0.7s and is idle 0.3s later.
+        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.95)
     }
 
-    func testTimeoutFallsBackToProjectWideDefault() {
-        SnapshotWaitDefaults.timeout = 0.3
+    func testTimeoutFallsBackToProjectWideDefault() throws {
+        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: true) }
+            .loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults(timeout: 0.3))
 
-        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitForIdle: true) }.loadViewWithPreferences()
-
-        XCTAssertNil(preferences.waitTimeout)
-        XCTAssertEqual(preferences.resolvedTimeout, 0.3)
+        let failure = try XCTUnwrap(preferences.failure)
+        XCTAssertTrue(failure.contains("within 0.3s"), failure)
     }
 
     /// An explicit timeout is used as is, even `0`, rather than being taken for "not set".
@@ -81,19 +65,8 @@ final class SnapshotWaitTests: XCTestCase {
         let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { false }, timeout: 0) }
             .loadViewWithPreferences()
 
-        XCTAssertEqual(preferences.resolvedTimeout, 0)
-        let failure = try XCTUnwrap(preferences.waitFailure)
+        let failure = try XCTUnwrap(preferences.failure)
         XCTAssertTrue(failure.contains("was still false after 0s"), failure)
-    }
-
-    func testDefaultsAreRestoredForEverySuite() {
-        SnapshotWaitDefaults.waitForIdle = true
-        SnapshotWaitDefaults.timeout = 0.3
-
-        SnapshotWaitDefaults.reset()
-
-        XCTAssertFalse(SnapshotWaitDefaults.waitForIdle)
-        XCTAssertEqual(SnapshotWaitDefaults.timeout, 5)
     }
 
     func testWaitUntilConditionReturnsWhenConditionIsMet() {
@@ -101,7 +74,7 @@ final class SnapshotWaitTests: XCTestCase {
         let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { Date() >= deadline }, timeout: 5) }
             .loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
+        XCTAssertTrue(preferences.isSettled)
         XCTAssertGreaterThanOrEqual(Date(), deadline)
     }
 
@@ -109,32 +82,93 @@ final class SnapshotWaitTests: XCTestCase {
         let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { false }, timeout: 0.2) }
             .loadViewWithPreferences()
 
-        let failure = try XCTUnwrap(preferences.waitFailure)
+        let failure = try XCTUnwrap(preferences.failure)
         XCTAssertTrue(failure.contains("was still false after 0.2s"), failure)
         // The call site of the modifier is part of the message.
         XCTAssertTrue(failure.contains("SnapshotWaitTests.swift:"), failure)
     }
 
-    func testProjectWideDefaultsAreUsedWhenPreviewDoesNotWait() {
-        SnapshotWaitDefaults.waitForIdle = true
-        SnapshotWaitDefaults.timeout = 0.3
+    func testProjectWideDefaultsAreUsedWhenPreviewDoesNotWait() throws {
+        let (_, preferences) = snapshot { Ticking(interval: 0.01) }
+            .loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults(waitForIdle: true, timeout: 0.3))
 
-        let (_, preferences) = snapshot { Ticking(interval: 0.01) }.loadViewWithPreferences()
-
-        XCTAssertNil(preferences.wait)
-        XCTAssertEqual(preferences.resolvedWait, .idle)
-        XCTAssertEqual(preferences.resolvedTimeout, 0.3)
-        XCTAssertNotNil(preferences.waitFailure)
+        let failure = try XCTUnwrap(preferences.failure)
+        XCTAssertTrue(failure.contains("within 0.3s"), failure)
     }
 
     func testPreviewPreferenceWinsOverProjectWideDefault() {
-        SnapshotWaitDefaults.waitForIdle = true
+        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: false) }
+            .loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults(waitForIdle: true))
 
-        let (_, preferences) = snapshot { Ticking(interval: 0.01).snapshot(waitForIdle: false) }.loadViewWithPreferences()
-
-        XCTAssertNil(preferences.resolvedWait)
-        XCTAssertNil(preferences.waitFailure)
+        XCTAssertNil(preferences.waitResult)
     }
+
+    // MARK: Waits of several views
+
+    /// A condition says when the preview is ready, so it is waited for over idle.
+    func testConditionOfOneViewWinsOverIdleOfAnother() {
+        let (_, preferences) = snapshot {
+            VStack {
+                Ticking(interval: 0.01).snapshot(waitForIdle: true, timeout: 0.3)
+                Text("Ready").snapshot(waitUntil: { true })
+            }
+        }.loadViewWithPreferences()
+
+        XCTAssertTrue(preferences.isSettled)
+    }
+
+    /// Opting a view out does not cancel what another view of the preview waits for.
+    func testOptOutOfOneViewKeepsTheWaitOfAnother() {
+        let deadline = Date().addingTimeInterval(0.2)
+        let (_, preferences) = snapshot {
+            VStack {
+                Text("Loading").snapshot(waitUntil: { Date() >= deadline }, timeout: 5)
+                Text("Static").snapshot(waitForIdle: false)
+            }
+        }.loadViewWithPreferences()
+
+        XCTAssertTrue(preferences.isSettled)
+        XCTAssertGreaterThanOrEqual(Date(), deadline)
+    }
+
+    /// A view that does not set a timeout does not take away the one another view set.
+    func testTimeoutOfOneViewIsKeptWhenAnotherSetsNone() throws {
+        let (_, preferences) = snapshot {
+            VStack {
+                Ticking(interval: 0.01).snapshot(waitForIdle: true, timeout: 0.3)
+                Text("Static").snapshot(waitForIdle: true)
+            }
+        }.loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.failure)
+        XCTAssertTrue(failure.contains("within 0.3s"), failure)
+    }
+
+    func testEveryConditionHasToBeMet() throws {
+        let (_, preferences) = snapshot {
+            VStack {
+                Text("Ready").snapshot(waitUntil: { true })
+                Text("Never").snapshot(waitUntil: { false }, timeout: 0.2)
+            }
+        }.loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.failure)
+        // Only the condition that is still false is named.
+        XCTAssertEqual(failure.components(separatedBy: "SnapshotWaitTests.swift:").count, 2, failure)
+    }
+
+    // MARK: Asynchronous code
+
+    /// From a task, the main queue is not served while the run loop is spun, so `.task` never runs.
+    func testTimeoutFromAsynchronousCodeExplainsWhy() async throws {
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { false }, timeout: 0.1) }
+            .loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.failure)
+        XCTAssertTrue(failure.contains("asynchronous code"), failure)
+    }
+
+    // MARK: Canvas size
 
     /// A canvas that fits the content follows it while it loads, instead of keeping its first size.
     func testCanvasFittingContentGrowsWithItWhileWaitingForIdle() {
@@ -145,7 +179,7 @@ final class SnapshotWaitTests: XCTestCase {
             device: DeviceConfig()
         ).loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
+        XCTAssertTrue(preferences.isSettled)
         XCTAssertEqual(view.frame.height, GrowingModel.loadedHeight)
     }
 
@@ -160,7 +194,7 @@ final class SnapshotWaitTests: XCTestCase {
             device: DeviceConfig()
         ).loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
+        XCTAssertTrue(preferences.isSettled)
         XCTAssertEqual(view.frame.height, GrowingModel.loadedHeight)
     }
 
@@ -168,6 +202,16 @@ final class SnapshotWaitTests: XCTestCase {
 
     private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
         PrefireSnapshot(view, name: "Endless", isScreen: false, device: DeviceConfig(size: CGSize(width: 120, height: 40)))
+    }
+}
+
+private extension PreferenceKeys {
+    var isSettled: Bool {
+        if case .settled = waitResult { true } else { false }
+    }
+
+    var failure: String? {
+        if case let .timedOut(message) = waitResult { message } else { nil }
     }
 }
 

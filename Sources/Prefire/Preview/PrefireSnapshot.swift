@@ -97,6 +97,27 @@ private final class SnapshotHostingContainer: NSView {
         layoutSubtreeIfNeeded()
     }
 
+    /// Resizes the canvas to its content, since a preview may grow while it loads.
+    func followContent() {
+        let fitting = fittingContentSize
+        let canvas = CGSize(width: clampedCanvasDimension(fitting.width), height: clampedCanvasDimension(fitting.height))
+        if canvas != frame.size {
+            applyCanvasSize(canvas)
+        }
+    }
+
+    /// Pixels of the view, rendered the way SnapshotTesting renders an `NSView`.
+    func frameData() -> Data {
+        layoutSubtreeIfNeeded()
+
+        guard bounds.width > 0, bounds.height > 0,
+              let representation = bitmapImageRepForCachingDisplay(in: bounds) else { return Data() }
+        cacheDisplay(in: bounds, to: representation)
+
+        guard let pixels = representation.bitmapData else { return Data() }
+        return Data(bytes: pixels, count: representation.bytesPerRow * representation.pixelsHigh)
+    }
+
     override func layout() {
         super.layout()
         hostingController.view.frame = bounds
@@ -194,36 +215,101 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
         self.device = Self.resolvedDevice(device, fixedLayoutSize: fixedLayoutSize)
     }
 
-    public func loadViewWithPreferences() -> (PrefireSnapshotView, PreferenceKeys) {
-        loadViewWithPreferences(drawHierarchyInKeyWindow: false)
-    }
-
-    /// - Parameter drawHierarchyInKeyWindow: How a preview that is waited on is captured into
-    ///                                       `PreferenceKeys.settledImage` on iOS/tvOS. Pass the
-    ///                                       value given to the snapshot strategy.
-    public func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
-        loadViewWithPreferences(drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: false)
-    }
-
     #if os(iOS) || os(tvOS)
+    /// Renders the preview once to read its preferences and, when it asks for it, waits until it is
+    /// ready and captures it into `PreferenceKeys.waitResult`.
+    ///
+    /// Waiting runs the main run loop in place: call it from a synchronous test method. From
+    /// asynchronous code `.task` and other main actor work of the preview do not run meanwhile.
+    ///
     /// - Parameters:
-    ///   - drawHierarchyInKeyWindow: How a preview that is waited on is captured into
-    ///                               `PreferenceKeys.settledImage`. Pass the value given to the
-    ///                               snapshot strategy.
-    ///   - fullPage: Whether a screen preview that is waited on is captured at the height of its
-    ///               whole scrollable content, as `fullPageDevice(delay:)` measures it. It is measured
-    ///               once it settled, so content loaded while waiting counts.
-    public func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool, fullPage: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
-        loadViewWithPreferences(drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: fullPage)
+    ///   - drawHierarchyInKeyWindow: How a preview that is waited on is captured. Pass the value given
+    ///                               to the snapshot strategy.
+    ///   - fullPage: Whether a screen preview that is waited on is captured at the height of its whole
+    ///               scrollable content, as `fullPageDevice(delay:)` measures it. It is measured once it
+    ///               settled, so content loaded while waiting counts.
+    ///   - waitDefaults: How previews that do not say so themselves wait.
+    public func loadViewWithPreferences(
+        drawHierarchyInKeyWindow: Bool = false,
+        fullPage: Bool = false,
+        waitDefaults: SnapshotWaitDefaults = .init()
+    ) -> (PrefireSnapshotView, PreferenceKeys) {
+        let preferences = PreferenceKeys()
+        let view = observingPreferences(into: preferences)
+
+        // Hosted where it would be waited on, so a preview that waits is hosted once and keeps the
+        // state it reaches: the snapshot strategy would host it in a window of its own, starting it over.
+        let canvas = SnapshotCanvas(
+            view: view,
+            isScreen: isScreen,
+            device: device,
+            traits: traits,
+            drawHierarchyInKeyWindow: drawHierarchyInKeyWindow
+        )
+        defer { canvas.dispose() }
+
+        guard let resolved = SnapshotWaiter.resolve(preferences.wait, defaults: waitDefaults) else {
+            return (view, preferences)
+        }
+
+        func waitInCanvas(delay: TimeInterval) -> String? {
+            SnapshotWaiter.wait(
+                for: resolved.wait,
+                timeout: resolved.timeout,
+                delay: delay,
+                name: name,
+                frame: canvas.frameData,
+                layout: canvas.followContent
+            )
+        }
+
+        var failure = waitInCanvas(delay: preferences.delay)
+        if failure == nil, fullPage, canvas.stretchToFullPage() != nil {
+            // Rows the stretched canvas brings in may start loading in their turn.
+            failure = waitInCanvas(delay: 0)
+        }
+
+        preferences.waitResult = failure.map(SnapshotWaitResult.timedOut) ?? .settled(canvas.capture())
+        return (view, preferences)
+    }
+    #elseif os(macOS)
+    /// Renders the preview to read its preferences and, when it asks for it, waits until it is ready.
+    ///
+    /// Waiting runs the main run loop in place: call it from a synchronous test method. From
+    /// asynchronous code `.task` and other main actor work of the preview do not run meanwhile.
+    ///
+    /// The returned view is hosted in a shared window and stays valid only until the next call.
+    ///
+    /// - Parameter waitDefaults: How previews that do not say so themselves wait.
+    public func loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults = .init()) -> (PrefireSnapshotView, PreferenceKeys) {
+        let preferences = PreferenceKeys()
+        let hostingView = SnapshotHostingContainer(rootView: observingPreferences(into: preferences), scale: device.scale)
+        hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
+
+        // SnapshotTesting captures this view where it is, so it is waited on directly.
+        guard let resolved = SnapshotWaiter.resolve(preferences.wait, defaults: waitDefaults) else {
+            return (hostingView, preferences)
+        }
+
+        let failure = SnapshotWaiter.wait(
+            for: resolved.wait,
+            timeout: resolved.timeout,
+            delay: preferences.delay,
+            name: name,
+            frame: hostingView.frameData,
+            layout: { if device.size == nil { hostingView.followContent() } }
+        )
+
+        preferences.waitResult = failure.map(SnapshotWaitResult.timedOut) ?? .settled
+        return (hostingView, preferences)
     }
     #endif
 
     // MARK: - Private functions
 
-    private func loadViewWithPreferences(drawHierarchyInKeyWindow: Bool, isFullPage: Bool) -> (PrefireSnapshotView, PreferenceKeys) {
-        let preferences = PreferenceKeys()
-
-        let view = AnyView(
+    /// The preview, reporting its snapshot preferences into `preferences` once it is rendered.
+    private func observingPreferences(into preferences: PreferenceKeys) -> AnyView {
+        AnyView(
             content
                 .onPreferenceChange(DelayPreferenceKey.self) {
                     preferences.delay = $0
@@ -240,88 +326,7 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 .onPreferenceChange(WaitPreferenceKey.self) {
                     preferences.wait = $0
                 }
-                .onPreferenceChange(WaitTimeoutPreferenceKey.self) {
-                    preferences.waitTimeout = $0
-                }
         )
-
-        return (
-            render(view: view, preferences: preferences, drawHierarchyInKeyWindow: drawHierarchyInKeyWindow, isFullPage: isFullPage),
-            preferences
-        )
-    }
-
-    /// Renders the view once so `onPreferenceChange` has fired, waits until it is ready,
-    /// and returns the value to snapshot.
-    ///
-    /// On macOS the result is hosted in a shared window and stays valid only until the next
-    /// `loadViewWithPreferences()` call.
-    private func render(
-        view: AnyView,
-        preferences: PreferenceKeys,
-        drawHierarchyInKeyWindow: Bool,
-        isFullPage: Bool
-    ) -> PrefireSnapshotView {
-        #if os(iOS) || os(tvOS)
-        let hostingController = UIHostingController(rootView: view)
-        let window = UIWindow(frame: .init())
-
-        window.isHidden = false
-        window.rootViewController = hostingController
-
-        hostingController.view.setNeedsLayout()
-        hostingController.view.layoutIfNeeded()
-
-        // The snapshot strategy would host `view` in a window of its own, starting it over. So a preview
-        // that is waited on is captured right where it settled, and the test compares that image.
-        if preferences.resolvedWait != nil {
-            // Keeps the preview from running twice while it is waited on.
-            window.rootViewController = nil
-            window.isHidden = true
-
-            let canvas = SnapshotCanvas(
-                view: view,
-                isScreen: isScreen,
-                device: device,
-                traits: traits,
-                drawHierarchyInKeyWindow: drawHierarchyInKeyWindow
-            )
-            defer { canvas.dispose() }
-
-            SnapshotWaiter.wait(for: preferences, in: canvas.view, name: name, layout: canvas.layout)
-            preferences.isDelayApplied = true
-
-            if preferences.waitFailure == nil {
-                if isFullPage {
-                    canvas.stretchToFullPage()
-                }
-                preferences.settledImage = canvas.capture()
-            }
-        }
-
-        return view
-        #elseif os(macOS)
-        let hostingView = SnapshotHostingContainer(rootView: view, scale: device.scale)
-        hostingView.applyCanvasSize(device.size ?? hostingView.fittingContentSize)
-
-        // SnapshotTesting captures this view where it is, so it can be waited on directly. The `delay`
-        // the wait spent on it must not be spent again by the snapshot strategy.
-        if preferences.resolvedWait != nil {
-            // A canvas that fits the content follows it, since a preview may grow while it loads.
-            let layout: () -> Void = {
-                guard device.size == nil else { return }
-
-                let size = hostingView.fittingContentSize
-                if size != hostingView.frame.size {
-                    hostingView.applyCanvasSize(size)
-                }
-            }
-            SnapshotWaiter.wait(for: preferences, in: hostingView, name: name, layout: layout)
-            preferences.isDelayApplied = true
-        }
-
-        return hostingView
-        #endif
     }
 
     private static func resolvedDevice(_ device: DeviceConfig, layout: PreviewLayout) -> DeviceConfig {
@@ -393,177 +398,19 @@ public extension PrefireSnapshot {
     func fullPageDevice(delay: TimeInterval = 0) -> DeviceConfig {
         guard isScreen, let size = device.size else { return device }
 
-        let snapshotTraits = UITraitCollection(traitsFrom: [device.traits, traits])
-        let host = FullPageMeasuringHost(content: content, size: size, safeArea: device.safeArea, traits: snapshotTraits)
-        defer { host.tearDown() }
+        let canvas = SnapshotCanvas(view: content, isScreen: true, device: device, traits: traits, drawHierarchyInKeyWindow: false)
+        defer { canvas.dispose() }
 
-        host.layout(height: size.height)
         if delay > 0 {
             RunLoop.main.run(until: Date(timeIntervalSinceNow: delay))
-            host.layout(height: size.height)
         }
 
-        let scale = snapshotTraits.displayScale > 0 ? snapshotTraits.displayScale : host.screenScale
-        guard let height = host.fullPageHeight(from: size.height, scale: scale) else { return device }
+        guard let height = canvas.stretchToFullPage() else { return device }
 
         var config = device
         config.size = CGSize(width: size.width, height: height)
         return config
     }
-}
-
-/// Canvas whose height can be changed while its content stays hosted, to fit a page to its content.
-@MainActor
-protocol FullPageCanvas: AnyObject {
-    /// Root of the hosted content.
-    var contentView: UIView { get }
-
-    /// Lays the content out on a canvas `height` points tall.
-    func layout(height: CGFloat)
-}
-
-extension FullPageCanvas {
-    /// Height that shows all of the content of the page's scroll view, rounded up to a point, or `nil`
-    /// when the page does not scroll. The canvas is left laid out at the returned height.
-    ///
-    /// - Parameters:
-    ///   - height: Height of the canvas, which the content is laid out at.
-    ///   - scale: Display scale of the image, which caps the height in pixels.
-    func fullPageHeight(from height: CGFloat, scale: CGFloat) -> CGFloat? {
-        guard let scrollView = pageScrollView(height: height) else { return nil }
-
-        let maxHeight = max(height, (fullPageMaxPixelHeight / scale).rounded(.down))
-
-        var fittedHeight = height
-        for _ in 0..<fullPageMaxIterations {
-            // Signed: lazy stacks estimate the size of rows they have not laid out yet, so the content
-            // may turn out shorter as well as longer once the canvas is stretched.
-            let candidate = min(max(fittedHeight + verticalOverflow(of: scrollView), height), maxHeight)
-            guard abs(candidate - fittedHeight) >= 0.5 else { break }
-
-            let viewportHeight = scrollView.bounds.height
-            layout(height: candidate)
-            guard scrollView.bounds.height != viewportHeight else { break }
-
-            fittedHeight = candidate
-        }
-
-        let roundedHeight = fittedHeight.rounded(.up)
-        if roundedHeight != fittedHeight {
-            layout(height: roundedHeight)
-        }
-        return roundedHeight
-    }
-
-    /// The scroll view that clips the most content among those whose viewport follows the canvas.
-    ///
-    /// The one that overflows the most is not enough on its own: a scroll view with a fixed height
-    /// nested in the page (e.g. `.frame(height: 200)`) can overflow more, but stretching the canvas
-    /// never shows more of it, so following it would stop at the first screen.
-    private func pageScrollView(height: CGFloat) -> UIScrollView? {
-        let candidates = visibleScrollViews(in: contentView).filter { verticalOverflow(of: $0) > 0 }
-        guard !candidates.isEmpty else { return nil }
-
-        let viewportHeights = candidates.map(\.bounds.height)
-        layout(height: height + fullPageProbeHeight)
-        let followingCanvas = zip(candidates, viewportHeights)
-            .filter { scrollView, viewportHeight in scrollView.bounds.height > viewportHeight }
-            .map(\.0)
-        layout(height: height)
-
-        return followingCanvas.max { verticalOverflow(of: $0) < verticalOverflow(of: $1) }
-    }
-
-    private func visibleScrollViews(in view: UIView) -> [UIScrollView] {
-        guard !view.isHidden, view.alpha > 0 else { return [] }
-
-        let nested = view.subviews.flatMap(visibleScrollViews(in:))
-        guard let scrollView = view as? UIScrollView, scrollView.isScrollEnabled else { return nested }
-        return [scrollView] + nested
-    }
-}
-
-/// Lays the content out the way SnapshotTesting's `.device` layout does: the device's safe area and the
-/// snapshot's traits, at a canvas height that can be changed.
-@MainActor
-private final class FullPageMeasuringHost: FullPageCanvas {
-    private let window: FullPageMeasuringWindow
-    private let container = UIViewController()
-    private let hostingController: UIHostingController<AnyView>
-
-    var contentView: UIView { hostingController.view }
-
-    init(content: AnyView, size: CGSize, safeArea: UIEdgeInsets, traits: UITraitCollection) {
-        window = FullPageMeasuringWindow(frame: CGRect(origin: .zero, size: size), safeArea: safeArea)
-        hostingController = UIHostingController(rootView: content)
-
-        container.addChild(hostingController)
-        container.view.addSubview(hostingController.view)
-        hostingController.didMove(toParent: container)
-        container.setOverrideTraitCollection(traits, forChild: hostingController)
-
-        window.rootViewController = container
-        window.isHidden = false
-    }
-
-    func layout(height: CGFloat) {
-        window.frame.size.height = height
-        container.view.frame = window.bounds
-        hostingController.view.frame = container.view.bounds
-        hostingController.view.setNeedsLayout()
-        hostingController.view.layoutIfNeeded()
-        // SwiftUI updates lazy content after the first pass, so settle the layout once more.
-        hostingController.view.layoutIfNeeded()
-    }
-
-    var screenScale: CGFloat { window.screen.scale }
-
-    func tearDown() {
-        // Representables hand back the same view and view controller every time they are made, and
-        // the snapshot hosts them next. Emptying the content dismantles them here, so they leave this
-        // hierarchy instead of being taken over while still attached to it.
-        hostingController.rootView = AnyView(EmptyView())
-        hostingController.view.layoutIfNeeded()
-        window.isHidden = true
-        window.rootViewController = nil
-    }
-}
-
-/// Window reporting the device's safe area, the way SnapshotTesting's own window does.
-///
-/// A plain `UIWindow` takes the safe area of the simulator running the tests, even off-screen,
-/// which would leave the snapshot that much taller than its content.
-private final class FullPageMeasuringWindow: UIWindow {
-    private let safeArea: UIEdgeInsets
-
-    init(frame: CGRect, safeArea: UIEdgeInsets) {
-        self.safeArea = safeArea
-        super.init(frame: frame)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override var safeAreaInsets: UIEdgeInsets { safeArea }
-}
-
-/// Upper bound for the height of a full-page snapshot, in pixels. The image is held in memory, so the
-/// limit applies to pixels rather than points, which would allow three times as much at 3x.
-private let fullPageMaxPixelHeight: CGFloat = 16_384
-
-/// How much `pageScrollView(height:)` stretches the canvas to see which scroll views follow it.
-private let fullPageProbeHeight: CGFloat = 100
-
-/// Lazy stacks report an estimated content size, so the height may need a few rounds to settle.
-private let fullPageMaxIterations = 10
-
-/// How much taller the content of `scrollView` is than its viewport. Negative when it is shorter.
-@MainActor
-private func verticalOverflow(of scrollView: UIScrollView) -> CGFloat {
-    let insets = scrollView.adjustedContentInset
-    return scrollView.contentSize.height + insets.top + insets.bottom - scrollView.bounds.height
 }
 #endif
 #endif

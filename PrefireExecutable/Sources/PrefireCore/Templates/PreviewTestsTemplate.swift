@@ -31,6 +31,7 @@ import SnapshotTesting
 #elseif os(macOS)
     private let deviceConfig = DeviceConfig()
 #endif
+    private let waitDefaults = SnapshotWaitDefaults({% if argument.snapshotWaitForIdle %}waitForIdle: {{ argument.snapshotWaitForIdle }}{% if argument.snapshotWaitTimeout %}, {% endif %}{% endif %}{% if argument.snapshotWaitTimeout %}timeout: {{ argument.snapshotWaitTimeout }}{% endif %})
 
 
     {% if argument.file %}
@@ -151,22 +152,26 @@ import SnapshotTesting
 
     private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
         #if os(macOS)
-        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences()
+        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences(waitDefaults: waitDefaults)
         #else
         let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences(
-            drawHierarchyInKeyWindow: {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}{{ argument.drawHierarchyInKeyWindowDefaultEnabled }}{% else %}false{% endif %}{% if argument.fullPageSnapshots %},
-            fullPage: true{% endif %}
+            drawHierarchyInKeyWindow: {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}{{ argument.drawHierarchyInKeyWindowDefaultEnabled }}{% else %}false{% endif %},{% if argument.fullPageSnapshots %}
+            fullPage: true,{% endif %}
+            waitDefaults: waitDefaults
         )
         #endif
 
-        // Waiting for `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` ran out of time.
-        if let waitFailure = preferences.waitFailure {
-            return waitFailure
+        #if os(macOS)
+        switch preferences.waitResult {
+        case let .timedOut(message):
+            return message
+        case .settled, nil:
+            break
         }
 
-        #if os(macOS)
         let strategy: Snapshotting<NSView, NSImage> = .wait(
-            for: preferences.resolvedDelay,
+            // A preview that was waited on has spent its delay already.
+            for: preferences.waitResult == nil ? preferences.delay : 0,
             on: .image(
                 precision: preferences.precision,
                 perceptualPrecision: preferences.perceptualPrecision,
@@ -183,31 +188,21 @@ import SnapshotTesting
         )
         #else
         {% if argument.fullPageSnapshots %}
-        // A preview that was waited on is already captured at its full height, where it settled.
-        let snapshotDevice = preferences.settledImage == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device
+        // A preview that was waited on is captured at its full height already, where it settled.
+        let snapshotDevice = preferences.waitResult == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device
         {% else %}
         let snapshotDevice = prefireSnapshot.device
         {% endif %}
-        let strategy: Snapshotting<AnyView, UIImage> = .wait(
-            for: preferences.resolvedDelay,
-            on: .image(
-                {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
-                drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
-                {% endif %}
-                precision: preferences.precision,
-                perceptualPrecision: preferences.perceptualPrecision,
-                layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits,
-                traits: prefireSnapshot.traits
-            )
-        )
-
         let failure: String?
 
-        if let settledImage = preferences.settledImage {
-            // The preview was waited on and is compared as captured once it settled: `strategy` would
-            // host it in a new window and start it over.
+        switch preferences.waitResult {
+        case let .timedOut(message):
+            return message
+        case let .settled(image):
+            // Compared as captured where it settled: a snapshot strategy would host the preview in a
+            // window of its own and start it over.
             failure = verifySnapshot(
-                of: settledImage,
+                of: image,
                 as: .image(
                     precision: preferences.precision,
                     perceptualPrecision: preferences.perceptualPrecision,
@@ -217,10 +212,21 @@ import SnapshotTesting
                 file: file{% endif %},
                 testName: prefireSnapshot.name
             )
-        } else {
+        case nil:
             failure = verifySnapshot(
                 of: previewView,
-                as: strategy,
+                as: .wait(
+                    for: preferences.delay,
+                    on: .image(
+                        {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
+                        drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
+                        {% endif %}
+                        precision: preferences.precision,
+                        perceptualPrecision: preferences.perceptualPrecision,
+                        layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits,
+                        traits: prefireSnapshot.traits
+                    )
+                ),
                 record: preferences.record ? .all : nil{% if argument.file %},
                 file: file{% endif %},
                 testName: prefireSnapshot.name
@@ -233,8 +239,12 @@ import SnapshotTesting
             let vc = UIHostingController(rootView: previewView)
             vc.view.frame = UIScreen.main.bounds
             {% if argument.fullPageSnapshots %}
-            if prefireSnapshot.isScreen, let height = preferences.settledImage?.size.height ?? snapshotDevice.size?.height {
-                vc.view.frame.size.height = height
+            if prefireSnapshot.isScreen {
+                if case let .settled(image) = preferences.waitResult {
+                    vc.view.frame.size.height = image.size.height
+                } else if let height = snapshotDevice.size?.height {
+                    vc.view.frame.size.height = height
+                }
             }
             {% endif %}
 
@@ -250,14 +260,6 @@ import SnapshotTesting
     }
 
     private func prepareEnvironment() {
-        // Another generated suite in this target may have configured waiting differently.
-        SnapshotWaitDefaults.reset()
-        {% if argument.snapshotWaitForIdle %}
-        SnapshotWaitDefaults.waitForIdle = {{ argument.snapshotWaitForIdle }}
-        {% endif %}
-        {% if argument.snapshotWaitTimeout %}
-        SnapshotWaitDefaults.timeout = {{ argument.snapshotWaitTimeout }}
-        {% endif %}
         #if os(iOS) || os(tvOS)
         if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
             guard deviceModel.contains(simulatorDevice) else {

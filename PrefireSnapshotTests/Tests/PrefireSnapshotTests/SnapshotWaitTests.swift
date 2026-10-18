@@ -22,19 +22,13 @@ final class SnapshotWaitTests: XCTestCase {
         return DeviceConfig(safeArea: config.safeArea, size: config.size, traits: config.traits)
     }
 
-    override func tearDown() {
-        SnapshotWaitDefaults.reset()
-        super.tearDown()
-    }
-
     func testWaitForIdleCapturesStateReachedInTask() throws {
         for isScreen in [false, true] {
             let (_, preferences) = snapshot(isScreen: isScreen) {
                 CountingLoader().snapshot(waitForIdle: true, timeout: 3)
             }.loadViewWithPreferences()
 
-            XCTAssertNil(preferences.waitFailure)
-            let image = try XCTUnwrap(preferences.settledImage)
+            let image = try XCTUnwrap(preferences.settledImage, preferences.failure ?? "")
 
             try assertImage(image, matches: Phase("done"), isScreen: isScreen)
             XCTAssertNotNil(diff(image, try reference(Phase("loading"), isScreen: isScreen)))
@@ -57,10 +51,9 @@ final class SnapshotWaitTests: XCTestCase {
             let viewModel = LoadingViewModel()
             LoadingList(viewModel: viewModel).snapshot(waitUntil: { viewModel.isLoaded }, timeout: 3)
         }
-        let (_, preferences) = snapshot.loadViewWithPreferences(drawHierarchyInKeyWindow: false, fullPage: true)
+        let (_, preferences) = snapshot.loadViewWithPreferences(fullPage: true)
 
-        XCTAssertNil(preferences.waitFailure)
-        let image = try XCTUnwrap(preferences.settledImage)
+        let image = try XCTUnwrap(preferences.settledImage, preferences.failure ?? "")
         let height = LoadingList.rowHeight * CGFloat(LoadingList.loadedRows) + device.safeArea.top + device.safeArea.bottom
         XCTAssertEqual(image.size.width, device.size?.width)
         XCTAssertEqual(image.size.height, height)
@@ -76,7 +69,7 @@ final class SnapshotWaitTests: XCTestCase {
     func testFullPageKeepsDeviceForContentFittingOneScreen() throws {
         let (_, preferences) = snapshot(isScreen: true) {
             CountingLoader().snapshot(waitForIdle: true, timeout: 3)
-        }.loadViewWithPreferences(drawHierarchyInKeyWindow: false, fullPage: true)
+        }.loadViewWithPreferences(fullPage: true)
 
         XCTAssertEqual(try XCTUnwrap(preferences.settledImage).size, device.size)
     }
@@ -89,18 +82,16 @@ final class SnapshotWaitTests: XCTestCase {
                 LoadingScreen(viewModel: viewModel).snapshot(waitUntil: { viewModel.isLoaded }, timeout: 3)
             }.loadViewWithPreferences()
 
-            XCTAssertNil(preferences.waitFailure)
+            XCTAssertNil(preferences.failure)
             XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.3, "isScreen: \(isScreen)")
             try assertImage(try XCTUnwrap(preferences.settledImage), matches: Phase("done"), isScreen: isScreen)
         }
     }
 
     func testProjectWideIdleDefaultCapturesSettledState() throws {
-        SnapshotWaitDefaults.waitForIdle = true
+        let (_, preferences) = snapshot(isScreen: false) { CountingLoader() }
+            .loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults(waitForIdle: true))
 
-        let (_, preferences) = snapshot(isScreen: false) { CountingLoader() }.loadViewWithPreferences()
-
-        XCTAssertNil(preferences.waitFailure)
         try assertImage(try XCTUnwrap(preferences.settledImage), matches: Phase("done"), isScreen: false)
     }
 
@@ -112,7 +103,6 @@ final class SnapshotWaitTests: XCTestCase {
         }.loadViewWithPreferences()
 
         XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.5)
-        XCTAssertEqual(preferences.resolvedDelay, 0)
         try assertImage(try XCTUnwrap(preferences.settledImage), matches: Phase("done"), isScreen: false)
     }
 
@@ -121,7 +111,7 @@ final class SnapshotWaitTests: XCTestCase {
             CountingLoader().snapshot(waitUntil: { false }, timeout: 0.2)
         }.loadViewWithPreferences()
 
-        XCTAssertNotNil(preferences.waitFailure)
+        XCTAssertNotNil(preferences.failure)
         XCTAssertNil(preferences.settledImage)
     }
 
@@ -129,9 +119,58 @@ final class SnapshotWaitTests: XCTestCase {
     func testPreviewWithoutWaitIsNotCaptured() {
         let (_, preferences) = snapshot(isScreen: false) { CountingLoader() }.loadViewWithPreferences()
 
-        XCTAssertNil(preferences.waitFailure)
-        XCTAssertNil(preferences.settledImage)
-        XCTAssertFalse(preferences.isDelayApplied)
+        XCTAssertNil(preferences.waitResult)
+    }
+
+    /// The preview is waited on where it was first hosted, so it appears once and starts its work once.
+    func testWaitedPreviewIsHostedOnce() throws {
+        let appearances = AppearanceCounter()
+        let (_, preferences) = snapshot(isScreen: false) {
+            CountingLoader()
+                .onAppear { appearances.count += 1 }
+                .snapshot(waitForIdle: true, timeout: 3)
+        }.loadViewWithPreferences()
+
+        XCTAssertNotNil(preferences.settledImage)
+        XCTAssertEqual(appearances.count, 1)
+    }
+
+    /// A view controller wrapped in a representable leaves the canvas once captured, so the preview
+    /// can be hosted again, as the accessibility snapshot does.
+    func testWaitedViewControllerLeavesTheCanvas() throws {
+        let viewController = LabelViewController()
+        let snapshot = PrefireSnapshot({ viewController }, name: "Controller", isScreen: true, device: device, traits: traits)
+
+        let (view, preferences) = snapshot.loadViewWithPreferences(waitDefaults: SnapshotWaitDefaults(waitForIdle: true))
+
+        XCTAssertNotNil(preferences.settledImage, preferences.failure ?? "")
+        XCTAssertNil(viewController.parent)
+
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        window.rootViewController = UIHostingController(rootView: view)
+        window.isHidden = false
+        window.rootViewController?.view.layoutIfNeeded()
+        XCTAssertNotNil(viewController.parent)
+
+        window.rootViewController = nil
+        window.isHidden = true
+    }
+
+    /// Rows the stretched canvas brings in load in their turn, and are waited for before the capture.
+    func testFullPageWaitsForRowsBroughtInByStretching() throws {
+        let (_, preferences) = snapshot(isScreen: true) {
+            LazyLoadingList(isPreloaded: false).snapshot(waitForIdle: true, timeout: 5)
+        }.loadViewWithPreferences(fullPage: true)
+
+        let image = try XCTUnwrap(preferences.settledImage, preferences.failure ?? "")
+        let height = LazyLoadingList.rowHeight * CGFloat(LazyLoadingList.rows) + device.safeArea.top + device.safeArea.bottom
+        XCTAssertEqual(image.size.height, height)
+
+        var expected = device
+        expected.size?.height = height
+        let reference = PrefireSnapshot({ LazyLoadingList(isPreloaded: true) }, name: "Reference", isScreen: true, device: expected, traits: traits)
+        let config = ViewImageConfig(safeArea: expected.safeArea, size: expected.size, traits: expected.traits)
+        XCTAssertNil(diff(image, try render(reference.loadViewWithPreferences().0, layout: .device(config: config))))
     }
 
     // MARK: Private
@@ -175,6 +214,70 @@ final class SnapshotWaitTests: XCTestCase {
 
     private func diff(_ lhs: UIImage, _ rhs: UIImage) -> String? {
         Snapshotting<UIImage, UIImage>.image.diffing.diff(lhs, rhs)?.0
+    }
+}
+
+private extension PreferenceKeys {
+    var settledImage: UIImage? {
+        if case let .settled(image) = waitResult { image } else { nil }
+    }
+
+    var failure: String? {
+        if case let .timedOut(message) = waitResult { message } else { nil }
+    }
+}
+
+@MainActor
+private final class AppearanceCounter {
+    var count = 0
+}
+
+private final class LabelViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+
+        let label = UILabel()
+        label.text = "Controller"
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+        ])
+    }
+}
+
+/// Rows that only show their content once they appeared and loaded, like rows fetching an image.
+private struct LazyLoadingList: View {
+    static let rowHeight: CGFloat = 50
+    static let rows = 40
+
+    let isPreloaded: Bool
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(0..<Self.rows, id: \.self) { index in
+                    Row(index: index, isLoaded: isPreloaded)
+                }
+            }
+        }
+    }
+
+    private struct Row: View {
+        let index: Int
+        @State var isLoaded: Bool
+
+        var body: some View {
+            Text(isLoaded ? "Row \(index)" : "…")
+                .frame(maxWidth: .infinity, minHeight: LazyLoadingList.rowHeight, maxHeight: LazyLoadingList.rowHeight)
+                .task {
+                    guard !isLoaded else { return }
+                    try? await Task.sleep(nanoseconds: 50_000_000)
+                    isLoaded = true
+                }
+        }
     }
 }
 

@@ -80,64 +80,104 @@ public struct RecordPreferenceKey: PreferenceKey {
 
 // MARK: - Waiting
 
-/// Condition Prefire waits for before it captures a snapshot.
+/// What Prefire waits for before it captures a snapshot, set by `snapshot(waitForIdle:timeout:)`
+/// and `snapshot(waitUntil:timeout:)`.
 public enum SnapshotWait: @unchecked Sendable {
-    /// Renders until the same frame comes back twice in a row.
-    case idle
+    /// Renders until the frame stops changing.
+    case idle(timeout: TimeInterval?)
 
-    /// Renders until `condition` returns `true`.
-    ///
-    /// - Parameter id: Call site of the modifier. Keeps the preference equal across re-renders.
-    case condition(id: String, condition: @MainActor () -> Bool)
+    /// Renders until every condition returns `true`.
+    case conditions([SnapshotWaitCondition], timeout: TimeInterval?)
 
     /// Captures right away, ignoring `SnapshotWaitDefaults.waitForIdle`.
     case disabled
+
+    /// Combines the waits of several views of one preview: a condition is waited for over idle, idle
+    /// over an opt-out, every condition has to be met, and the longest timeout applies.
+    func combined(with other: SnapshotWait) -> SnapshotWait {
+        switch (self, other) {
+        case let (.conditions(lhs, lhsTimeout), .conditions(rhs, rhsTimeout)):
+            .conditions(lhs + rhs, timeout: Self.longest(lhsTimeout, rhsTimeout))
+        case (.conditions, _), (.idle, .disabled):
+            self
+        case (_, .conditions), (.disabled, .idle):
+            other
+        case let (.idle(lhsTimeout), .idle(rhsTimeout)):
+            .idle(timeout: Self.longest(lhsTimeout, rhsTimeout))
+        case (.disabled, .disabled):
+            .disabled
+        }
+    }
+
+    private static func longest(_ lhs: TimeInterval?, _ rhs: TimeInterval?) -> TimeInterval? {
+        guard let lhs, let rhs else { return lhs ?? rhs }
+        return max(lhs, rhs)
+    }
 }
 
 extension SnapshotWait: Equatable {
+    /// Conditions are never equal, so a re-rendered preview always hands over its latest closure.
     public static func == (lhs: SnapshotWait, rhs: SnapshotWait) -> Bool {
         switch (lhs, rhs) {
-        case (.idle, .idle), (.disabled, .disabled): true
-        case let (.condition(lhsID, _), .condition(rhsID, _)): lhsID == rhsID
+        case let (.idle(lhsTimeout), .idle(rhsTimeout)): lhsTimeout == rhsTimeout
+        case (.disabled, .disabled): true
         default: false
         }
     }
 }
 
-/// Project wide waiting defaults, set by the generated tests from `.prefire.yml`.
-///
-/// Only read while snapshots are taken, so mutating them from `setUp()` is safe.
-public enum SnapshotWaitDefaults {
-    /// Wait for the frame to stabilize even when a preview does not ask for it.
-    public nonisolated(unsafe) static var waitForIdle: Bool = false
+/// A condition of `snapshot(waitUntil:timeout:)`.
+public struct SnapshotWaitCondition: @unchecked Sendable {
+    /// Call site of the modifier, named when the condition is not met in time.
+    public let location: String
 
-    /// Time limit for a wait that does not set its own.
-    public nonisolated(unsafe) static var timeout: TimeInterval = 5
+    let isMet: @MainActor () -> Bool
 
-    /// Restores the library defaults.
-    ///
-    /// Generated suites call it before applying their own configuration, so a test target hosting
-    /// suites from several `.prefire.yml` files does not depend on the order they run in.
-    public static func reset() {
-        waitForIdle = false
-        timeout = 5
+    public init(location: String, isMet: @escaping @MainActor () -> Bool) {
+        self.location = location
+        self.isMet = isMet
     }
+}
+
+/// How previews wait when they do not say so themselves: `snapshot_wait_for_idle` and
+/// `snapshot_wait_timeout` of `.prefire.yml`, which the generated tests pass on.
+public struct SnapshotWaitDefaults: Sendable {
+    /// Wait for the frame to stop changing even when a preview does not ask for it.
+    public var waitForIdle: Bool
+
+    /// Time limit of a wait that does not set its own, in seconds.
+    public var timeout: TimeInterval
+
+    public init(waitForIdle: Bool = false, timeout: TimeInterval = 5) {
+        self.waitForIdle = waitForIdle
+        self.timeout = timeout
+    }
+}
+
+/// How waiting for a preview ended.
+public enum SnapshotWaitResult {
+    #if os(iOS) || os(tvOS)
+    /// The preview settled, captured where it was waited on.
+    ///
+    /// Compare this image instead of snapshotting the view again: a snapshot strategy hosts the view
+    /// in a window of its own, and moving a preview to another window restarts its `.onAppear` and
+    /// `.task`, so the state it reached while waiting would be lost.
+    case settled(UIImage)
+    #else
+    /// The preview settled. The returned view shows that state and has spent `delay` already.
+    case settled
+    #endif
+
+    /// The preview was not ready in time. The message says why, for the test to fail with.
+    case timedOut(String)
 }
 
 public struct WaitPreferenceKey: PreferenceKey {
     public static let defaultValue: SnapshotWait? = nil
 
     public static func reduce(value: inout SnapshotWait?, nextValue: () -> SnapshotWait?) {
-        value = nextValue()
-    }
-}
-
-public struct WaitTimeoutPreferenceKey: PreferenceKey {
-    /// `nil` falls back to `SnapshotWaitDefaults.timeout`.
-    public static let defaultValue: TimeInterval? = nil
-
-    public static func reduce(value: inout TimeInterval?, nextValue: () -> TimeInterval?) {
-        value = nextValue()
+        guard let next = nextValue() else { return }
+        value = value?.combined(with: next) ?? next
     }
 }
 
@@ -148,59 +188,17 @@ public class PreferenceKeys: @unchecked Sendable {
     public var perceptualPrecision: Float
     public var record: Bool
 
-    /// Condition to wait for. `nil` falls back to `SnapshotWaitDefaults.waitForIdle`.
-    public var wait: SnapshotWait?
+    /// How waiting for the preview ended, or `nil` when it was not waited for.
+    public internal(set) var waitResult: SnapshotWaitResult?
 
-    /// Time limit for `wait`. `nil` falls back to `SnapshotWaitDefaults.timeout`.
-    public var waitTimeout: TimeInterval?
+    /// What the preview asked to wait for.
+    var wait: SnapshotWait?
 
-    /// Whether the wait already spent `delay` on the view that is about to be captured.
-    public internal(set) var isDelayApplied = false
-
-    /// Why waiting failed, or `nil` when there was nothing to wait for or the wait succeeded.
-    public internal(set) var waitFailure: String?
-
-    #if os(iOS) || os(tvOS)
-    /// The preview in the state the wait settled on, or `nil` when there was nothing to wait for.
-    ///
-    /// Compare this image instead of snapshotting the view again: a snapshot strategy hosts the view
-    /// in a window of its own, and moving a preview to another window restarts its `.onAppear` and
-    /// `.task`, so the state it reached while waiting would be lost.
-    public internal(set) var settledImage: UIImage?
-    #endif
-
-    /// Delay for the snapshot strategy: `delay`, unless the wait already spent it.
-    ///
-    /// A wait starts by spending `delay`, so a preview that only starts working after it is still
-    /// observed. When that happened on the view being captured, the strategy must not spend it again.
-    public var resolvedDelay: TimeInterval { isDelayApplied ? 0 : delay }
-
-    /// Condition to wait for, including the project wide default.
-    public var resolvedWait: SnapshotWait? {
-        switch wait {
-        case nil: SnapshotWaitDefaults.waitForIdle ? .idle : nil
-        case .some(.disabled): nil
-        case let .some(wait): wait
-        }
-    }
-
-    /// Time limit for `resolvedWait`, including the project wide default.
-    public var resolvedTimeout: TimeInterval { waitTimeout ?? SnapshotWaitDefaults.timeout }
-
-    public init(
-        delay: TimeInterval = 0,
-        precision: Float = 1,
-        perceptualPrecision: Float = 1,
-        record: Bool = false,
-        wait: SnapshotWait? = nil,
-        waitTimeout: TimeInterval? = nil
-    ) {
+    public init(delay: TimeInterval = 0, precision: Float = 1, perceptualPrecision: Float = 1, record: Bool = false) {
         self.delay = delay
         self.precision = precision
         self.perceptualPrecision = perceptualPrecision
         self.record = record
-        self.wait = wait
-        self.waitTimeout = waitTimeout
     }
 }
 
@@ -225,8 +223,8 @@ public extension View {
     /// Use this modifier to capture the snapshot as soon as the preview stops changing,
     /// instead of guessing a fixed `delay`.
     ///
-    /// Prefire renders the preview and compares consecutive frames: the snapshot is taken once the
-    /// same frame comes back twice in a row. Combine it with
+    /// Prefire renders the preview and compares frames: the snapshot is taken once nothing changed
+    /// for about a third of a second. Combine it with
     /// `snapshot(delay:precision:perceptualPrecision:record:)` when you also need to tune the
     /// comparison, or to keep a floor under the wait: `delay` is spent before the frames are
     /// compared, so a preview that only starts working after it is still waited for.
@@ -238,14 +236,15 @@ public extension View {
     ///              `snapshot_wait_timeout` from the configuration, 5 seconds unless set.
     @inlinable
     func snapshot(waitForIdle: Bool, timeout: TimeInterval? = nil) -> some View {
-        preference(key: WaitPreferenceKey.self, value: waitForIdle ? .idle : .disabled)
-            .preference(key: WaitTimeoutPreferenceKey.self, value: timeout)
+        preference(key: WaitPreferenceKey.self, value: waitForIdle ? .idle(timeout: timeout) : .disabled)
     }
 
     /// Use this modifier when the preview is ready at a moment only it knows about,
     /// like a loaded view model or a finished animation.
     ///
-    /// The condition is checked on the main thread while the preview keeps rendering.
+    /// The condition is checked on the main thread while the preview keeps rendering. When several
+    /// views of a preview set one, all of them have to be met. A condition is waited for over
+    /// `snapshot(waitForIdle:timeout:)`.
     ///
     /// - Parameters:
     ///   - condition: Returns `true` once the preview is ready to be captured.
@@ -258,7 +257,9 @@ public extension View {
         fileID: String = #fileID,
         line: UInt = #line
     ) -> some View {
-        preference(key: WaitPreferenceKey.self, value: .condition(id: "\(fileID):\(line)", condition: condition))
-            .preference(key: WaitTimeoutPreferenceKey.self, value: timeout)
+        preference(
+            key: WaitPreferenceKey.self,
+            value: .conditions([SnapshotWaitCondition(location: "\(fileID):\(line)", isMet: condition)], timeout: timeout)
+        )
     }
 }
