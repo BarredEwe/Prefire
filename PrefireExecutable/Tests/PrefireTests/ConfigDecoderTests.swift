@@ -102,4 +102,31 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
     }
+
+    func test_decodeConfig_replacesEveryEnvKeyInValue() {
+        let configString = """
+        test_configuration:
+          - test_target_path: "${PROJECT_DIR}/${MODULE}/Tests"
+          - sources:
+            - ${PROJECT_DIR}/${MODULE}/Sources
+        """
+        let env = ["PROJECT_DIR": "/User/Project", "MODULE": "Feature"]
+
+        let config = ConfigDecoder().decode(from: configString, env: env)
+
+        XCTAssertEqual(config.tests.testTargetPath, "/User/Project/Feature/Tests")
+        XCTAssertEqual(config.tests.sources, ["/User/Project/Feature/Sources"])
+    }
+
+    func test_decodeConfig_keepsUnknownKeysAndTargetPlaceholders() {
+        let configString = """
+        test_configuration:
+          - test_target_path: "${PROJECT_DIR}/${UNKNOWN}/${TARGET}/${TEST_TARGET}"
+        """
+        let env = ["PROJECT_DIR": "/User/Project", "TARGET": "EnvTarget", "TEST_TARGET": "EnvTestTarget"]
+
+        let config = ConfigDecoder().decode(from: configString, env: env)
+
+        XCTAssertEqual(config.tests.testTargetPath, "/User/Project/${UNKNOWN}/${TARGET}/${TEST_TARGET}")
+    }
 }

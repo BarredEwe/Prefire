@@ -13,6 +13,12 @@ import Foundation
 /// // Result: "${PROJECT_DIR}/MyApp/Tests"
 /// ```
 enum ConfigPathResolver {
+    static let targetKey = "TARGET"
+    static let testTargetKey = "TEST_TARGET"
+
+    /// Keys that are resolved here rather than from the environment
+    static let placeholderKeys: Set<String> = [targetKey, testTargetKey]
+
     /// Resolves template placeholders in a configuration path
     ///
     /// - Parameters:
@@ -28,11 +34,11 @@ enum ConfigPathResolver {
         var result = path
 
         if let target {
-            result = result.replacingOccurrences(of: "${TARGET}", with: target)
+            result = result.replacingOccurrences(of: "${\(targetKey)}", with: target)
         }
 
         if let testTarget {
-            result = result.replacingOccurrences(of: "${TEST_TARGET}", with: testTarget)
+            result = result.replacingOccurrences(of: "${\(testTargetKey)}", with: testTarget)
         }
 
         return result

@@ -148,6 +148,23 @@ class GenerateTestsCommandTests: XCTestCase {
         XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/My Project/My App/Tests")
     }
 
+    func test_from_resolvesPlaceholdersAlongsideProcessEnvironment() {
+        let configData = """
+        test_configuration:
+          target: FeatureA
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests/${TEST_TARGET}"
+        """
+        let env = ProcessInfo.processInfo.environment.merging(
+            ["PROJECT_DIR": "/Users/dev/MyProject", "TARGET": "EnvTarget"],
+            uniquingKeysWith: { _, new in new }
+        )
+        let config = ConfigDecoder().decode(from: configData, env: env)
+
+        let options = makeOptions(testTarget: "FeatureATests", config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "/Users/dev/MyProject/FeatureA/Tests/FeatureATests")
+    }
+
     // MARK: - CLI and Config Merging Tests
 
     func test_from_configTakesPrecedenceOverCLI_forTarget() {
