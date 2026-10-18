@@ -285,6 +285,7 @@ See detailed configuration in the [Configuration guide](Documentation/Configurat
 ```yaml
 test_configuration:
   target: MyApp
+  test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"  # Template parameters supported
 
 playbook_configuration:
   preview_default_enabled: true

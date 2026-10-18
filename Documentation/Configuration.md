@@ -44,7 +44,7 @@ playbook_configuration:
 | Key                                            | Description                                                                                                                                                                                                                               |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `target`                                       | Target name used for snapshot generation. Default: _FirstTarget_                                                                                                                                                                          |
-| `test_target_path`                             | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Default: target name folder                                                                                                                         |
+| `test_target_path`                             | Path to unit test directory. Snapshots will be written to its `__Snapshots__` folder. Supports `${TARGET}` and `${TEST_TARGET}` placeholders (see below). Default: target name folder                                                    |
 | `test_file_path`                               | Output file path for generated tests. Default: DerivedData or resolved via plugin                                                                                                                                                         |
 | `template_file_path`                           | Custom template path relative to target. Optional. Defaults:‣ _PreviewTests.stencil_ for test plugin‣ _PreviewModels.stencil_ for playbook plugin. See [Templates documentation](Templates.md) for available context and filters. |
 | `simulator_device`                             | Device identifier used to run tests (e.g. `iPhone15,2`). Optional                                                                                                                                                                         |
@@ -127,6 +127,20 @@ Verifying snapshots works with a plain `swift test`. **Recording** new reference
 
 ```bash
 swift test --disable-sandbox
+```
+
+---
+
+### 🎯 Template Parameters
+
+The `test_target_path` configuration supports template placeholders `${TARGET}` and `${TEST_TARGET}` that are dynamically replaced at runtime. Useful for multi-target projects and monorepos.
+
+**Example:**
+```yaml
+test_configuration:
+  target: MyApp
+  test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"
+  # Resolves to: ${PROJECT_DIR}/MyApp/Tests
 ```
 
 ---

@@ -7,34 +7,46 @@ private enum Constants {
 }
 
 struct GeneratedPlaybookOptions {
-    var targetPath: String?
-    var sources: [Path]
-    var output: Path
-    var previewDefaultEnabled: Bool
-    var template: Path?
-    var cacheBasePath: Path?
-    var imports: [String]?
-    var testableImports: [String]?
+    let targetPath: String?
+    let sources: [Path]
+    let output: Path
+    let previewDefaultEnabled: Bool
+    let template: Path?
+    let cacheBasePath: Path?
+    let imports: [String]?
+    let testableImports: [String]?
+}
 
-    init(targetPath: String?, sources: [String], output: String?, template: String?, cacheBasePath: String?, config: Config?) throws {
-        self.targetPath = config?.playbook.targetPath ?? targetPath
-        self.sources = sources.isEmpty ? [.current] : sources.compactMap({ Path($0) })
+// MARK: - Factory
 
-        self.output = (output.flatMap({ Path($0) }) ?? .current) + Constants.defaultOutputName
+extension GeneratedPlaybookOptions {
+    /// Creates GeneratedPlaybookOptions by merging CLI options with Config
+    /// - Parameters:
+    ///   - cli: Raw CLI options
+    ///   - config: Loaded config (optional)
+    /// - Returns: Fully resolved GeneratedPlaybookOptions
+    static func from(
+        cli: CLIPlaybookOptions,
+        config: Config?
+    ) -> GeneratedPlaybookOptions {
+        let targetPath = config?.playbook.targetPath ?? cli.targetPath
 
-        previewDefaultEnabled = config?.playbook.previewDefaultEnabled ?? true
+        let template = OptionsResolver.resolveTemplate(
+            cliTemplate: cli.template,
+            configTemplate: config?.playbook.template,
+            targetPath: targetPath.flatMap { Path($0) }
+        )
 
-        if let template = config?.playbook.template, let targetPath {
-            let targetURL = URL(filePath: targetPath)
-            let templateURL = targetURL.appending(path: template)
-            self.template = Path(templateURL.absoluteURL.path(percentEncoded: false))
-        } else if let template {
-            self.template = Path(template)
-        }
-
-        self.cacheBasePath = cacheBasePath.flatMap({ Path($0) })
-        imports = config?.playbook.imports
-        testableImports = config?.playbook.testableImports
+        return GeneratedPlaybookOptions(
+            targetPath: targetPath,
+            sources: OptionsResolver.resolveSources(cli.sources),
+            output: OptionsResolver.resolveOutput(cli.output, defaultFileName: Constants.defaultOutputName),
+            previewDefaultEnabled: config?.playbook.previewDefaultEnabled ?? true,
+            template: template,
+            cacheBasePath: cli.cacheBasePath.flatMap { Path($0) },
+            imports: config?.playbook.imports,
+            testableImports: config?.playbook.testableImports
+        )
     }
 }
 

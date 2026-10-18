@@ -4,26 +4,45 @@ import XCTest
 import PathKit
 
 class GenerateTestsCommandTests: XCTestCase {
-    var options: GeneratedTestsOptions!
 
-    override func setUp() {
-        super.setUp()
-        options = try? GeneratedTestsOptions(
-            target: "GenerateTestsCommand",
-            testTarget: "GenerateTestsCommandTests",
-            template: nil,
-            sources: [],
-            output: "User/Tests/PreviewTests.generated.swift",
-            testTargetPath: "User/Tests",
-            cacheBasePath: nil,
-            device: nil,
-            osVersion: nil,
-            config: nil
+    // MARK: - Helper Methods
+
+    private func makeOptions(
+        target: String? = nil,
+        testTarget: String? = nil,
+        template: String? = nil,
+        sources: [String] = [],
+        output: String? = nil,
+        testTargetPath: String? = nil,
+        cacheBasePath: String? = nil,
+        device: String? = nil,
+        osVersion: String? = nil,
+        config: Config? = nil
+    ) -> GeneratedTestsOptions {
+        let cli = CLITestsOptions(
+            target: target,
+            testTarget: testTarget,
+            template: template,
+            sources: sources,
+            output: output,
+            testTargetPath: testTargetPath,
+            cacheBasePath: cacheBasePath,
+            device: device,
+            osVersion: osVersion
         )
+        return GeneratedTestsOptions.from(cli: cli, config: config)
     }
 
+    // MARK: - makeArguments Tests
+
     func test_makeArguments_sources() async {
-        options.sources = ["some/sources"]
+        let options = makeOptions(
+            target: "GenerateTestsCommand",
+            testTarget: "GenerateTestsCommandTests",
+            sources: ["some/sources"],
+            testTargetPath: "User/Tests"
+        )
+
         let expectedArguments = [
             "mainTarget": options.target! as NSString,
             "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
@@ -33,13 +52,26 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
-    
+
     func test_makeArguments_snapshot_devices() async {
-        options.snapshotDevices = ["iPhone 15", "iPad"]
-        options.sources = ["some/sources", "some/other/sources"]
+        let configData = """
+        test_configuration:
+          snapshot_devices:
+            - iPhone 15
+            - iPad
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(
+            target: "GenerateTestsCommand",
+            testTarget: "GenerateTestsCommandTests",
+            sources: ["some/sources", "some/other/sources"],
+            testTargetPath: "User/Tests",
+            config: config
+        )
 
         let expectedArguments = [
-            "mainTarget": "\(options.target ?? "")" as NSString,
+            "mainTarget": options.target! as NSString,
             "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
             "snapshotDevices": "iPhone 15|iPad" as NSString,
         ] as [String: NSObject]
@@ -48,10 +80,138 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
-    
+
+    // MARK: - Template Parameter Tests
+
+    func test_from_resolvesTargetPlaceholder() {
+        let configData = """
+        test_configuration:
+          target: MyAppTarget
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests"
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/MyAppTarget/Tests")
+    }
+
+    func test_from_resolvesTestTargetPlaceholder() {
+        let configData = """
+        test_configuration:
+          target: MyApp
+          test_target_path: "${PROJECT_DIR}/Tests/${TEST_TARGET}"
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(testTarget: "MyAppTests", config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/Tests/MyAppTests")
+    }
+
+    func test_from_resolvesBothPlaceholders() {
+        let configData = """
+        test_configuration:
+          target: FeatureA
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests/${TEST_TARGET}"
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(testTarget: "FeatureATests", config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/FeatureA/Tests/FeatureATests")
+    }
+
+    func test_from_noPlaceholders_keepsOriginalPath() {
+        let configData = """
+        test_configuration:
+          target: MyApp
+          test_target_path: "${PROJECT_DIR}/Tests"
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(testTarget: "MyAppTests", config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/Tests")
+    }
+
+    func test_from_pathWithSpaces_resolvesCorrectly() {
+        let configData = """
+        test_configuration:
+          target: My App
+          test_target_path: "${PROJECT_DIR}/My Project/${TARGET}/Tests"
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "${PROJECT_DIR}/My Project/My App/Tests")
+    }
+
+    func test_from_resolvesPlaceholdersAlongsideProcessEnvironment() {
+        let configData = """
+        test_configuration:
+          target: FeatureA
+          test_target_path: "${PROJECT_DIR}/${TARGET}/Tests/${TEST_TARGET}"
+        """
+        let env = ProcessInfo.processInfo.environment.merging(
+            ["PROJECT_DIR": "/Users/dev/MyProject", "TARGET": "EnvTarget"],
+            uniquingKeysWith: { _, new in new }
+        )
+        let config = ConfigDecoder().decode(from: configData, env: env)
+
+        let options = makeOptions(testTarget: "FeatureATests", config: config)
+
+        XCTAssertEqual(options.testTargetPath?.string, "/Users/dev/MyProject/FeatureA/Tests/FeatureATests")
+    }
+
+    // MARK: - CLI and Config Merging Tests
+
+    func test_from_configTakesPrecedenceOverCLI_forTarget() {
+        let configData = """
+        test_configuration:
+          target: ConfigTarget
+        """
+        let config = ConfigDecoder().decode(from: configData, env: [:])
+
+        let options = makeOptions(
+            target: "CLITarget",
+            testTarget: "CLITestTarget",
+            config: config
+        )
+
+        XCTAssertEqual(options.target, "ConfigTarget")
+        // testTarget only comes from CLI (not in config)
+        XCTAssertEqual(options.testTarget, "CLITestTarget")
+    }
+
+    func test_from_usesCliWhenConfigIsNil() {
+        let options = makeOptions(
+            target: "CLITarget",
+            testTarget: "CLITestTarget"
+        )
+
+        XCTAssertEqual(options.target, "CLITarget")
+        XCTAssertEqual(options.testTarget, "CLITestTarget")
+    }
+
+    // MARK: - Snapshot Options Tests
+
+    private func makeOptions(testConfiguration: String) -> GeneratedTestsOptions {
+        let config = ConfigDecoder().decode(from: "test_configuration:\n" + testConfiguration, env: [:])
+        return makeOptions(
+            target: "GenerateTestsCommand",
+            testTarget: "GenerateTestsCommandTests",
+            testTargetPath: "User/Tests",
+            config: config
+        )
+    }
+
     func test_makeArguments_split_snapshot_directories_uses_templated_file_name() async {
-        options.useGroupedSnapshots = false
-        options.splitSnapshotDirectories = true
+        let options = makeOptions(testConfiguration: """
+          use_grouped_snapshots: false
+          split_snapshot_directories: true
+        """)
 
         let expectedArguments = [
             "mainTarget": "\(options.target ?? "")" as NSString,
@@ -64,8 +224,10 @@ class GenerateTestsCommandTests: XCTestCase {
     }
 
     func test_makeArguments_ungrouped_without_split_keeps_legacy_file_name() async {
-        options.useGroupedSnapshots = false
-        options.splitSnapshotDirectories = false
+        let options = makeOptions(testConfiguration: """
+          use_grouped_snapshots: false
+          split_snapshot_directories: false
+        """)
 
         let expectedArguments = [
             "mainTarget": "\(options.target ?? "")" as NSString,
@@ -78,7 +240,9 @@ class GenerateTestsCommandTests: XCTestCase {
     }
 
     func test_makeArguments_drawHierarchyInKeyWindowDefaultEnabled() async {
-        options.drawHierarchyInKeyWindowDefaultEnabled = true
+        let options = makeOptions(testConfiguration: """
+          draw_hierarchy_in_key_window_default_enabled: true
+        """)
 
         let expectedArguments = [
             "mainTarget": "\(options.target ?? "")" as NSString,
@@ -92,7 +256,9 @@ class GenerateTestsCommandTests: XCTestCase {
     }
 
     func test_makeArguments_fullPageSnapshots() async {
-        options.fullPageSnapshots = true
+        let options = makeOptions(testConfiguration: """
+          full_page_snapshots: true
+        """)
 
         let expectedArguments = [
             "mainTarget": "\(options.target ?? "")" as NSString,

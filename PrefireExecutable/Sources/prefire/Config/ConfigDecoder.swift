@@ -115,42 +115,45 @@ final class ConfigDecoder {
         for line in lines[lines.startIndex + 1..<lines.endIndex] {
             guard !line.contains(Constants.separtor) else { return values }
 
-            var value = line
+            let value = line
                 .trimmingCharacters(in: .whitespaces)
                 .replacingOccurrences(of: "\"", with: "")
                 .replacingOccurrences(of: "- ", with: "")
 
             guard !value.isEmpty else { continue }
 
-            // Check and replace if the value contains a key formatted as "${key}"
-            if let key = value.findKey(), let envValue = env[key] {
-                value = value.replacingOccurrences(of: "${\(key)}", with: envValue)
-            }
-
-            values.append(value)
+            values.append(value.replacingEnvKeys(env: env))
         }
 
         return values
     }
 
     private func getValue(from component: String?, env: [String: String]) -> String? {
-        var value = component?.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "\"", with: "")
-
-        // Check and replace if the value contains a key formatted as "${key}"
-        if let key = value?.findKey(), let envValue = env[key] {
-            value = value?.replacingOccurrences(of: "${\(key)}", with: envValue)
-        }
-
-        return value
+        component?
+            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "\"", with: "")
+            .replacingEnvKeys(env: env)
     }
 }
 
 private extension String {
-    /// Extract the key enclosed within "${}" from a string
-    /// - Returns: Key
-    func findKey() -> String? {
-        guard contains("${") else { return nil }
+    /// Replace every key formatted as "${key}" with its value from the environment.
+    /// Unknown keys and the target placeholders resolved later by `ConfigPathResolver` are kept as is.
+    func replacingEnvKeys(env: [String: String]) -> String {
+        var result = self
+        for key in findKeys() where !ConfigPathResolver.placeholderKeys.contains(key) {
+            guard let envValue = env[key] else { continue }
+            result = result.replacingOccurrences(of: "${\(key)}", with: envValue)
+        }
+        return result
+    }
 
-        return components(separatedBy: "${").last?.components(separatedBy: "}").first
+    /// Extract all keys enclosed within "${}" from a string
+    /// - Returns: Keys in order of appearance
+    func findKeys() -> [String] {
+        components(separatedBy: "${")
+            .dropFirst()
+            .compactMap { part in part.range(of: "}").map { String(part[..<$0.lowerBound]) } }
+            .filter { !$0.isEmpty }
     }
 }
