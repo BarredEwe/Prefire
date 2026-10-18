@@ -177,4 +177,80 @@ class GenerateTestsCommandTests: XCTestCase {
         XCTAssertEqual(options.target, "CLITarget")
         XCTAssertEqual(options.testTarget, "CLITestTarget")
     }
+
+    // MARK: - Snapshot Options Tests
+
+    private func makeOptions(testConfiguration: String) -> GeneratedTestsOptions {
+        let config = ConfigDecoder().decode(from: "test_configuration:\n" + testConfiguration, env: [:])
+        return makeOptions(
+            target: "GenerateTestsCommand",
+            testTarget: "GenerateTestsCommandTests",
+            testTargetPath: "User/Tests",
+            config: config
+        )
+    }
+
+    func test_makeArguments_split_snapshot_directories_uses_templated_file_name() async {
+        let options = makeOptions(testConfiguration: """
+          use_grouped_snapshots: false
+          split_snapshot_directories: true
+        """)
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "{PREVIEW_FILE_NAME}Tests.generated.swift" })!.string as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
+    func test_makeArguments_ungrouped_without_split_keeps_legacy_file_name() async {
+        let options = makeOptions(testConfiguration: """
+          use_grouped_snapshots: false
+          split_snapshot_directories: false
+        """)
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift" })!.string as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
+    func test_makeArguments_drawHierarchyInKeyWindowDefaultEnabled() async {
+        let options = makeOptions(testConfiguration: """
+          draw_hierarchy_in_key_window_default_enabled: true
+        """)
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
+    func test_makeArguments_fullPageSnapshots() async {
+        let options = makeOptions(testConfiguration: """
+          full_page_snapshots: true
+        """)
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
+            "fullPageSnapshots": "true" as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
 }

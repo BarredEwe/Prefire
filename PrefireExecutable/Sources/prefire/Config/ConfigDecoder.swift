@@ -72,6 +72,12 @@ final class ConfigDecoder {
             config.tests.testTargetPath = getValue(from: components.last, env: env)
         case .useGroupedSnapshots:
             config.tests.useGroupedSnapshots = getValue(from: components.last, env: env) == "true"
+        case .splitSnapshotDirectories:
+            config.tests.splitSnapshotDirectories = getValue(from: components.last, env: env) == "true"
+        case .drawHierarchyInKeyWindowDefaultEnabled:
+            config.tests.drawHierarchyInKeyWindowDefaultEnabled = getValue(from: components.last, env: env) == "true"
+        case .fullPageSnapshots:
+            config.tests.fullPageSnapshots = getValue(from: components.last, env: env) == "true"
         }
     }
 
@@ -101,7 +107,8 @@ final class ConfigDecoder {
     }
 
     private func getValues(from components: [String], lines: ArraySlice<String>, env: [String: String]) -> [String]? {
-        guard components.last?.isEmpty == true else { return nil }
+        guard let lastComponent = components.last?.trimmingCharacters(in: .whitespaces),
+              lastComponent.isEmpty == true else { return nil }
 
         var values = [String]()
 

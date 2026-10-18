@@ -71,25 +71,29 @@ public struct PreviewModel: Identifiable {
         self.deviceConfig = deviceConfig
     }
 
+    #if os(iOS) || os(tvOS) || os(macOS)
     @MainActor
-    public init<T: UIView>(
+    public init<T: PrefireNativeView>(
         id: String? = nil,
         content: @escaping @MainActor () -> T,
         name: String,
         type: LayoutType = .component,
-        device: PreviewDevice? = nil
+        device: PreviewDevice? = nil,
+        deviceConfig: DeviceConfig? = nil
     ) {
-        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device)
+        self.init(id: id, content: { AnyView(ViewRepresentable(view: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
 
     @MainActor
-    public init<T: UIViewController>(
+    public init<T: PrefireNativeViewController>(
         id: String? = nil,
         content: @escaping @MainActor () -> T,
         name: String,
         type: LayoutType = .component,
-        device: PreviewDevice? = nil
+        device: PreviewDevice? = nil,
+        deviceConfig: DeviceConfig? = nil
     ) {
-        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device)
+        self.init(id: id, content: { AnyView(ViewControllerRepresentable(viewController: content())) }, name: name, type: type, device: device, deviceConfig: deviceConfig)
     }
+    #endif
 }

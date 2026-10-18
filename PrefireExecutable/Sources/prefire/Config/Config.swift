@@ -24,6 +24,9 @@ struct TestsConfig {
     var imports: [String]?
     var testableImports: [String]?
     var useGroupedSnapshots: Bool?
+    var splitSnapshotDirectories: Bool?
+    var drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    var fullPageSnapshots: Bool?
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
@@ -38,6 +41,9 @@ struct TestsConfig {
         case imports = "imports"
         case testableImports = "testable_imports"
         case useGroupedSnapshots = "use_grouped_snapshots"
+        case splitSnapshotDirectories = "split_snapshot_directories"
+        case drawHierarchyInKeyWindowDefaultEnabled = "draw_hierarchy_in_key_window_default_enabled"
+        case fullPageSnapshots = "full_page_snapshots"
     }
 }
 

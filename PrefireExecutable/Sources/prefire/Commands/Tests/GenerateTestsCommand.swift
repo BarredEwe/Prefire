@@ -22,6 +22,9 @@ struct GeneratedTestsOptions {
     let imports: [String]?
     let testableImports: [String]?
     let useGroupedSnapshots: Bool
+    let splitSnapshotDirectories: Bool
+    let drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    let fullPageSnapshots: Bool
 }
 
 // MARK: - Factory
@@ -57,7 +60,7 @@ extension GeneratedTestsOptions {
             target: target,
             testTarget: testTarget,
             template: template,
-            sources: OptionsResolver.resolveSources(sources),
+            sources: OptionsResolver.resolveSources(sources, default: []),
             output: output.flatMap { Path($0) } ?? .current,
             prefireEnabledMarker: config?.tests.previewDefaultEnabled ?? true,
             testTargetPath: testTargetPath,
@@ -67,7 +70,10 @@ extension GeneratedTestsOptions {
             snapshotDevices: config?.tests.snapshotDevices,
             imports: config?.tests.imports,
             testableImports: config?.tests.testableImports,
-            useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true
+            useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true,
+            splitSnapshotDirectories: config?.tests.splitSnapshotDirectories ?? false,
+            drawHierarchyInKeyWindowDefaultEnabled: config?.tests.drawHierarchyInKeyWindowDefaultEnabled,
+            fullPageSnapshots: config?.tests.fullPageSnapshots ?? false
         )
     }
 }
@@ -89,6 +95,8 @@ enum GenerateTestsCommand {
         static let testableImports = "testableImports"
         static let previewsMacros = "previewsMacros"
         static let previewsMacrosDict = "previewsMacrosDict"
+        static let drawHierarchyInKeyWindowDefaultEnabled = "drawHierarchyInKeyWindowDefaultEnabled"
+        static let fullPageSnapshots = "fullPageSnapshots"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -105,7 +113,16 @@ enum GenerateTestsCommand {
     }
 
     static func makeArguments(for options: GeneratedTestsOptions) async -> [String: NSObject] {
-        let snapshotOutput = options.testTargetPath.flatMap({ $0 + Constants.snapshotFileName })
+        // `split_snapshot_directories` works only together with `use_grouped_snapshots: false`,
+        // because each `__Snapshots__/<name>/` folder is derived from a distinct generated `.swift`
+        // file. Warn instead of silently ignoring so the user notices the misconfiguration.
+        if options.splitSnapshotDirectories && options.useGroupedSnapshots {
+            Logger.warning("⚠️ `split_snapshot_directories: true` requires `use_grouped_snapshots: false` and will be ignored otherwise.")
+        }
+
+        let splitDirectories = options.splitSnapshotDirectories && !options.useGroupedSnapshots
+        let snapshotFileName = splitDirectories ? Constants.snapshotFileTemplated : Constants.snapshotFileName
+        let snapshotOutput = options.testTargetPath.flatMap({ $0 + snapshotFileName })
 
         Logger.info(
             """
@@ -116,6 +133,8 @@ enum GenerateTestsCommand {
                 ➜ Generated test path: \(options.output)
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
+                ➜ drawHierarchyInKeyWindow default enabled: \(options.drawHierarchyInKeyWindowDefaultEnabled?.description ?? "nil")
+                ➜ Full page snapshots: \(options.fullPageSnapshots)
             """
         )
 
@@ -127,6 +146,8 @@ enum GenerateTestsCommand {
             Keys.testableImports: options.testableImports as? NSArray,
             Keys.mainTarget: options.target as? NSString,
             Keys.file: snapshotOutput?.string as? NSString,
+            Keys.drawHierarchyInKeyWindowDefaultEnabled: options.drawHierarchyInKeyWindowDefaultEnabled?.description as? NSString,
+            Keys.fullPageSnapshots: options.fullPageSnapshots ? "true" as NSString : nil,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

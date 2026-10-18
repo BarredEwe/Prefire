@@ -1,7 +1,6 @@
 import Foundation
 import CryptoKit
 import PathKit
-import SourceryRuntime
 
 struct PrefireCacheManager {
     private let version: String
@@ -15,21 +14,21 @@ struct PrefireCacheManager {
     func loadOrGenerate(
         sources: [Path],
         template: String,
-        parseTypes: () throws -> Types,
-        parsePreviews: () async throws -> [String: String]
-    ) async throws -> (types: Types, previews: [String: String]) {
-        let key = fingerprint(for: sources, extra: template)
+        parseTypes: () throws -> [ParsedType],
+        parsePreviews: () async throws -> [String: RawPreviewModel]
+    ) async throws -> (types: [ParsedType], previews: [String: RawPreviewModel]) {
+        let key = fingerprint(for: sources, extra: template + "\npreview-model-cache-v3")
         let dir = Path.cachesDir(sourcePath: sources.first ?? .current, basePath: cacheBasePath)
-        let typesFile = dir + "\(version)-\(key).types"
+        let typesFile = dir + "\(version)-\(key).types.json"
         let previewsFile = dir + "\(version)-\(key).previews.json"
 
-        var types: Types?
-        var previews: [String: String]?
+        var types: [ParsedType]?
+        var previews: [String: RawPreviewModel]?
 
         if typesFile.exists {
             do {
                 let data = try Data(contentsOf: typesFile.url)
-                types = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? Types
+                types = try JSONDecoder().decode([ParsedType].self, from: data)
             } catch {
                 Logger.warning("⚠️ Failed to read Types cache: \(error)")
             }
@@ -38,7 +37,7 @@ struct PrefireCacheManager {
         if previewsFile.exists {
             do {
                 let data = try Data(contentsOf: previewsFile.url)
-                previews = try JSONDecoder().decode([String: String].self, from: data)
+                previews = try JSONDecoder().decode([String: RawPreviewModel].self, from: data)
             } catch {
                 Logger.warning("⚠️ Failed to read Previews cache: \(error)")
             }
@@ -59,7 +58,7 @@ struct PrefireCacheManager {
         let freshTypes = try parseTypes()
         let freshPreviews = try await parsePreviews()
 
-        let tData = try NSKeyedArchiver.archivedData(withRootObject: freshTypes, requiringSecureCoding: false)
+        let tData = try JSONEncoder().encode(freshTypes)
         let pData = try JSONEncoder().encode(freshPreviews)
 
         try typesFile.parent().mkpath()
@@ -99,6 +98,12 @@ private extension Digest {
 }
 
 extension Path {
+    /// User caches directory, the root Prefire writes its parse cache into.
+    static var defaultBaseCachePath: Path {
+        let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
+        return Path(paths[0])
+    }
+
     static func cachesDir(
         sourcePath: Path,
         basePath: Path? = nil,

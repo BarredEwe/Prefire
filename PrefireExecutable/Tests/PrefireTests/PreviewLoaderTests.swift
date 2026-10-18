@@ -49,6 +49,50 @@ class PreviewLoaderTests: XCTestCase {
         XCTAssertEqual(previews?.count, 1)
         XCTAssertEqual(previews?[0], previewRepresentations[3])
     }
+
+    func test_loadSingleLinePreviewBody() {
+        let content = "#Preview(\"SingleLine\") { previewFoo() }\n"
+        let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: true)
+
+        XCTAssertEqual(previews?.count, 1)
+        XCTAssertEqual(previews?[0], content)
+    }
+
+    func test_loadSingleLineAndMultiLinePreviewBodies() {
+        let content = """
+        #Preview("SingleLine") { previewFoo() }
+        #Preview("MultiLine") {
+            Text("TestView")
+        }
+
+        """
+        let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: true)
+
+        XCTAssertEqual(previews?.count, 2)
+        XCTAssertEqual(previews?[0], "#Preview(\"SingleLine\") { previewFoo() }\n")
+        XCTAssertEqual(previews?[1], "#Preview(\"MultiLine\") {\n    Text(\"TestView\")\n}\n")
+    }
+
+    func test_loadSingleLinePreviewBodyDefaultDisabled() {
+        let content = "#Preview(\"SingleLine\") { previewFoo() }\n"
+        let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: false)
+
+        XCTAssertNil(previews)
+    }
+
+    func test_loadPreviewWithBraceInDisplayName() {
+        let content = """
+        #Preview("{braced}")
+        {
+            Text("TestView")
+        }
+
+        """
+        let previews = PreviewLoader.previewBodies(from: content, defaultEnabled: true)
+
+        XCTAssertEqual(previews?.count, 1)
+        XCTAssertEqual(previews?[0], "#Preview(\"{braced}\")\n{\n    Text(\"TestView\")\n}\n")
+    }
 }
 
 // MARK: - Previews
