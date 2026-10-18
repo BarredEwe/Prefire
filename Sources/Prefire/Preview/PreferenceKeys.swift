@@ -252,8 +252,8 @@ public extension View {
     ///   - timeout: How long to wait before the test fails, counted once `delay` is spent. `nil` uses
     ///              `snapshot_wait_timeout` from the configuration, 5 seconds unless set.
     @inlinable
-    func snapshotWait(
-        until condition: @escaping @MainActor () -> Bool,
+    func snapshot(
+        waitUntil condition: @escaping @MainActor () -> Bool,
         timeout: TimeInterval? = nil,
         fileID: String = #fileID,
         line: UInt = #line

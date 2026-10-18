@@ -233,7 +233,7 @@ import SnapshotTesting
 }
 ```
 
-On iOS/tvOS a preview that uses `.snapshot(waitForIdle:)` or `.snapshotWait(until:)` is captured where it settled.
+On iOS/tvOS a preview that uses `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is captured where it settled.
 Compare `PreferenceKeys.settledImage` when it is set, and fail with `PreferenceKeys.waitFailure` when the wait timed out:
 snapshotting the returned view again would start the preview over. The built-in template shows how.
 

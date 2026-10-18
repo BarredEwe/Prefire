@@ -83,7 +83,7 @@ enum SnapshotWaiter {
             } else {
                 preferences.waitFailure = """
                 Prefire: the condition of "\(name)" (\(id)) was still false after \(formatted(timeout))s. \
-                Raise the timeout of `.snapshotWait(until:timeout:)`, \
+                Raise the timeout of `.snapshot(waitUntil:timeout:)`, \
                 or check that the preview reaches the expected state.
                 """
             }

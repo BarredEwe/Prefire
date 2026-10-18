@@ -213,7 +213,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 
     Waiting for idle only sees what is drawn: a preview that shows the same frame while it loads,
     or runs a Core Animation animation such as a `ProgressView` spinner, looks idle after 100 ms. Use
-    `.snapshotWait(until:)` for those, or a `delay` as a floor: Prefire spends it before it starts
+    `.snapshot(waitUntil:)` for those, or a `delay` as a floor: Prefire spends it before it starts
     comparing frames, and does not wait it out a second time when capturing. Both modifiers can be
     combined, since they configure different things:
 
@@ -231,12 +231,14 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 - When the preview itself knows when it is ready, wait for a condition:
 
     ```swift
-    .snapshotWait(until: { viewModel.isLoaded })
-    .snapshotWait(until: { viewModel.isLoaded }, timeout: 2.0)
+    .snapshot(waitUntil: { viewModel.isLoaded })
+    .snapshot(waitUntil: { viewModel.isLoaded }, timeout: 2.0)
     ```
 
     The condition is checked on the main thread while the preview keeps rendering, and the test
     fails with the call site of the modifier when it is still `false` after `timeout`.
+
+    A preview waits one way: with both `waitForIdle:` and `waitUntil:`, the outer modifier applies.
 
     The preview is captured right where it was waited on, so state it reached in `.onAppear` or
     `.task` is kept. Accessibility snapshots are the exception: they render the preview anew and
@@ -307,7 +309,7 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Mark a UI state | `.previewState(.error)` |
 | Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
 | Wait until the preview settles | `.snapshot(waitForIdle: true, timeout: 2.0)` |
-| Wait for a condition | `.snapshotWait(until: { viewModel.isLoaded })` |
+| Wait for a condition | `.snapshot(waitUntil: { viewModel.isLoaded })` |
 | Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---

@@ -159,7 +159,7 @@ import SnapshotTesting
         )
         #endif
 
-        // Waiting for `.snapshot(waitForIdle:)` or `.snapshotWait(until:)` ran out of time.
+        // Waiting for `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` ran out of time.
         if let waitFailure = preferences.waitFailure {
             return waitFailure
         }

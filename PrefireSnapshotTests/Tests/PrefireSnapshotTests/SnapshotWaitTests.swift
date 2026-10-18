@@ -55,7 +55,7 @@ final class SnapshotWaitTests: XCTestCase {
     func testFullPageMeasuresContentLoadedWhileWaiting() throws {
         let snapshot = snapshot(isScreen: true) {
             let viewModel = LoadingViewModel()
-            LoadingList(viewModel: viewModel).snapshotWait(until: { viewModel.isLoaded }, timeout: 3)
+            LoadingList(viewModel: viewModel).snapshot(waitUntil: { viewModel.isLoaded }, timeout: 3)
         }
         let (_, preferences) = snapshot.loadViewWithPreferences(drawHierarchyInKeyWindow: false, fullPage: true)
 
@@ -86,7 +86,7 @@ final class SnapshotWaitTests: XCTestCase {
             let start = Date()
             let (_, preferences) = snapshot(isScreen: isScreen) {
                 let viewModel = LoadingViewModel()
-                LoadingScreen(viewModel: viewModel).snapshotWait(until: { viewModel.isLoaded }, timeout: 3)
+                LoadingScreen(viewModel: viewModel).snapshot(waitUntil: { viewModel.isLoaded }, timeout: 3)
             }.loadViewWithPreferences()
 
             XCTAssertNil(preferences.waitFailure)
@@ -118,7 +118,7 @@ final class SnapshotWaitTests: XCTestCase {
 
     func testTimeoutLeavesNothingToCompare() {
         let (_, preferences) = snapshot(isScreen: false) {
-            CountingLoader().snapshotWait(until: { false }, timeout: 0.2)
+            CountingLoader().snapshot(waitUntil: { false }, timeout: 0.2)
         }.loadViewWithPreferences()
 
         XCTAssertNotNil(preferences.waitFailure)

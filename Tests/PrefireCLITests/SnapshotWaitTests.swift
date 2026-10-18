@@ -78,7 +78,7 @@ final class SnapshotWaitTests: XCTestCase {
 
     /// An explicit timeout is used as is, even `0`, rather than being taken for "not set".
     func testExplicitZeroTimeoutIsNotReplacedByDefault() throws {
-        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { false }, timeout: 0) }
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { false }, timeout: 0) }
             .loadViewWithPreferences()
 
         XCTAssertEqual(preferences.resolvedTimeout, 0)
@@ -98,7 +98,7 @@ final class SnapshotWaitTests: XCTestCase {
 
     func testWaitUntilConditionReturnsWhenConditionIsMet() {
         let deadline = Date().addingTimeInterval(0.2)
-        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { Date() >= deadline }, timeout: 5) }
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { Date() >= deadline }, timeout: 5) }
             .loadViewWithPreferences()
 
         XCTAssertNil(preferences.waitFailure)
@@ -106,7 +106,7 @@ final class SnapshotWaitTests: XCTestCase {
     }
 
     func testWaitUntilConditionFailsWithTimeoutMessage() throws {
-        let (_, preferences) = snapshot { Text("Prefire").snapshotWait(until: { false }, timeout: 0.2) }
+        let (_, preferences) = snapshot { Text("Prefire").snapshot(waitUntil: { false }, timeout: 0.2) }
             .loadViewWithPreferences()
 
         let failure = try XCTUnwrap(preferences.waitFailure)
@@ -153,7 +153,7 @@ final class SnapshotWaitTests: XCTestCase {
         let (view, preferences) = PrefireSnapshot(
             {
                 let model = GrowingModel()
-                Growing(model: model).snapshotWait(until: { model.isLoaded }, timeout: 3)
+                Growing(model: model).snapshot(waitUntil: { model.isLoaded }, timeout: 3)
             },
             name: "Growing",
             isScreen: false,
