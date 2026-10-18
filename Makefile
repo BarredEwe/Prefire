@@ -20,7 +20,67 @@ DESTINATION ?= generic/platform=iOS Simulator
 # Simulator for `make test-ios`. Picked by UDID: device names differ between Xcode versions.
 IOS_SIMULATOR_ID ?= $(shell xcrun simctl list devices available iPhone | grep -oE '[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}' | head -1)
 
-.PHONY: help build binary cli test test-cli test-ios update archive clean
+# Simulator services `make slim-ios-simulator` turns off: widgets, Siri, Spotlight, iCloud, the
+# stores, health, photos and the like, which a freshly booted simulator starts and the tests do
+# not use. The list is the default profile of simslim (https://github.com/MobAI-App/simslim).
+IOS_SIMULATOR_SLIM_JOBS := \
+	com.apple.FamilyControlsAgent com.apple.GameController.gamecontrollerd \
+	com.apple.MapKit.SnapshotService com.apple.Maps.geocorrectiond com.apple.Maps.mapspushd \
+	com.apple.Maps.mapssyncd com.apple.PosterBoard com.apple.Safari.History \
+	com.apple.Safari.SafeBrowsing.Service com.apple.Safari.passwordbreachd \
+	com.apple.SafariBookmarksSyncAgent com.apple.ScreenTimeAgent com.apple.ScreenTimeSettingsAgent \
+	com.apple.SecureBackupDaemon com.apple.StatusKitAgent com.apple.TrustedPeersHelper \
+	com.apple.UsageTrackingAgent com.apple.WebBookmarks.webbookmarksd com.apple.activityawardsd \
+	com.apple.activitysharingd com.apple.akd com.apple.amsaccountsd com.apple.amsengagementd \
+	com.apple.amsondevicestoraged com.apple.announced com.apple.ap.adprivacyd \
+	com.apple.ap.promotedcontentd com.apple.appleaccountd com.apple.appleaccounttransparencyd \
+	com.apple.appleidsetupd com.apple.appstorecomponentsd com.apple.appstored com.apple.apsd \
+	com.apple.askpermissiond com.apple.asktod com.apple.assetsd com.apple.assetsd.nebulad \
+	com.apple.assetsubscriptiond com.apple.assistant_cdmd com.apple.assistant_service \
+	com.apple.avatarsd com.apple.bird com.apple.businessservicesd com.apple.calaccessd \
+	com.apple.carkitd com.apple.cdpd com.apple.chronod com.apple.ckdiscretionaryd com.apple.cloudd \
+	com.apple.cloudphotod com.apple.cloudsettingssyncagent com.apple.communicationtrustd \
+	com.apple.companiond com.apple.contacts.postersyncd com.apple.contactsd com.apple.coreidvd \
+	com.apple.corespeechd com.apple.corespotlightservice com.apple.countryd \
+	com.apple.dataaccess.dataaccessd com.apple.deviceaccessd com.apple.devicecheckd \
+	com.apple.diagnosticextensionsd com.apple.email.maild com.apple.exchangesyncd \
+	com.apple.facetimemessagestored com.apple.familycircled com.apple.familynotification \
+	com.apple.feedbackd com.apple.financed com.apple.findmy.findmylocated com.apple.finhealthd \
+	com.apple.fitcore com.apple.fitcore.session com.apple.fitnesscoachingd \
+	com.apple.fitnessintelligenced com.apple.followupd com.apple.gamesaved \
+	com.apple.generativeexperiencesd com.apple.geoanalyticsd com.apple.healthappd \
+	com.apple.healthcontentd com.apple.healthd com.apple.healtheventsd com.apple.healthrecordsd \
+	com.apple.homed com.apple.homeeventsd com.apple.icloudmailagent \
+	com.apple.icloudsubscriptionoptimizerd com.apple.identityservicesd com.apple.ids_simd \
+	com.apple.imautomatichistorydeletionagent com.apple.imcore.imtransferagent \
+	com.apple.imdpersistence.IMDPersistenceAgent com.apple.ind com.apple.intelligencecontextd \
+	com.apple.intelligenceflowd com.apple.intelligenceplatformd com.apple.intelligencetasksd \
+	com.apple.itunescloudd com.apple.itunesstored com.apple.jetpackassetd \
+	com.apple.knowledgeconstructiond com.apple.linkd com.apple.liveactivitiesd \
+	com.apple.managedconfiguration.passcodenagd com.apple.maps.destinationd com.apple.mediaanalysisd \
+	com.apple.mediaanalysisd.service com.apple.medialibraryd com.apple.mediastream.mstreamd \
+	com.apple.merchantd com.apple.mlhostd com.apple.mlruntimed com.apple.mobileassetd \
+	com.apple.modelcatalogd com.apple.modelmanagerd com.apple.musicd com.apple.naturallanguaged \
+	com.apple.navd com.apple.newsd com.apple.parsec-fbf com.apple.parsecd com.apple.passd \
+	com.apple.peopled com.apple.photoanalysisd com.apple.photosface com.apple.proactiveeventtrackerd \
+	com.apple.protectedcloudstorage.protectedcloudkeysyncing com.apple.purplebuddy.budd \
+	com.apple.rapportd com.apple.remindd com.apple.replicatord com.apple.rtcreportingd \
+	com.apple.safarifetcherd com.apple.searchd com.apple.searchtoold com.apple.securityuploadd \
+	com.apple.siri.acousticsignature com.apple.siri.context.service com.apple.siriactionsd \
+	com.apple.siriinferenced com.apple.siriknowledged com.apple.sirittsd com.apple.sociallayerd \
+	com.apple.sosd com.apple.speechmodeltrainingd com.apple.spotlightknowledged \
+	com.apple.spotlightknowledged.updater com.apple.stickersd com.apple.storagedatad \
+	com.apple.storekitd com.apple.suggestd com.apple.swcd com.apple.syncdefaultsd \
+	com.apple.telephonyutilities.callservicesd com.apple.textunderstandingd com.apple.tipsd \
+	com.apple.triald com.apple.tvremoted com.apple.videosubscriptionsd com.apple.voicebankingd \
+	com.apple.voiced com.apple.wcd com.apple.weatherd com.apple.webkit.adattributiond \
+	com.apple.webkit.webpushd com.apple.webprivacyd
+
+# Where launchd_sim keeps a simulator's disabled services; it reads the file when the simulator
+# boots (iOS 18.5 and later). It survives `simctl erase`: delete it to turn the services back on.
+IOS_SIMULATOR_DISABLED_STORE = /private/var/tmp/com.apple.CoreSimulator.SimDevice.$(IOS_SIMULATOR_ID)/disabled.plist
+
+.PHONY: help build binary cli test test-cli test-ios slim-ios-simulator update archive clean
 
 ##@ General
 
@@ -87,6 +147,12 @@ test-ios: ## Run the Prefire library tests on an iPhone simulator
 		-default-test-execution-time-allowance 60 \
 		-skipMacroValidation \
 		-skipPackagePluginValidation
+
+slim-ios-simulator: ## Turn off the simulator services the tests do not use (takes effect on the next boot)
+	@echo "Disabling $(words $(IOS_SIMULATOR_SLIM_JOBS)) services in $(IOS_SIMULATOR_DISABLED_STORE)"
+	@mkdir -p "$(dir $(IOS_SIMULATOR_DISABLED_STORE))"
+	@/usr/libexec/PlistBuddy $(foreach job,$(IOS_SIMULATOR_SLIM_JOBS),-c "Delete :$(job)" -c "Add :$(job) bool true") \
+		"$(IOS_SIMULATOR_DISABLED_STORE)" 2>&1 | { grep -v 'Does Not Exist' || true; }
 
 ##@ Release
 
