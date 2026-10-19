@@ -173,6 +173,11 @@ public enum PrefireGenerator {
             context: context.dictionary(arguments: arguments)
         )
 
+        if output.exists, (try? output.read()) == Data(rendered.utf8) {
+            Logger.info("✅ Output unchanged, keeping file: \(output)")
+            return
+        }
+
         Logger.info("💾 Writing to file: \(output)")
         try output.parent().mkpath()
         try output.write(rendered)
