@@ -45,7 +45,7 @@ jobs:
       # Services the tests do not use are turned off before xcodebuild boots the simulator,
       # which then boots and starts the tests sooner.
       - name: Run Prefire iOS Tests
-        run: make slim-ios-simulator test-ios
+        run: make slim-sim test-ios
 
       - name: Build prefire CLI wrapper
         run: swift build -c release --product prefire

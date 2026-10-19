@@ -250,6 +250,10 @@ public extension View {
     ///   - condition: Returns `true` once the preview is ready to be captured.
     ///   - timeout: How long to wait before the test fails, counted once `delay` is spent. `nil` uses
     ///              `snapshot_wait_timeout` from the configuration, 5 seconds unless set.
+    ///   - fileID: File of the call site, named when the condition is not met in time.
+    ///   - line: Line of the call site, named when the condition is not met in time. A helper that
+    ///           wraps this modifier can take `fileID` and `line` with the same defaults and pass
+    ///           them on, so the message names the preview using the helper rather than the helper.
     @inlinable
     func snapshot(
         waitUntil condition: @escaping @MainActor () -> Bool,

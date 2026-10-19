@@ -238,6 +238,17 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     The condition is checked on the main thread while the preview keeps rendering, and the test
     fails with the call site of the modifier when it is still `false` after `timeout`.
 
+    A helper wrapping the modifier can pass its own call site on, so a timeout names the preview
+    that uses it:
+
+    ```swift
+    extension View {
+        func waitingUntilLoaded(_ viewModel: ViewModel, fileID: String = #fileID, line: UInt = #line) -> some View {
+            snapshot(waitUntil: { viewModel.isLoaded }, fileID: fileID, line: line)
+        }
+    }
+    ```
+
     When several views of a preview wait, a condition is waited for over idle, every condition has
     to be met, `.snapshot(waitForIdle: false)` of one view does not cancel the wait of another, and
     the longest timeout applies.

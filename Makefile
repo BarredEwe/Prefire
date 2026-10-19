@@ -20,7 +20,7 @@ DESTINATION ?= generic/platform=iOS Simulator
 # Simulator for `make test-ios`. Picked by UDID: device names differ between Xcode versions.
 IOS_SIMULATOR_ID ?= $(shell xcrun simctl list devices available iPhone | grep -oE '[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}' | head -1)
 
-# Simulator services `make slim-ios-simulator` turns off: widgets, Siri, Spotlight, iCloud, the
+# Simulator services `make slim-sim` turns off on CI: widgets, Siri, Spotlight, iCloud, the
 # stores, health, photos and the like, which a freshly booted simulator starts and the tests do
 # not use. The list is the default profile of simslim (https://github.com/MobAI-App/simslim).
 IOS_SIMULATOR_SLIM_JOBS := \
@@ -77,10 +77,11 @@ IOS_SIMULATOR_SLIM_JOBS := \
 	com.apple.webkit.webpushd com.apple.webprivacyd
 
 # Where launchd_sim keeps a simulator's disabled services; it reads the file when the simulator
-# boots (iOS 18.5 and later). It survives `simctl erase`: delete it to turn the services back on.
+# boots (iOS 18.5 and later). CoreSimulator keeps services of its own in it, so only the ones of
+# `make slim-sim` are added and removed. It survives `simctl erase`.
 IOS_SIMULATOR_DISABLED_STORE = /private/var/tmp/com.apple.CoreSimulator.SimDevice.$(IOS_SIMULATOR_ID)/disabled.plist
 
-.PHONY: help build binary cli test test-cli test-ios slim-ios-simulator update archive clean
+.PHONY: help build binary cli test test-cli test-ios slim-sim restore-sim update archive clean
 
 ##@ General
 
@@ -148,10 +149,22 @@ test-ios: ## Run the Prefire library tests on an iPhone simulator
 		-skipMacroValidation \
 		-skipPackagePluginValidation
 
-slim-ios-simulator: ## Turn off the simulator services the tests do not use (takes effect on the next boot)
+slim-sim: ## CI: turn off simulator services the tests do not use (undo: make restore-sim)
+	@# The services stay off on this simulator, even after it is erased, until `make restore-sim`.
+	@if [ -z "$${CI:-}" ] && [ -z "$${FORCE:-}" ]; then \
+		echo "make slim-sim turns off Safari, Siri, Spotlight, iCloud and more on simulator $(IOS_SIMULATOR_ID)"; \
+		echo "until you run make restore-sim, even after erasing it. It is meant for CI."; \
+		echo "Run it with FORCE=1 to do it here anyway."; \
+		exit 1; \
+	fi
 	@echo "Disabling $(words $(IOS_SIMULATOR_SLIM_JOBS)) services in $(IOS_SIMULATOR_DISABLED_STORE)"
 	@mkdir -p "$(dir $(IOS_SIMULATOR_DISABLED_STORE))"
 	@/usr/libexec/PlistBuddy $(foreach job,$(IOS_SIMULATOR_SLIM_JOBS),-c "Delete :$(job)" -c "Add :$(job) bool true") \
+		"$(IOS_SIMULATOR_DISABLED_STORE)" 2>&1 | { grep -v 'Does Not Exist' || true; }
+
+restore-sim: ## Turn the services of `make slim-sim` back on (takes effect on the next boot)
+	@[ ! -f "$(IOS_SIMULATOR_DISABLED_STORE)" ] || /usr/libexec/PlistBuddy \
+		$(foreach job,$(IOS_SIMULATOR_SLIM_JOBS),-c "Delete :$(job)") \
 		"$(IOS_SIMULATOR_DISABLED_STORE)" 2>&1 | { grep -v 'Does Not Exist' || true; }
 
 ##@ Release

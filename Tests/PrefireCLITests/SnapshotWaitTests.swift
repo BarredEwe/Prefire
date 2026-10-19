@@ -103,6 +103,15 @@ final class SnapshotWaitTests: XCTestCase {
         XCTAssertNil(preferences.waitResult)
     }
 
+    /// A helper wrapping the modifier passes its caller on, so the message names the preview.
+    func testHelperPassesItsCallSiteOn() throws {
+        let line = #line + 1
+        let (_, preferences) = snapshot { Text("Prefire").neverReady() }.loadViewWithPreferences()
+
+        let failure = try XCTUnwrap(preferences.failure)
+        XCTAssertTrue(failure.contains("SnapshotWaitTests.swift:\(line)"), failure)
+    }
+
     // MARK: Waits of several views
 
     /// A condition says when the preview is ready, so it is waited for over idle.
@@ -202,6 +211,12 @@ final class SnapshotWaitTests: XCTestCase {
 
     private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
         PrefireSnapshot(view, name: "Endless", isScreen: false, device: DeviceConfig(size: CGSize(width: 120, height: 40)))
+    }
+}
+
+private extension View {
+    func neverReady(fileID: String = #fileID, line: UInt = #line) -> some View {
+        snapshot(waitUntil: { false }, timeout: 0.1, fileID: fileID, line: line)
     }
 }
 
