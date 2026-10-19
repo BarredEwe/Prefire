@@ -48,6 +48,42 @@ final class PrefireGeneratorTests: XCTestCase {
         XCTAssertFalse(result.contains("TestPreview_Ignored"), "Should skip explicitly ignored preview")
     }
 
+    func testOutputIsRewrittenOnlyWhenItChanges() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/unchanged_output_previews.swift")
+        let cache = Path("/tmp/cache_unchanged_output/")
+        let template = "{% for p in argument.previewsMacrosDict %}{{ p.componentTestName }}\n{% endfor %}"
+        try? output.delete()
+
+        func generate(template: String) async throws {
+            try await PrefireGenerator.generate(
+                version: "1.0.0",
+                sources: [file],
+                output: output,
+                arguments: [:],
+                inlineTemplate: template,
+                defaultEnabled: true,
+                cacheDir: cache,
+                useGroupedSnapshots: true
+            )
+        }
+
+        try await generate(template: template)
+        let pastDate = Date(timeIntervalSince1970: 0)
+        try FileManager.default.setAttributes([.modificationDate: pastDate], ofItemAtPath: output.string)
+
+        try await generate(template: template)
+        XCTAssertEqual(try modificationDate(of: output), pastDate, "Identical output must not be rewritten, or every build recompiles it")
+
+        try await generate(template: "Changed\n" + template)
+        XCTAssertNotEqual(try modificationDate(of: output), pastDate, "Changed output must be rewritten")
+        XCTAssertTrue(try output.read(.utf8).hasPrefix("Changed\n"))
+    }
+
+    private func modificationDate(of path: Path) throws -> Date? {
+        try FileManager.default.attributesOfItem(atPath: path.string)[.modificationDate] as? Date
+    }
+
     func testParameterizedPreviewRendersSnapshotTemplate() async throws {
         let file = Path("/tmp/ParameterizedPreview.swift")
         let output = Path("/tmp/ParameterizedPreviewTests.generated.swift")
