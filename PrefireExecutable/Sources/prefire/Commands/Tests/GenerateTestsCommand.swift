@@ -24,6 +24,8 @@ struct GeneratedTestsOptions {
     var useGroupedSnapshots: Bool
     var splitSnapshotDirectories: Bool
     var drawHierarchyInKeyWindowDefaultEnabled: Bool?
+    var snapshotWaitForIdle: Bool?
+    var snapshotWaitTimeout: Double?
     var fullPageSnapshots: Bool
 
     init(
@@ -62,6 +64,8 @@ struct GeneratedTestsOptions {
         imports = config?.tests.imports
         testableImports = config?.tests.testableImports
         drawHierarchyInKeyWindowDefaultEnabled = config?.tests.drawHierarchyInKeyWindowDefaultEnabled
+        snapshotWaitForIdle = config?.tests.snapshotWaitForIdle
+        snapshotWaitTimeout = config?.tests.snapshotWaitTimeout
         fullPageSnapshots = config?.tests.fullPageSnapshots ?? false
     }
 }
@@ -84,6 +88,8 @@ enum GenerateTestsCommand {
         static let previewsMacros = "previewsMacros"
         static let previewsMacrosDict = "previewsMacrosDict"
         static let drawHierarchyInKeyWindowDefaultEnabled = "drawHierarchyInKeyWindowDefaultEnabled"
+        static let snapshotWaitForIdle = "snapshotWaitForIdle"
+        static let snapshotWaitTimeout = "snapshotWaitTimeout"
         static let fullPageSnapshots = "fullPageSnapshots"
     }
 
@@ -122,6 +128,8 @@ enum GenerateTestsCommand {
                 ➜ Snapshot resources path: \(snapshotOutput ?? "nil")
                 ➜ Preview default enabled: \(options.prefireEnabledMarker)
                 ➜ drawHierarchyInKeyWindow default enabled: \(options.drawHierarchyInKeyWindowDefaultEnabled?.description ?? "nil")
+                ➜ Wait for idle by default: \(options.snapshotWaitForIdle?.description ?? "nil")
+                ➜ Wait timeout: \(options.snapshotWaitTimeout?.description ?? "nil")
                 ➜ Full page snapshots: \(options.fullPageSnapshots)
             """
         )
@@ -135,6 +143,8 @@ enum GenerateTestsCommand {
             Keys.mainTarget: options.target as? NSString,
             Keys.file: snapshotOutput?.string as? NSString,
             Keys.drawHierarchyInKeyWindowDefaultEnabled: options.drawHierarchyInKeyWindowDefaultEnabled?.description as? NSString,
+            Keys.snapshotWaitForIdle: options.snapshotWaitForIdle?.description as? NSString,
+            Keys.snapshotWaitTimeout: options.snapshotWaitTimeout?.description as? NSString,
             Keys.fullPageSnapshots: options.fullPageSnapshots ? "true" as NSString : nil,
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }

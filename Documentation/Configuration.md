@@ -15,6 +15,8 @@ test_configuration:
   preview_default_enabled: true
   use_grouped_snapshots: true
   split_snapshot_directories: false
+  snapshot_wait_for_idle: true
+  snapshot_wait_timeout: 2.0
   full_page_snapshots: false
   sources:
     - ${PROJECT_DIR}/Sources/
@@ -56,6 +58,8 @@ playbook_configuration:
 | `sources`                                      | List of Swift files or folders to scan for previews. Defaults to inferred from the target                                                                                                                                                 |
 | `imports`                                      | Extra imports added to the generated test or playbook file                                                                                                                                                                                |
 | `testable_imports`                             | Extra `@testable` imports added to allow test visibility                                                                                                                                                                                  |
+| `snapshot_wait_for_idle`                       | Wait for every preview to stop changing before it is captured, instead of relying on `.snapshot(delay:)`. Single previews opt out with `.snapshot(waitForIdle: false)`. Closes [#28](https://github.com/BarredEwe/Prefire/issues/28). Default: `false`                                                                        |
+| `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
 
@@ -68,6 +72,7 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 - Only the scroll view that follows the canvas counts. A scroll view with a fixed height nested in the page (e.g. `.frame(height: 200)`) is captured as it appears on screen.
 - The extra layout hosts the preview once more, so `onAppear`, `.task` and `@StateObject` run one more time. A preview whose content differs between appearances can be measured differently from the image.
 - With `.snapshot(delay:)`, the delay is waited once to measure and once more to take the image, so the test takes twice as long.
+- A preview that is waited on with `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is measured once it settled, in the window it is captured in, so content it loads while waiting counts and it is hosted only once.
 - The `.accessibility` image from `AccessibilitySnapshot` uses the same height.
 - The image is at most 16,384 px tall, which is about 5,461 pt at 3x.
 - Previews using `.sizeThatFitsLayout` or a fixed layout are not affected.

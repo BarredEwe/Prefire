@@ -39,10 +39,6 @@ let package = Package(
             name: "PrefireCLITests",
             dependencies: ["PrefireCLI", "Prefire"]
         ),
-        .testTarget(
-            name: "PrefireTests",
-            dependencies: ["Prefire"]
-        ),
         .plugin(
             name: "PrefirePlaybookPlugin",
             capability: .buildTool(),
