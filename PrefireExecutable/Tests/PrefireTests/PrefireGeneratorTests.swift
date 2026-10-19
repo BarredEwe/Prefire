@@ -523,4 +523,106 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try expectedOutput.read(.utf8)
         XCTAssertTrue(result.contains("class TestPreviewTests: XCTestCase"), "Should use source file name as class name for ungrouped snapshots")
     }
+
+    func testTemplateWaitsForPreviewBeforeCapturing() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: [:],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("case let .timedOut(message):\n            return message"))
+        // macOS captures the view that was waited on, which already spent `delay`.
+        XCTAssertTrue(result.contains("for: preferences.waitResult == nil ? preferences.delay : 0,"))
+        // iOS/tvOS compare the image captured where the preview settled, rendering it again would start it over.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false,\n            waitDefaults: waitDefaults\n        )"))
+        XCTAssertTrue(result.contains("case let .settled(image):"))
+        // Without configuration the library defaults apply, passed to every snapshot rather than set globally.
+        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults()"))
+        XCTAssertTrue(result.contains("loadViewWithPreferences(waitDefaults: waitDefaults)"))
+    }
+
+    func testTemplateAppliesWaitConfiguration() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_configuration_preview/")
+        let args: [String: NSObject] = [
+            "snapshotWaitForIdle": "true" as NSString,
+            "snapshotWaitTimeout": "2.5" as NSString,
+            "drawHierarchyInKeyWindowDefaultEnabled": "true" as NSString,
+        ]
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: args,
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults(waitForIdle: true, timeout: 2.5)"))
+        // A preview that is waited on is captured the way the snapshot strategy would capture it.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: true,\n            waitDefaults: waitDefaults\n        )"))
+    }
+
+    func testTemplateCapturesWaitedPreviewAtFullPageHeight() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitFullPagePreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_full_page_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["fullPageSnapshots": "true" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        // A preview that is waited on is measured where it settled, the others before the strategy renders them.
+        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false,\n            fullPage: true,\n            waitDefaults: waitDefaults\n        )"))
+        XCTAssertTrue(result.contains("preferences.waitResult == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device"))
+        XCTAssertTrue(result.contains("if case let .settled(image) = preferences.waitResult {\n                    vc.view.frame.size.height = image.size.height"))
+    }
+
+    func testTemplateAppliesWaitTimeoutAlone() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/WaitTimeoutPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_wait_timeout_preview/")
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: ["snapshotWaitTimeout": "2.5" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults(timeout: 2.5)"))
+    }
 }

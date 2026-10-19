@@ -77,6 +77,22 @@ class GenerateTestsCommandTests: XCTestCase {
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
 
+    func test_makeArguments_snapshot_wait() async {
+        options.snapshotWaitForIdle = true
+        options.snapshotWaitTimeout = 2.5
+
+        let expectedArguments = [
+            "mainTarget": "\(options.target ?? "")" as NSString,
+            "file": options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString,
+            "snapshotWaitForIdle": "true" as NSString,
+            "snapshotWaitTimeout": "2.5" as NSString,
+        ] as [String: NSObject]
+
+        let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+        XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+    }
+
     func test_makeArguments_drawHierarchyInKeyWindowDefaultEnabled() async {
         options.drawHierarchyInKeyWindowDefaultEnabled = true
 

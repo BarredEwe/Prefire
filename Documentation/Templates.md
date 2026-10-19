@@ -233,6 +233,12 @@ import SnapshotTesting
 }
 ```
 
+A preview that uses `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is waited on by `loadViewWithPreferences()`,
+which reports how it went in `PreferenceKeys.waitResult`: fail with the message of `.timedOut`, and on iOS/tvOS compare
+the image of `.settled`, captured where the preview settled, since snapshotting the returned view again would start
+the preview over. Pass `waitDefaults:` to apply `snapshot_wait_for_idle` and `snapshot_wait_timeout`. The built-in
+template shows how.
+
 Wire it up in `.prefire.yml`:
 
 ```yaml

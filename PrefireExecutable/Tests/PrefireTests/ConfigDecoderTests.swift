@@ -21,6 +21,8 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports:
               - Prefire
           - draw_hierarchy_in_key_window_default_enabled: true
+          - snapshot_wait_for_idle: true
+          - snapshot_wait_timeout: 2.5
           - full_page_snapshots: true
         playbook_configuration:
           - template_file_path: CustomModels.stencil
@@ -50,6 +52,8 @@ class ConfigDecoderTests: XCTestCase {
           - testable_imports: 
               - Prefire 
           - draw_hierarchy_in_key_window_default_enabled: true 
+          - snapshot_wait_for_idle: true 
+          - snapshot_wait_timeout: 2.5 
         playbook_configuration: 
           - template_file_path: CustomModels.stencil 
           - imports: 
@@ -76,6 +80,8 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config.tests.drawHierarchyInKeyWindowDefaultEnabled, true)
+        XCTAssertEqual(config.tests.snapshotWaitForIdle, true)
+        XCTAssertEqual(config.tests.snapshotWaitTimeout, 2.5)
         XCTAssertEqual(config.tests.fullPageSnapshots, true)
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
@@ -97,9 +103,25 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.imports, ["UIKit", "SwiftUI"])
         XCTAssertEqual(config.tests.testableImports, ["Prefire"])
         XCTAssertEqual(config.tests.drawHierarchyInKeyWindowDefaultEnabled, true)
+        XCTAssertEqual(config.tests.snapshotWaitForIdle, true)
+        XCTAssertEqual(config.tests.snapshotWaitTimeout, 2.5)
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
         XCTAssertEqual(config.playbook.previewDefaultEnabled, false)
+    }
+
+    func test_snapshotWaitTimeout_ignoresValuesThatAreNotAPositiveNumber() {
+        for value in ["0", "-1", "soon", "inf", "nan"] {
+            let config = ConfigDecoder().decode(
+                from: """
+                test_configuration:
+                  - snapshot_wait_timeout: \(value)
+                """,
+                env: env
+            )
+
+            XCTAssertNil(config.tests.snapshotWaitTimeout, value)
+        }
     }
 }
