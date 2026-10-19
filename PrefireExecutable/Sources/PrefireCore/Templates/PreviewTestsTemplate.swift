@@ -21,19 +21,24 @@ import SnapshotTesting
 #endif
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
-    private var simulatorDevice: String?{% if argument.simulatorDevice %} = "{{ argument.simulatorDevice|default:nil }}"{% endif %}
-    private var requiredOSVersion: Int?{% if argument.simulatorOSVersion %} = {{ argument.simulatorOSVersion }}{% endif %}
-    private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
-#if os(iOS)
-    private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
-#elseif os(tvOS)
-    private let deviceConfig: DeviceConfig = ViewImageConfig.tv.deviceConfig
-#elseif os(macOS)
-    private let deviceConfig = DeviceConfig()
-#endif
-    private let waitDefaults = SnapshotWaitDefaults({% if argument.snapshotWaitForIdle %}waitForIdle: {{ argument.snapshotWaitForIdle }}{% if argument.snapshotWaitTimeout %}, {% endif %}{% endif %}{% if argument.snapshotWaitTimeout %}timeout: {{ argument.snapshotWaitTimeout }}{% endif %})
-
-
+    private let session = PrefireSnapshotSession(
+        {% if argument.simulatorDevice %}
+        simulatorDevice: "{{ argument.simulatorDevice }}",
+        {% endif %}
+        {% if argument.simulatorOSVersion %}
+        osVersion: {{ argument.simulatorOSVersion }},
+        {% endif %}
+        {% if argument.snapshotDevices %}
+        devices: {{ argument.snapshotDevices|split:"|" }},
+        {% endif %}
+        {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
+        drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
+        {% endif %}
+        {% if argument.fullPageSnapshots %}
+        fullPage: true,
+        {% endif %}
+        waitDefaults: SnapshotWaitDefaults({% if argument.snapshotWaitForIdle %}waitForIdle: {{ argument.snapshotWaitForIdle }}{% if argument.snapshotWaitTimeout %}, {% endif %}{% endif %}{% if argument.snapshotWaitTimeout %}timeout: {{ argument.snapshotWaitTimeout }}{% endif %})
+    )
     {% if argument.file %}
 
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
@@ -42,46 +47,40 @@ import SnapshotTesting
     @MainActor override func setUp() async throws {
         try await super.setUp()
 
-        prepareEnvironment()
+        session.prepareEnvironment()
     }
 
     // MARK: - PreviewProvider
 
     {% for type in types.types where type.kind != "protocol" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", ""|replace:".", "_" }}() {
-        for preview in {{ type.name }}._allPreviews {
-            let prefireSnapshot = PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)
-            if let failure = assertSnapshots(for: prefireSnapshot) {
-                XCTFail(failure)
-            }
-        }
+        assertSnapshots(of: {{ type.name }}._allPreviews)
     }
     {%- if not forloop.last %}
 
     {% endif %}
     {% endfor %}
     {% if argument.previewsMacrosDict %}
+
     // MARK: - Macros
 
     {% for macroModel in argument.previewsMacrosDict %}
-    func test_{{ macroModel.componentTestName }}_Preview() {        
+{# Written once for both kinds of preview below, indented where it is used. #}
+{% set snapshotAssertion %}assertSnapshots(for: PrefireSnapshot(
+    {
+        {% if macroModel.properties and not macroModel.hasArguments %}PreviewWrapper{{ macroModel.componentTestName }}(){% else %}{{ macroModel.body|indent:8 }}{% endif %}
+    },
+    name: "{{ macroModel.displayName }}{% if macroModel.hasArguments %}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument)){% endif %}",
+    isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
+    device: session.device{% if macroModel.fixedLayoutSize %},
+    fixedLayoutSize: {{ macroModel.fixedLayoutSize }}{% endif %}
+)){% endset %}
+    func test_{{ macroModel.componentTestName }}_Preview() {
         {% if macroModel.hasArguments %}
         for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
             let {{ macroModel.argumentPattern }} = previewArgument
 
-            let prefireSnapshot = PrefireSnapshot(
-                {
-                    {{ macroModel.body|indent:20 }}
-                },
-                name: "{{ macroModel.displayName }}-\(previewArgumentIndex + 1)-\(String(describing: previewArgument))",
-                isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
-                device: deviceConfig,
-                fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
-            )
-
-            if let failure = assertSnapshots(for: prefireSnapshot) {
-                XCTFail(failure)
-            }
+            {{ snapshotAssertion|indent:12 }}
         }
         {% else %}
         {% if macroModel.properties %}
@@ -91,24 +90,9 @@ import SnapshotTesting
                 {{ macroModel.body|indent:12 }}
             }
         }
-        {% endif %}
-        let prefireSnapshot = PrefireSnapshot(
-            {
-                {% if macroModel.properties %}
-                PreviewWrapper{{ macroModel.componentTestName }}()
-                {% else %}
-                {{ macroModel.body|indent:12 }}
-                {% endif %}
-            },
-            name: "{{ macroModel.displayName }}",
-            isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
-            device: deviceConfig,
-            fixedLayoutSize: {% if macroModel.fixedLayoutSize %}{{ macroModel.fixedLayoutSize }}{% else %}nil{% endif %}
-        )
 
-        if let failure = assertSnapshots(for: prefireSnapshot) {
-            XCTFail(failure)
-        }
+        {% endif %}
+        {{ snapshotAssertion|indent:8 }}
         {% endif %}
     }
     {%- if not forloop.last %}
@@ -116,228 +100,73 @@ import SnapshotTesting
     {% endif %}
     {% endfor %}
     {% endif %}
-    // MARK: Private
 
-    private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
-        #if os(macOS)
-        return assertSnapshot(for: prefireSnapshot)
-        #else
-        guard !snapshotDevices.isEmpty else {
-            return assertSnapshot(for: prefireSnapshot)
+    // MARK: - SnapshotTesting
+
+    private func assertSnapshots(of previews: [_Preview], testName: String = #function, filePath: StaticString = #filePath, line: UInt = #line) {
+        for preview in previews {
+            assertSnapshots(for: session.snapshot(of: preview, testName: testName), filePath: filePath, line: line)
         }
-
-        for deviceName in snapshotDevices {
-            var snapshot = prefireSnapshot
-            guard let device = PreviewDevice(rawValue: deviceName).snapshotDeviceConfig() else {
-                fatalError("Unknown device name from configuration file: \(deviceName). Supported devices: \(PreviewDevice.supportedSnapshotDeviceNames.joined(separator: ", "))")
-            }
-
-            snapshot.name = "\(prefireSnapshot.name)-\(deviceName)"
-            snapshot.device = device
-
-            // Ignore specific device safe area
-            snapshot.device.safeArea = .zero
-
-            // Ignore specific device display scale
-            snapshot.traits = UITraitCollection(displayScale: 2.0)
-
-            if let failure = assertSnapshot(for: snapshot) {
-                XCTFail(failure)
-            }
-        }
-
-        return nil
-        #endif
     }
 
-    private func assertSnapshot<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>) -> String? {
-        #if os(macOS)
-        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences(waitDefaults: waitDefaults)
-        #else
-        let (previewView, preferences) = prefireSnapshot.loadViewWithPreferences(
-            drawHierarchyInKeyWindow: {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}{{ argument.drawHierarchyInKeyWindowDefaultEnabled }}{% else %}false{% endif %},{% if argument.fullPageSnapshots %}
-            fullPage: true,{% endif %}
-            waitDefaults: waitDefaults
-        )
-        #endif
-
-        #if os(macOS)
-        switch preferences.waitResult {
-        case let .timedOut(message):
-            return message
-        case .settled, nil:
-            break
+    private func assertSnapshots<Content: SwiftUI.View>(for prefireSnapshot: PrefireSnapshot<Content>, filePath: StaticString = #filePath, line: UInt = #line) {
+        for failure in session.failures(of: prefireSnapshot, verify: verify) {
+            XCTFail(failure, file: filePath, line: line)
         }
+    }
 
-        let strategy: Snapshotting<NSView, NSImage> = .wait(
-            // A preview that was waited on has spent its delay already.
-            for: preferences.waitResult == nil ? preferences.delay : 0,
-            on: .image(
-                precision: preferences.precision,
-                perceptualPrecision: preferences.perceptualPrecision,
-                size: prefireSnapshot.device.size
-            )
-        )
-
-        let failure = verifySnapshot(
-            of: previewView,
-            as: strategy,
-            record: preferences.record ? .all : nil{% if argument.file %},
-            file: file{% endif %},
-            testName: prefireSnapshot.name
-        )
-        #else
-        {% if argument.fullPageSnapshots %}
-        // A preview that was waited on is captured at its full height already, where it settled.
-        let snapshotDevice = preferences.waitResult == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device
-        {% else %}
-        let snapshotDevice = prefireSnapshot.device
-        {% endif %}
-        let failure: String?
-
-        switch preferences.waitResult {
-        case let .timedOut(message):
-            return message
-        case let .settled(image):
-            // Compared as captured where it settled: a snapshot strategy would host the preview in a
-            // window of its own and start it over.
-            failure = verifySnapshot(
-                of: image,
-                as: .image(
-                    precision: preferences.precision,
-                    perceptualPrecision: preferences.perceptualPrecision,
-                    scale: prefireSnapshot.traits.displayScale
-                ),
-                record: preferences.record ? .all : nil{% if argument.file %},
-                file: file{% endif %},
-                testName: prefireSnapshot.name
-            )
-        case nil:
-            failure = verifySnapshot(
-                of: previewView,
-                as: .wait(
-                    for: preferences.delay,
-                    on: .image(
-                        {% if argument.drawHierarchyInKeyWindowDefaultEnabled %}
-                        drawHierarchyInKeyWindow: {{ argument.drawHierarchyInKeyWindowDefaultEnabled }},
-                        {% endif %}
-                        precision: preferences.precision,
-                        perceptualPrecision: preferences.perceptualPrecision,
-                        layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits,
-                        traits: prefireSnapshot.traits
-                    )
-                ),
-                record: preferences.record ? .all : nil{% if argument.file %},
-                file: file{% endif %},
-                testName: prefireSnapshot.name
-            )
-        }
-        #endif
+    private func verify(_ capture: PrefireSnapshotCapture) -> String? {
+        let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
+{% set reference %}record: record,{% if argument.file %} file: file,{% endif %}{% endset %}
 
         #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
-            // Renders the preview anew, so a waited on preview is captured as it starts, after `delay`.
-            let vc = UIHostingController(rootView: previewView)
-            vc.view.frame = UIScreen.main.bounds
-            {% if argument.fullPageSnapshots %}
-            if prefireSnapshot.isScreen {
-                if case let .settled(image) = preferences.waitResult {
-                    vc.view.frame.size.height = image.size.height
-                } else if let height = snapshotDevice.size?.height {
-                    vc.view.frame.size.height = height
-                }
-            }
-            {% endif %}
+        SnapshotTesting.assertSnapshot(
+            of: capture.accessibilityController(),
+            as: .wait(for: capture.delay, on: .accessibilityImage(showActivationPoints: .always)),
+            {{ reference }}
+            testName: capture.name + ".accessibility"
+        )
+        #endif
 
-            SnapshotTesting.assertSnapshot(
-                of: vc,
-                as: .wait(for: preferences.delay, on: .accessibilityImage(showActivationPoints: .always)),
-                record: preferences.record ? .all : nil{% if argument.file %},
-                file: file{% endif %},
-                testName: prefireSnapshot.name + ".accessibility"
+        switch capture.comparison {
+        #if os(macOS)
+        case let .view(size):
+            return verifySnapshot(
+                of: capture.view,
+                as: .wait(
+                    for: capture.delay,
+                    on: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, size: size)
+                ),
+                {{ reference }}
+                testName: capture.name
+            )
+        #else
+        case let .image(image):
+            return verifySnapshot(
+                of: image,
+                as: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, scale: capture.traits.displayScale),
+                {{ reference }}
+                testName: capture.name
+            )
+        case let .view(device):
+            return verifySnapshot(
+                of: capture.view,
+                as: .wait(
+                    for: capture.delay,
+                    on: .image(
+                        drawHierarchyInKeyWindow: session.drawHierarchyInKeyWindow,
+                        precision: capture.precision,
+                        perceptualPrecision: capture.perceptualPrecision,
+                        layout: device.map { .device(config: ViewImageConfig(safeArea: $0.safeArea, size: $0.size, traits: $0.traits)) } ?? .sizeThatFits,
+                        traits: capture.traits
+                    )
+                ),
+                {{ reference }}
+                testName: capture.name
             )
         #endif
-        return failure
-    }
-
-    private func prepareEnvironment() {
-        #if os(iOS) || os(tvOS)
-        if let simulatorDevice, let deviceModel = ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"] {
-            guard deviceModel.contains(simulatorDevice) else {
-                fatalError("Switch to using \(simulatorDevice) for these tests. (You are using \(deviceModel))")
-            }
         }
-
-        if let requiredOSVersion {
-            let osVersion = ProcessInfo().operatingSystemVersion
-            guard osVersion.majorVersion == requiredOSVersion else {
-                fatalError("Switch to iOS \(requiredOSVersion) for these tests. (You are using \(osVersion))")
-            }
-        }
-
-        UIView.setAnimationsEnabled(false)
-        #endif
     }
 }
-
-// MARK: - SnapshotTesting + Extensions
-
-#if os(iOS) || os(tvOS)
-private extension DeviceConfig {
-    var imageConfig: ViewImageConfig { ViewImageConfig(safeArea: safeArea, size: size, traits: traits) }
-}
-
-private extension ViewImageConfig {
-    var deviceConfig: DeviceConfig { DeviceConfig(safeArea: safeArea, size: size, traits: traits) }
-
-    /// Portrait iPhone config for devices without a matching SnapshotTesting preset.
-    static func iPhone(width: CGFloat, height: CGFloat, top: CGFloat, traits: UITraitCollection) -> ViewImageConfig {
-        ViewImageConfig(safeArea: UIEdgeInsets(top: top, left: 0, bottom: 34, right: 0), size: CGSize(width: width, height: height), traits: traits)
-    }
-}
-
-private extension PreviewDevice {
-    static var snapshotDeviceGroups: [(names: [String], config: ViewImageConfig)] {
-        #if os(iOS)
-        [
-            (["iPhone 17 Pro Max"], .iPhone(width: 440, height: 956, top: 62, traits: .iPhone13ProMax(.portrait))),
-            (["iPhone 17", "iPhone 17 Pro"], .iPhone(width: 402, height: 874, top: 62, traits: .iPhone13(.portrait))),
-            (["iPhone Air"], .iPhone(width: 420, height: 912, top: 68, traits: .iPhone13ProMax(.portrait))),
-            (["iPhone 16 Plus", "iPhone 15 Plus"], .iPhone(width: 430, height: 932, top: 59, traits: .iPhone13ProMax(.portrait))),
-            (["iPhone 17e", "iPhone 16e"], .iPhone13),
-            (["iPhone 16 Pro Max", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 14 Plus", "iPhone 13 Pro Max", "iPhone 12 Pro Max"], .iPhone13ProMax),
-            (["iPhone 16 Pro", "iPhone 15 Pro", "iPhone 14 Pro", "iPhone 13 Pro", "iPhone 12 Pro"], .iPhone13Pro),
-            (["iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone 10", "iPhone X"], .iPhoneX),
-            (["iPhone 6", "iPhone 6s", "iPhone 7", "iPhone 8", "iPhone SE (2nd generation)", "iPhone SE (3rd generation)"], .iPhone8),
-            (["iPhone 6 Plus", "iPhone 6s Plus", "iPhone 8 Plus"], .iPhone8Plus),
-            (["iPhone SE (1st generation)"], .iPhoneSe),
-            (["iPad"], .iPad10_2),
-            (["iPad Mini"], .iPadMini),
-            (["iPad Pro 11"], .iPadPro11),
-            (["iPad Pro 12.9"], .iPadPro12_9),
-        ]
-        #elseif os(tvOS)
-        [(["Apple TV"], .tv)]
-        #endif
-    }
-
-    static var supportedSnapshotDeviceNames: [String] {
-        snapshotDeviceGroups.flatMap(\.names)
-    }
-
-    func snapshotDevice() -> ViewImageConfig? {
-        Self.snapshotDeviceGroups.first { $0.names.contains(rawValue) }?.config
-    }
-
-    func snapshotDeviceConfig() -> DeviceConfig? {
-        snapshotDevice()?.deviceConfig
-    }
-}
-#endif
-
-#if os(macOS)
-private extension PreviewDevice {
-    func snapshotDeviceConfig() -> DeviceConfig? { nil }
-}
-#endif
 """#
 }
