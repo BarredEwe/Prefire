@@ -61,7 +61,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 | `argument.simulatorOSVersion`            | `String` (or absent)   | tests  | Major iOS version from `required_os:`.                                                                   |
 | `argument.snapshotDevices`               | `String` (or absent)   | tests  | Snapshot device names joined by `\|`. Iterate by applying `\|split:"\|"`. See §4.                        |
 | `argument.drawHierarchyInKeyWindowDefaultEnabled` | `String` `"true"`/`"false"` (or absent) | tests | Value of `draw_hierarchy_in_key_window_default_enabled:` as a string. |
-| `argument.fullPageSnapshots` | `String` `"true"` (or absent) | tests | Present when `full_page_snapshots: true`. The default template then measures screen previews with `prefireSnapshot.fullPageDevice(delay:)` and uses the result for both the image and the `.accessibility` snapshot. |
+| `argument.fullPageSnapshots` | `String` `"true"` (or absent) | tests | Present when `full_page_snapshots: true`. The default template passes it as `PrefireSnapshotSession(fullPage: true)`, which measures screen previews with `prefireSnapshot.fullPageDevice(delay:)` and uses the result for both the image and the `.accessibility` snapshot. |
 | `argument.previewsMacrosDict`            | `[[String: Any]]`      | both   | Array of `#Preview` macro models. See §3.3.                                                              |
 
 `NSNull` values (i.e. when a config key is missing) should be guarded with `{% if argument.foo %}` — Stencil treats both `nil` and `NSNull` as falsy.
@@ -155,6 +155,20 @@ The built-in templates are the most useful starting point — copy them, change 
 - **Tests template** — `EmbeddedTemplates.previewTests` in [`PrefireExecutable/Sources/PrefireCore/Templates/PreviewTestsTemplate.swift`](../PrefireExecutable/Sources/PrefireCore/Templates/PreviewTestsTemplate.swift)
 - **Playbook template** — `EmbeddedTemplates.previewModels` in [`PrefireExecutable/Sources/PrefireCore/Templates/PreviewModelsTemplates.swift`](../PrefireExecutable/Sources/PrefireCore/Templates/PreviewModelsTemplates.swift)
 
+The tests template only declares the tests and hands them to SnapshotTesting. Everything else lives in the Prefire
+library, in `PrefireSnapshotSession`, so a custom template can reuse it instead of copying it:
+
+| API | What it does |
+| --- | --- |
+| `PrefireSnapshotSession(simulatorDevice:osVersion:devices:drawHierarchyInKeyWindow:fullPage:waitDefaults:)` | Holds the `test_configuration` values. Every argument has a default. |
+| `session.prepareEnvironment()` | Stops the tests on a simulator other than `simulator_device` / `required_os` (kept in `session.environment`, a `PrefireSnapshotEnvironment`) and turns animations off. Call it from `setUp`. |
+| `session.device` | Canvas of previews that do not name a device: iPhone X on iOS, Apple TV on tvOS, the size that fits on macOS. |
+| `session.snapshot(of:)` | `PrefireSnapshot` of a `PreviewProvider` preview, on the device of its `.previewDevice(_:)`. |
+| `session.variants(of:)` | The snapshot once per `snapshot_devices` entry, named after the device, or the snapshot itself. |
+| `session.failures(of:verify:)` | Captures every variant of a snapshot and returns why they failed: what `verify` returned, or the message of a wait that timed out. |
+| `session.capture(_:)` | Renders the snapshot, waits for it when it asks for it, and returns a `PrefireSnapshotCapture`: its `comparison` says which image to compare (`.image`, iOS/tvOS) or how to snapshot `capture.view` (`.view`). Throws `SnapshotWaitTimeout` when the wait runs out. |
+| `DeviceConfig.named(_:)` | Canvas of a device name, matching SnapshotTesting's `ViewImageConfig` presets. `DeviceConfig.supportedNames` lists the names. |
+
 Key blocks worth studying:
 
 - **Class-name placeholder** — the tests template references `{PREVIEW_FILE_NAME}` so the same file works for both `use_grouped_snapshots: true` and `use_grouped_snapshots: false` modes:
@@ -164,13 +178,15 @@ Key blocks worth studying:
   When `use_grouped_snapshots: false`, Prefire replaces `{PREVIEW_FILE_NAME}` in **both** the output path and the template body with the source-file name before rendering. The same placeholder is also valid in `test_file_path`.
 - **`snapshotDevices` array** — the config stores a pipe-joined string; the template splits it back into a Swift array:
   ```stencil
-  private let snapshotDevices: [String]{% if argument.snapshotDevices %} = {{ argument.snapshotDevices|split:"|" }}{% else %} = []{% endif %}
-  ```
-- **Per-device iteration** — guarded by an empty-check, so a single test runs once on the default device and once per `snapshot_devices` entry:
-  ```stencil
-  {% if argument.file %}
-  private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
+  {% if argument.snapshotDevices %}
+  devices: {{ argument.snapshotDevices|split:"|" }},
   {% endif %}
+  ```
+- **Per-device iteration** — `session.failures(of:verify:)` goes through `session.variants(of:)`, which returns the snapshot once on the default device, or once per `snapshot_devices` entry:
+  ```swift
+  for failure in session.failures(of: prefireSnapshot, verify: verify) {
+      XCTFail(failure, file: filePath, line: line)
+  }
   ```
 - **`@Previewable` properties** — captured as raw Swift source and embedded verbatim into a generated `PreviewWrapper` view:
   ```stencil
@@ -189,7 +205,7 @@ Key blocks worth studying:
 
 ## 6. Worked example
 
-Suppose you don't use AccessibilitySnapshot and you want a leaner tests file. Save the following as `MyAppTests/MinimalPreviewTests.stencil`:
+Suppose you don't use AccessibilitySnapshot, test on iOS only, and you want a leaner tests file. Save the following as `MyAppTests/MinimalPreviewTests.stencil`:
 
 ```stencil
 // swiftlint:disable all
@@ -210,7 +226,7 @@ import {{ import }}
 import SnapshotTesting
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
-    private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
+    private let session = PrefireSnapshotSession()
 
     {% if argument.previewsMacrosDict %}
     {% for macroModel in argument.previewsMacrosDict %}
@@ -221,23 +237,54 @@ import SnapshotTesting
             },
             name: "{{ macroModel.displayName }}",
             isScreen: {% if macroModel.isScreen == 1 %}true{% else %}false{% endif %},
-            device: deviceConfig
+            device: session.device
         )
 
-        if let failure = assertSnapshot(of: prefireSnapshot.loadViewWithPreferences().0, as: .image) {
+        for failure in session.failures(of: prefireSnapshot, verify: verify) {
             XCTFail(failure)
         }
     }
     {% endfor %}
     {% endif %}
+
+    private func verify(_ capture: PrefireSnapshotCapture) -> String? {
+        let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
+
+        switch capture.comparison {
+        case let .image(image):
+            return verifySnapshot(
+                of: image,
+                as: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, scale: capture.traits.displayScale),
+                record: record,
+                testName: capture.name
+            )
+        case let .view(device):
+            return verifySnapshot(
+                of: capture.view,
+                as: .wait(
+                    for: capture.delay,
+                    on: .image(
+                        precision: capture.precision,
+                        perceptualPrecision: capture.perceptualPrecision,
+                        layout: device.map { .device(config: ViewImageConfig(safeArea: $0.safeArea, size: $0.size, traits: $0.traits)) } ?? .sizeThatFits,
+                        traits: capture.traits
+                    )
+                ),
+                record: record,
+                testName: capture.name
+            )
+        }
+    }
 }
 ```
 
-A preview that uses `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is waited on by `loadViewWithPreferences()`,
-which reports how it went in `PreferenceKeys.waitResult`: fail with the message of `.timedOut`, and on iOS/tvOS compare
-the image of `.settled`, captured where the preview settled, since snapshotting the returned view again would start
-the preview over. Pass `waitDefaults:` to apply `snapshot_wait_for_idle` and `snapshot_wait_timeout`. The built-in
-template shows how.
+A preview that uses `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is waited on by `session.capture(_:)`, which
+throws `SnapshotWaitTimeout` when it does not get ready in time; `session.failures(of:verify:)` reports that message for
+you. On iOS/tvOS compare the image of `.image`, captured where the preview settled, since snapshotting `capture.view`
+again would start the preview over. Pass `waitDefaults:` to the session to apply
+`snapshot_wait_for_idle` and `snapshot_wait_timeout`. Pass `capture.precision`, `capture.perceptualPrecision`,
+`capture.record` and `capture.delay` on to SnapshotTesting as `verify(_:)` does, or `.snapshot(precision:delay:record:)`
+on a preview has no effect.
 
 Wire it up in `.prefire.yml`:
 
@@ -270,7 +317,7 @@ import UIKit
 import SnapshotTesting
 
 @MainActor class PreviewTests: XCTestCase {
-    private let deviceConfig: DeviceConfig = ViewImageConfig.iPhoneX.deviceConfig
+    private let session = PrefireSnapshotSession()
 
     func test_Default_Preview() {
         let prefireSnapshot = PrefireSnapshot(
@@ -279,11 +326,40 @@ import SnapshotTesting
             },
             name: "Default",
             isScreen: false,
-            device: deviceConfig
+            device: session.device
         )
 
-        if let failure = assertSnapshot(of: prefireSnapshot.loadViewWithPreferences().0, as: .image) {
+        for failure in session.failures(of: prefireSnapshot, verify: verify) {
             XCTFail(failure)
+        }
+    }
+
+    private func verify(_ capture: PrefireSnapshotCapture) -> String? {
+        let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
+
+        switch capture.comparison {
+        case let .image(image):
+            return verifySnapshot(
+                of: image,
+                as: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, scale: capture.traits.displayScale),
+                record: record,
+                testName: capture.name
+            )
+        case let .view(device):
+            return verifySnapshot(
+                of: capture.view,
+                as: .wait(
+                    for: capture.delay,
+                    on: .image(
+                        precision: capture.precision,
+                        perceptualPrecision: capture.perceptualPrecision,
+                        layout: device.map { .device(config: ViewImageConfig(safeArea: $0.safeArea, size: $0.size, traits: $0.traits)) } ?? .sizeThatFits,
+                        traits: capture.traits
+                    )
+                ),
+                record: record,
+                testName: capture.name
+            )
         }
     }
 }
@@ -295,7 +371,7 @@ import SnapshotTesting
 
 - **Required imports** are not auto-added. For tests you almost always need `XCTest`, `SwiftUI`, `Prefire`, and `SnapshotTesting`; for playbook you need `SwiftUI` and `Prefire`. Add them at the top of your template literally.
 - **`{PREVIEW_FILE_NAME}` is a real placeholder.** It is replaced in the template string *and* in `test_file_path` *only* when `use_grouped_snapshots: false`. The class declared in your template must be named `{PREVIEW_FILE_NAME}Tests`, otherwise the generated file won't compile.
-- **`snapshotDevices` is a pipe-joined string**, not an array. Use `|split:"|"`. Forgetting the filter produces `snapshotDevices = iPhone 14|iPad` in the generated file.
+- **`snapshotDevices` is a pipe-joined string**, not an array. Use `|split:"|"`. Forgetting the filter produces `devices: iPhone 14|iPad` in the generated file.
 - **Guard `previewsMacrosDict`.** An empty array will still produce a (broken) `for` block. Always wrap the macro loop in `{% if argument.previewsMacrosDict %}`.
 - **Cache invalidation.** `PrefireCacheManager` keys the cache on source content. When you change a template, delete `~/.prefire-cache/` to force a full re-render.
 - **`isScreen` is a `Bool` but Stencil may serialize it as `1`/`0`.** Compare with `{% if macroModel.isScreen == 1 %}` rather than `{% if macroModel.isScreen %}`, as in the default template.

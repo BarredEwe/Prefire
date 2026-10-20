@@ -143,12 +143,11 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("fixedLayoutSize: CGSize(width: 640, height: Layout.height)"))
-        XCTAssertTrue(result.contains("let strategy: Snapshotting<NSView, NSImage>"))
-        XCTAssertTrue(result.contains("size: prefireSnapshot.device.size"))
+        XCTAssertTrue(result.contains("device: session.device,\n            fixedLayoutSize:"))
+        XCTAssertTrue(result.contains("on: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, size: size)"))
         XCTAssertTrue(result.contains("isScreen: false,"))
-        // On iOS/tvOS the layout follows `isScreen` only.
-        XCTAssertTrue(result.contains("let snapshotDevice = prefireSnapshot.device"))
-        XCTAssertTrue(result.contains("layout: prefireSnapshot.isScreen ? .device(config: snapshotDevice.imageConfig) : .sizeThatFits"))
+        // On iOS/tvOS the layout follows `isScreen` only, which the library resolves.
+        XCTAssertTrue(result.contains("layout: device.map { .device(config: ViewImageConfig(safeArea: $0.safeArea, size: $0.size, traits: $0.traits)) } ?? .sizeThatFits"))
     }
 
     /// Conformance inherited through another protocol has to be detected, not just the one
@@ -183,7 +182,7 @@ final class PrefireGeneratorTests: XCTestCase {
         )
 
         let result = try output.read(.utf8)
-        XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertTrue(result.contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
         XCTAssertFalse(result.contains("TeamProvider._allPreviews"))
     }
 
@@ -215,7 +214,7 @@ final class PrefireGeneratorTests: XCTestCase {
             useGroupedSnapshots: true
         )
 
-        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertTrue(try output.read(.utf8).contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
     }
 
     /// Conformance added by an extension in another file has to be detected too.
@@ -249,7 +248,7 @@ final class PrefireGeneratorTests: XCTestCase {
             useGroupedSnapshots: true
         )
 
-        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertTrue(try output.read(.utf8).contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
     }
 
     /// `extension X: PrefireProvider` for a type declared outside the scanned sources still gets a test.
@@ -277,7 +276,7 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
         XCTAssertTrue(result.contains("func test_externalPanel()"))
-        XCTAssertTrue(result.contains("for preview in ExternalPanel_Previews._allPreviews"))
+        XCTAssertTrue(result.contains("assertSnapshots(of: ExternalPanel_Previews._allPreviews)"))
     }
 
     /// A nested provider must still produce a valid Swift function name.
@@ -311,7 +310,7 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
         XCTAssertTrue(result.contains("func test_feature_Panel()"))
-        XCTAssertTrue(result.contains("for preview in Feature.Panel_Previews._allPreviews"))
+        XCTAssertTrue(result.contains("assertSnapshots(of: Feature.Panel_Previews._allPreviews)"))
     }
 
     /// The `annotated:` filter keeps working without Sourcery.
@@ -342,7 +341,7 @@ final class PrefireGeneratorTests: XCTestCase {
             useGroupedSnapshots: true
         )
 
-        XCTAssertTrue(try output.read(.utf8).contains("for preview in Panel_Previews._allPreviews"))
+        XCTAssertTrue(try output.read(.utf8).contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
     }
 
     func testPrefireProviderTemplateUsesPreviewDeviceNotPreviewModel() async throws {
@@ -376,8 +375,7 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("for preview in Panel_Previews._allPreviews"))
-        XCTAssertTrue(result.contains("PrefireSnapshot(preview, device: preview.device?.snapshotDeviceConfig() ?? deviceConfig)"))
+        XCTAssertTrue(result.contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
         XCTAssertFalse(result.contains("preview.deviceConfig"))
     }
 
@@ -542,15 +540,12 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("case let .timedOut(message):\n            return message"))
-        // macOS captures the view that was waited on, which already spent `delay`.
-        XCTAssertTrue(result.contains("for: preferences.waitResult == nil ? preferences.delay : 0,"))
+        // A wait that timed out is reported by the library, so the template only compares.
+        XCTAssertTrue(result.contains("for failure in session.failures(of: prefireSnapshot, verify: verify)"))
         // iOS/tvOS compare the image captured where the preview settled, rendering it again would start it over.
-        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false,\n            waitDefaults: waitDefaults\n        )"))
-        XCTAssertTrue(result.contains("case let .settled(image):"))
+        XCTAssertTrue(result.contains("case let .image(image):\n            return verifySnapshot(\n                of: image,"))
         // Without configuration the library defaults apply, passed to every snapshot rather than set globally.
-        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults()"))
-        XCTAssertTrue(result.contains("loadViewWithPreferences(waitDefaults: waitDefaults)"))
+        XCTAssertTrue(result.contains("private let session = PrefireSnapshotSession(\n        waitDefaults: SnapshotWaitDefaults()\n    )"))
     }
 
     func testTemplateAppliesWaitConfiguration() async throws {
@@ -576,12 +571,15 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults(waitForIdle: true, timeout: 2.5)"))
-        // A preview that is waited on is captured the way the snapshot strategy would capture it.
-        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: true,\n            waitDefaults: waitDefaults\n        )"))
+        XCTAssertTrue(result.contains("""
+            private let session = PrefireSnapshotSession(
+                drawHierarchyInKeyWindow: true,
+                waitDefaults: SnapshotWaitDefaults(waitForIdle: true, timeout: 2.5)
+            )
+        """))
     }
 
-    func testTemplateCapturesWaitedPreviewAtFullPageHeight() async throws {
+    func testTemplateAppliesFullPageConfiguration() async throws {
         let file = Path(fixtureTestPreviewSource)
         let output = Path("/tmp/WaitFullPagePreviewTests.generated.swift")
         let cache = Path("/tmp/cache_wait_full_page_preview/")
@@ -599,10 +597,44 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        // A preview that is waited on is measured where it settled, the others before the strategy renders them.
-        XCTAssertTrue(result.contains("loadViewWithPreferences(\n            drawHierarchyInKeyWindow: false,\n            fullPage: true,\n            waitDefaults: waitDefaults\n        )"))
-        XCTAssertTrue(result.contains("preferences.waitResult == nil ? prefireSnapshot.fullPageDevice(delay: preferences.delay) : prefireSnapshot.device"))
-        XCTAssertTrue(result.contains("if case let .settled(image) = preferences.waitResult {\n                    vc.view.frame.size.height = image.size.height"))
+        XCTAssertTrue(result.contains("private let session = PrefireSnapshotSession(\n        fullPage: true,\n        waitDefaults: SnapshotWaitDefaults()\n    )"))
+    }
+
+    func testTemplateAppliesSimulatorAndDeviceConfiguration() async throws {
+        let file = Path(fixtureTestPreviewSource)
+        let output = Path("/tmp/DeviceConfigurationPreviewTests.generated.swift")
+        let cache = Path("/tmp/cache_device_configuration_preview/")
+        let args: [String: NSObject] = [
+            "simulatorDevice": "iPhone15,2" as NSString,
+            "simulatorOSVersion": "17" as NSString,
+            "snapshotDevices": "iPhone 15|iPad" as NSString,
+            "file": "/Tests/PreviewTests.generated.swift" as NSString,
+        ]
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [file],
+            output: output,
+            arguments: args,
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: cache,
+            useGroupedSnapshots: true
+        )
+
+        let result = try output.read(.utf8)
+
+        XCTAssertTrue(result.contains("""
+            private let session = PrefireSnapshotSession(
+                simulatorDevice: "iPhone15,2",
+                osVersion: 17,
+                devices: ["iPhone 15", "iPad"],
+                waitDefaults: SnapshotWaitDefaults()
+            )
+        """))
+        XCTAssertTrue(result.contains("private var file: StaticString { .init(stringLiteral: \"/Tests/PreviewTests.generated.swift\") }"))
+        // Every comparison stores its reference next to the configured file.
+        XCTAssertEqual(result.components(separatedBy: "record: record, file: file,\n").count - 1, 4)
     }
 
     func testTemplateAppliesWaitTimeoutAlone() async throws {
@@ -623,6 +655,6 @@ final class PrefireGeneratorTests: XCTestCase {
 
         let result = try output.read(.utf8)
 
-        XCTAssertTrue(result.contains("private let waitDefaults = SnapshotWaitDefaults(timeout: 2.5)"))
+        XCTAssertTrue(result.contains("waitDefaults: SnapshotWaitDefaults(timeout: 2.5)"))
     }
 }
