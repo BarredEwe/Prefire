@@ -124,4 +124,32 @@ class ConfigDecoderTests: XCTestCase {
             XCTAssertNil(config.tests.snapshotWaitTimeout, value)
         }
     }
+
+    func test_renderConfiguration() {
+        let config = ConfigDecoder().decode(
+            from: """
+            test_configuration:
+              - target: PrefireExample
+            render_configuration:
+              - scheme: PrefireExample
+              - workspace: ${TARGET_DIR}/App.xcworkspace
+              - destination: platform=iOS Simulator,name=iPhone 16,OS=18.0
+              - test_target: PrefireExampleTests
+              - output_dir: .prefire/render
+              - sources:
+                  - ${TARGET_DIR}/Views
+                  - Sources
+            """,
+            env: env
+        )
+
+        XCTAssertEqual(config.tests.target, "PrefireExample")
+        XCTAssertEqual(config.render.scheme, "PrefireExample")
+        XCTAssertEqual(config.render.workspace, "/User/Tests/App.xcworkspace")
+        XCTAssertNil(config.render.project)
+        XCTAssertEqual(config.render.destination, "platform=iOS Simulator,name=iPhone 16,OS=18.0")
+        XCTAssertEqual(config.render.testTarget, "PrefireExampleTests")
+        XCTAssertEqual(config.render.outputDir, ".prefire/render")
+        XCTAssertEqual(config.render.sources, ["/User/Tests/Views", "Sources"])
+    }
 }

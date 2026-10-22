@@ -18,6 +18,8 @@ final class ConfigDecoder {
                 currentSection = .tests
             } else if lines[index].contains(Config.CodingKeys.playbook.rawValue + Constants.separtor) {
                 currentSection = .playbook
+            } else if lines[index].contains(Config.CodingKeys.render.rawValue + Constants.separtor) {
+                currentSection = .render
             } else if let currentSection {
                 let components = lines[index].components(separatedBy: Constants.separtor)
                 if components.count > 1 {
@@ -26,6 +28,8 @@ final class ConfigDecoder {
                         handleTestConfig(config: &config, components: components, lines: lines[index..<lines.count], env: env)
                     case .playbook:
                         handlePlaybookConfig(config: &config, components: components, lines: lines[index..<lines.count], env: env)
+                    case .render:
+                        handleRenderConfig(config: &config, components: components, lines: lines[index..<lines.count], env: env)
                     }
                 }
             }
@@ -113,6 +117,38 @@ final class ConfigDecoder {
                 config.playbook.imports = getValues(from: components, lines: lines, env: env)
             case .testableImports:
                 config.playbook.testableImports = getValues(from: components, lines: lines, env: env)
+        }
+    }
+
+    private func handleRenderConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String: String]) {
+        var components = components
+        let keyString = components.removeFirst().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+
+        guard !keyString.isEmpty else { return }
+
+        guard let key = RenderConfig.CodingKeys(rawValue: keyString) else {
+            Logger.warning("⚠️ Unknown render config key: '\(keyString)'")
+            return
+        }
+
+        // Values like `platform=iOS Simulator,name=iPhone 16,OS=18.0` may hold the separator.
+        let value = getValue(from: components.joined(separator: Constants.separtor), env: env)
+
+        switch key {
+        case .scheme:
+            config.render.scheme = value
+        case .workspace:
+            config.render.workspace = value
+        case .project:
+            config.render.project = value
+        case .destination:
+            config.render.destination = value
+        case .testTarget:
+            config.render.testTarget = value
+        case .outputDir:
+            config.render.outputDir = value
+        case .sources:
+            config.render.sources = getValues(from: components, lines: lines, env: env)
         }
     }
 

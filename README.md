@@ -24,6 +24,7 @@
 - 📸 **Snapshot Testing** — automatic test generation from previews (iOS, tvOS, macOS)
 - 📚 **Playbook View** — auto-generated interactive component catalog (iOS)
 - 🏃 **Flow-aware** — build user stories from multiple preview steps
+- 🤖 **AI-ready** — render previews to PNG for agents with `prefire render` and an [MCP server](Documentation/AI.md)
 - 🧩 **UIKit + AppKit Support** — support for `UIView`/`UIViewController` and `NSView`/`NSViewController`
 - ⚙️ **SPM + Xcode Plugins** — works in CLI, Xcode build phases, or CI
 - 🧠 **Fast Caching** — fingerprint-based AST and body caching avoids redundant work
@@ -342,6 +343,26 @@ prefire playbook
 ```
 
 Run `prefire tests --help` or `prefire playbook --help` for more options.
+
+---
+
+## 🤖 Let AI agents see SwiftUI
+
+Prefire renders previews in its snapshot tests, built anew and on the devices you choose, so it can
+show them to an AI agent as images, which Xcode Previews can't do reliably outside Xcode.
+
+```bash
+# Render previews to PNG + JSON
+prefire render "Sign in" --device "iPhone 16 Pro" --color-scheme dark
+
+# Let Claude Code render previews itself
+claude mcp add prefire -- prefire mcp
+
+# An HTML board of the last render, grouped by user story
+prefire board
+```
+
+Set the scheme to build in `render_configuration` of `.prefire.yml`. See the [AI guide](Documentation/AI.md).
 
 ---
 ## 🗂 Configuration: `.prefire.yml`

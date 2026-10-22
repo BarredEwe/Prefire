@@ -37,7 +37,16 @@ playbook_configuration:
     - Foundation
   testable_imports:
     - SwiftUI
+
+render_configuration:
+  scheme: PrefireExample
+  workspace: PrefireExample.xcworkspace
+  destination: platform=iOS Simulator,name=iPhone 16
+  test_target: PrefireExampleTests
+  output_dir: .prefire/render
 ```
+
+`render_configuration` is used by `prefire render`, `prefire mcp` and `prefire board`. See its keys in the [AI guide](AI.md#setup).
 
 ---
 

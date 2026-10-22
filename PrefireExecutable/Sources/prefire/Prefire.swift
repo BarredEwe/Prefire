@@ -10,6 +10,9 @@ struct Prefire: AsyncParsableCommand {
         subcommands: [
             Playbook.self,
             Tests.self,
+            Render.self,
+            Board.self,
+            MCP.self,
             Version.self
         ]
     )
