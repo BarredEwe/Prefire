@@ -143,6 +143,9 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
 
     #if os(iOS) || os(tvOS)
     public var traits: UITraitCollection = .init()
+    #elseif os(macOS)
+    /// Appearance `prefire render` asked for. On iOS/tvOS it is put into `traits` instead.
+    var renderOptions: PrefireRenderOptions?
     #endif
 
     private var content: AnyView {
@@ -157,11 +160,16 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
             )
         }
         #else
-        if let size = device.size {
+        let sized = if let size = device.size {
             AnyView(previewContent.frame(width: size.width, height: size.height))
         } else {
             AnyView(previewContent)
         }
+        #if os(macOS)
+        return renderOptions?.applyingAppearance(to: sized) ?? sized
+        #else
+        return sized
+        #endif
         #endif
     }
 
@@ -325,6 +333,12 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 }
                 .onPreferenceChange(WaitPreferenceKey.self) {
                     preferences.wait = $0
+                }
+                .onPreferenceChange(UserStoryPreferenceKey.self) {
+                    preferences.userStory = $0
+                }
+                .onPreferenceChange(StatePreferenceKey.self) {
+                    preferences.state = $0
                 }
         )
     }
