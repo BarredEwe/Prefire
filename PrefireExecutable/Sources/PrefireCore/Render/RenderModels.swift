@@ -8,6 +8,9 @@ public struct RenderOptions: Codable, Equatable, Sendable {
     /// `xcodebuild` passes variables with this prefix on to the test runner, without the prefix.
     public static let testRunnerEnvironmentKey = "TEST_RUNNER_PREFIRE_RENDER"
 
+    /// File the tests write `runID` to when they run in render mode, rendering or not.
+    public static let runMarkerFileName = ".prefire-render-run"
+
     public var directory: String
     public var runID: String
     public var previews: [String]

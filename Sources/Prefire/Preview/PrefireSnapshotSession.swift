@@ -177,6 +177,7 @@ public struct PrefireSnapshotSession {
         verify: (PrefireSnapshotCapture) -> String?
     ) -> [String] {
         if let render {
+            PrefireRenderWriter.markRun(options: render)
             guard render.includes(snapshot.name) else { return [] }
             return namedVariants(of: snapshot).compactMap { device, variant in
                 renderSnapshot(variant, device: device, options: render)
@@ -294,9 +295,15 @@ public struct PrefireSnapshotSession {
             if capture.delay > 0 {
                 RunLoop.main.run(until: Date(timeIntervalSinceNow: capture.delay))
             }
-            png = prefireRenderPNG(of: capture.view)
-            record.width = Double(capture.view.bounds.width)
-            record.height = Double(capture.view.bounds.height)
+            let size: CGSize?
+            switch capture.comparison {
+            case let .view(comparedSize):
+                size = comparedSize
+            }
+            png = prefireRenderPNG(of: capture.view, size: size)
+            let renderedSize = size ?? capture.view.bounds.size
+            record.width = Double(renderedSize.width)
+            record.height = Double(renderedSize.height)
             record.scale = Double(snapshot.device.scale)
             #endif
 

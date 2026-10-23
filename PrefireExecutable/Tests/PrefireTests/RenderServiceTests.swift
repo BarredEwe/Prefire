@@ -157,6 +157,44 @@ final class RenderServiceTests: XCTestCase {
         }
     }
 
+    func test_render_throws_whenTheTestsDoNotRunInRenderMode() {
+        let service = RenderService(
+            configuration: RenderConfiguration(scheme: "App", outputDirectory: directory),
+            runner: FakeRunner { _, _ in 0 }
+        )
+
+        XCTAssertThrowsError(try service.render(RenderRequest(previews: ["Button"]))) { error in
+            guard case RenderError.notInRenderMode = error else {
+                return XCTFail("Unexpected error \(error)")
+            }
+        }
+    }
+
+    func test_render_returnsNoPreviews_whenTheTestsRanButNoneMatched() throws {
+        let runner = FakeRunner { _, environment in
+            let options = try JSONDecoder().decode(RenderOptions.self, from: Data(environment["TEST_RUNNER_PREFIRE_RENDER"]!.utf8))
+            try Data(options.runID.utf8).write(to: URL(fileURLWithPath: options.directory).appendingPathComponent(RenderOptions.runMarkerFileName))
+            return 0
+        }
+        let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory), runner: runner)
+
+        let result = try service.render(RenderRequest(previews: ["Unknown"]))
+
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.manifest.previews, [])
+    }
+
+    func test_render_ignoresTheMarkerOfAnEarlierRun() throws {
+        try Data("earlier".utf8).write(to: directory.appendingPathComponent(RenderOptions.runMarkerFileName))
+        let service = RenderService(
+            configuration: RenderConfiguration(scheme: "App", outputDirectory: directory),
+            runner: FakeRunner { _, _ in 0 },
+            makeRunID: { "now" }
+        )
+
+        XCTAssertThrowsError(try service.render(RenderRequest()))
+    }
+
     func test_render_rejectsUnknownAppearance() {
         let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory), runner: FakeRunner { _, _ in 0 })
 

@@ -5,6 +5,15 @@ import SwiftUI
 import UIKit
 #elseif os(macOS)
 import AppKit
+#if canImport(SceneKit)
+import SceneKit
+#endif
+#if canImport(SpriteKit)
+import SpriteKit
+#endif
+#if canImport(WebKit)
+import WebKit
+#endif
 #endif
 
 #if canImport(XCTest) && !os(watchOS)
@@ -16,6 +25,10 @@ import AppKit
 public struct PrefireRenderOptions: Codable, Equatable, Sendable {
     /// Environment variable `prefire render` sets. `xcodebuild` passes it on as `TEST_RUNNER_PREFIRE_RENDER`.
     public static let environmentKey = "PREFIRE_RENDER"
+
+    /// File in `directory` the tests write `runID` to as soon as one runs in render mode, whether or not
+    /// it renders anything. Without it `prefire render` knows the tests did not take the options.
+    public static let runMarkerFileName = ".prefire-render-run"
 
     /// Directory the images and their records are written to.
     public var directory: String
@@ -161,6 +174,14 @@ enum PrefireRenderWriter {
         }
     }
 
+    /// Tells `prefire render` the tests run in render mode, by writing `options.runID` to
+    /// `PrefireRenderOptions.runMarkerFileName`.
+    static func markRun(options: PrefireRenderOptions) {
+        let directory = URL(fileURLWithPath: options.directory, isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? Data(options.runID.utf8).write(to: directory.appendingPathComponent(PrefireRenderOptions.runMarkerFileName), options: .atomic)
+    }
+
     /// `name` reduced to characters that are safe in a file name.
     static func fileName(for name: String) -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
@@ -261,14 +282,112 @@ extension PrefireRenderOptions {
     }
 }
 
-/// PNG of `view` as it is on screen, the way SnapshotTesting renders an `NSView`.
+/// PNG of `view` the way SnapshotTesting's `.image(size:)` takes it: at `size` when one is given, and
+/// with `SKView`, `SCNView` and `WKWebView` drawn as images, which `cacheDisplay` leaves blank.
 @MainActor
-func prefireRenderPNG(of view: NSView) -> Data? {
+func prefireRenderPNG(of view: NSView, size: CGSize?) -> Data? {
+    let initialSize = view.frame.size
+    if let size {
+        view.frame.size = size
+    }
+    defer { view.frame.size = initialSize }
+
     view.layoutSubtreeIfNeeded()
-    guard view.bounds.width > 0, view.bounds.height > 0,
-          let representation = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
+    guard view.bounds.width > 0, view.bounds.height > 0 else { return nil }
+
+    let images = PrefireRenderedViews.drawAsImages(in: view)
+    defer { images.forEach { $0.removeFromSuperview() } }
+
+    guard let representation = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
     view.cacheDisplay(in: view.bounds, to: representation)
     return representation.representation(using: .png, properties: [:])
+}
+
+/// Views that draw with Metal or out of process, so `cacheDisplay` can't capture them.
+///
+/// Mirrors `addImagesForRenderedViews` of SnapshotTesting, so a render looks like the reference image
+/// of the preview.
+@MainActor
+enum PrefireRenderedViews {
+    /// Most time to wait for a `WKWebView` to load and snapshot.
+    static let webViewTimeout: TimeInterval = 10
+
+    /// Puts an image of each such view in `view` above it.
+    /// - Returns: The image views, to remove once `view` is captured.
+    static func drawAsImages(in view: NSView) -> [NSView] {
+        view.subviews.flatMap { subview -> [NSView] in
+            guard let image = image(of: subview) else { return drawAsImages(in: subview) }
+
+            let imageView = NSImageView()
+            imageView.image = image
+            imageView.frame = subview.frame
+            subview.superview?.addSubview(imageView, positioned: .above, relativeTo: subview)
+            return [imageView]
+        }
+    }
+
+    private static func image(of view: NSView) -> NSImage? {
+        #if canImport(SceneKit)
+        if let sceneView = view as? SCNView {
+            return inWindow(view) { sceneView.snapshot() }
+        }
+        #endif
+        #if canImport(SpriteKit)
+        if let spriteView = view as? SKView {
+            guard let scene = spriteView.scene,
+                  let image = inWindow(view, { spriteView.texture(from: scene)?.cgImage() }) else { return nil }
+            return NSImage(cgImage: image, size: spriteView.bounds.size)
+        }
+        #endif
+        #if canImport(WebKit)
+        if let webView = view as? WKWebView {
+            return image(of: webView)
+        }
+        #endif
+        return nil
+    }
+
+    #if canImport(WebKit)
+    private static func image(of webView: WKWebView) -> NSImage? {
+        let deadline = Date(timeIntervalSinceNow: webViewTimeout)
+        while webView.isLoading, Date() < deadline {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+        }
+        guard webView.frame.width > 0, webView.frame.height > 0 else { return NSImage() }
+
+        var image: NSImage?
+        var isDone = false
+        inWindow(webView) {
+            let configuration = WKSnapshotConfiguration()
+            configuration.afterScreenUpdates = false
+            webView.takeSnapshot(with: configuration) { snapshot, _ in
+                image = snapshot
+                isDone = true
+            }
+        }
+        while !isDone, Date() < deadline {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+        }
+        return image
+    }
+    #endif
+
+    /// Runs `perform` with `view` in a window of its own, as SnapshotTesting does, then puts it back.
+    private static func inWindow<T>(_ view: NSView, _ perform: () -> T) -> T {
+        let superview = view.superview
+        defer { superview?.addSubview(view) }
+
+        let window = ScaledWindow()
+        window.contentView = NSView()
+        window.contentView?.addSubview(view)
+        window.makeKey()
+        return perform()
+    }
+
+    /// A window drawn at 2x whatever screen there is, like the one SnapshotTesting uses.
+    private final class ScaledWindow: NSWindow {
+        override var backingScaleFactor: CGFloat { 2 }
+    }
 }
 #endif
 #endif

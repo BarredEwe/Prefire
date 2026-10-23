@@ -1,5 +1,6 @@
 #if os(macOS)
 import Prefire
+import SpriteKit
 import SwiftUI
 import XCTest
 
@@ -63,11 +64,29 @@ final class RenderModeTests: XCTestCase {
         XCTAssertGreaterThan(image.size.width, 0)
     }
 
-    func testPreviewsThatAreNotAskedForAreSkipped() {
-        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, previews: ["Other"]))
+    func testPreviewsThatAreNotAskedForAreSkipped() throws {
+        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run", previews: ["Other"]))
 
         XCTAssertEqual(session.failures(of: snapshot { Text("Prefire") }) { _ in "verified" }, [])
         XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("Text.json").path))
+
+        // `prefire render` tells a run that matched nothing from tests that ignore render mode by it.
+        let marker = directory.appendingPathComponent(PrefireRenderOptions.runMarkerFileName)
+        XCTAssertEqual(try String(contentsOf: marker, encoding: .utf8), "run")
+    }
+
+    func testSpriteKitIsRendered() throws {
+        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run"))
+
+        _ = session.failures(of: snapshot { SpriteKitView().frame(width: 40, height: 40) }) { _ in nil }
+
+        let image = try XCTUnwrap(NSImage(contentsOf: directory.appendingPathComponent("Text.png")))
+        let bitmap = try XCTUnwrap(image.representations.first as? NSBitmapImageRep)
+        let color = try XCTUnwrap(bitmap.colorAt(x: bitmap.pixelsWide / 2, y: bitmap.pixelsHigh / 2)?.usingColorSpace(.sRGB))
+        // SpriteKit draws in the color space of the display, so red is not quite pure.
+        XCTAssertGreaterThan(color.redComponent, 0.8)
+        XCTAssertLessThan(color.greenComponent, 0.3)
+        XCTAssertLessThan(color.blueComponent, 0.3)
     }
 
     func testPreviewsNamedAlikeAreBothKept() throws {
@@ -110,5 +129,18 @@ final class RenderModeTests: XCTestCase {
     private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
         PrefireSnapshot(view, name: "Text", isScreen: false, device: DeviceConfig())
     }
+}
+
+/// An `SKView` showing a red scene, which `cacheDisplay` alone draws blank.
+private struct SpriteKitView: NSViewRepresentable {
+    func makeNSView(context: Context) -> SKView {
+        let scene = SKScene(size: CGSize(width: 40, height: 40))
+        scene.backgroundColor = .red
+        let view = SKView()
+        view.presentScene(scene)
+        return view
+    }
+
+    func updateNSView(_ nsView: SKView, context: Context) {}
 }
 #endif
