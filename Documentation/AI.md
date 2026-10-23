@@ -41,9 +41,14 @@ render_configuration:
 | `test_target` | Target of the generated tests. With it, `xcodebuild` runs only the tests of the previews asked for, and never the other tests of the scheme. Recommended.          |
 | `output_dir`  | Directory of the images, their records, `manifest.json` and `board.html`. Default: `.prefire/render`. Add it to `.gitignore`.                                       |
 | `sources`     | Files or folders the previews are looked for in. Default: `sources` of `test_configuration`, or the current directory.                                             |
+| `xcodebuild_args` | Arguments passed on to `xcodebuild` after Prefire's own, like `-derivedDataPath` and its value, or `-skipPackagePluginValidation`. Optional.                   |
+
+Outside of Xcode `${PROJECT_DIR}` is the folder of the config given with `--config`, or the current
+directory, so `sources` written for `prefire tests` work as they are.
 
 Every key can be given on the command line too (`--scheme`, `--workspace`, `--project`,
-`--destination`, `--test-target`, `--output`, `--source`), which wins over the file.
+`--destination`, `--test-target`, `--output`, `--source`, `--xcodebuild-arg`), which wins over the
+file. `--xcodebuild-arg` values add to `xcodebuild_args`.
 
 ### `prefire render`
 
@@ -62,13 +67,18 @@ prefire render --list
   unnamed one. A name also selects the snapshots that add a suffix to it, like those of
   `#Preview(..., arguments:)` or of each of `snapshot_devices`.
 - `--device` renders screen previews on the devices named, with their real safe area and scale,
-  instead of `snapshot_devices`. The names are those of `snapshot_devices`.
+  instead of `snapshot_devices`. The names are those of `snapshot_devices`; an unknown one gets a
+  record with the error and the names Prefire knows. Devices are ignored on macOS.
+- A `PreviewProvider` marked `PrefireProvider` is asked for by its type name, like `Card_Previews`,
+  and renders all its previews.
 - `--color-scheme`: `light` or `dark`. `--dynamic-type`: `xSmall` … `xxxLarge`, `accessibility1` …
   `accessibility5`.
 - Each preview is written as `<name>.png` next to `<name>.json` (name, device, size, scale,
   user story, state, and an error when it could not be rendered). `manifest.json` lists the
   previews of the last run in source order, with the file and line each is declared on. Files of
-  earlier runs are removed.
+  earlier runs are removed once a run renders, so a build that fails keeps the last render.
+- Names that match no preview, and devices asked for on macOS, are reported as warnings.
+- One render at a time writes to an output directory: another, like one of `prefire mcp`, waits.
 - The output of `xcodebuild` goes to `xcodebuild.log` in the output directory. `--json` prints the
   manifest; otherwise a line per preview is printed.
 - The command exits with the status of `xcodebuild`, which is not 0 when a preview failed to render.
@@ -134,13 +144,13 @@ without a user story come last. The page follows the light or dark appearance of
 ### Notes
 
 - Render mode is turned on by the `PREFIRE_RENDER` environment variable (`TEST_RUNNER_PREFIRE_RENDER`
-  for `xcodebuild`), which holds the options as JSON. The tests run as usual without it.
+  for `xcodebuild`), which holds the options as JSON. The tests run as usual without it. With it
+  they compare nothing and pass, and say so in their output: don't set it in a scheme.
 - Images are rendered the way the snapshot tests render them. Previews that wait, with
   `.snapshot(delay:)`, `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)`, are rendered once they
   settled. `SKView`, `SCNView` and `WKWebView` are drawn as images, as SnapshotTesting
   draws them.
-- Snapshots of a `PreviewProvider` marked `PrefireProvider` are named by its previews. With
-  `test_target` set, asking for the provider type by name renders all its previews; without it, ask
-  for the names its snapshots have.
+- Snapshots of a `PreviewProvider` marked `PrefireProvider` are named by its previews, and found by
+  its type name or by those names.
 - macOS previews are rendered too, with the color scheme and Dynamic Type asked for; `--device`
   applies to iOS and tvOS.

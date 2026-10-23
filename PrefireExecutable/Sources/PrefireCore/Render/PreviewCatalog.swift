@@ -53,9 +53,18 @@ public enum PreviewCatalog {
             }
         }
 
-        return try files.sorted { $0.string < $1.string }.flatMap { file in
+        var catalog = try files.sorted { $0.string < $1.string }.flatMap { file in
             try entries(in: file.read(.utf8), file: file, defaultEnabled: defaultEnabled, useGroupedSnapshots: useGroupedSnapshots)
         }
+
+        // Ungrouped, each generated class tests every provider and no `PreviewTests` class exists,
+        // so the test of a provider is taken from the first class.
+        if !useGroupedSnapshots, let testClass = catalog.first(where: { $0.kind == .macro })?.testClass {
+            for index in catalog.indices where catalog[index].kind == .provider {
+                catalog[index].testClass = testClass
+            }
+        }
+        return catalog
     }
 
     static func entries(in content: String, file: Path, defaultEnabled: Bool, useGroupedSnapshots: Bool) -> [PreviewEntry] {
@@ -88,7 +97,7 @@ public enum PreviewCatalog {
                         kind: .provider,
                         file: file.string,
                         line: declarationLine(of: type.localName, in: lines),
-                        // Providers are tested in the grouped class, whatever `use_grouped_snapshots` says.
+                        // `entries(sources:)` picks one of the generated classes when ungrouped.
                         testClass: "PreviewTests",
                         testMethod: providerTestMethod(for: type.name),
                         isScreen: false

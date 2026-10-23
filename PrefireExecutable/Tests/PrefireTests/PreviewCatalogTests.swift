@@ -35,6 +35,18 @@ final class PreviewCatalogTests: XCTestCase {
         XCTAssertEqual(entries.map(\.testClass), ["SignInTests", "SignInTests", "PreviewTests"])
     }
 
+    func test_entries_testProvidersInAGeneratedClass_whenSnapshotsAreNotGrouped() throws {
+        let directory = Path(NSTemporaryDirectory()) + "PreviewCatalogTests-\(UUID().uuidString)"
+        try directory.mkpath()
+        defer { try? directory.delete() }
+        try (directory + "A.swift").write("#Preview(\"Alpha\") { Text(\"A\") }\n")
+        try (directory + "B.swift").write(source)
+
+        let entries = try PreviewCatalog.entries(sources: [directory], defaultEnabled: true, useGroupedSnapshots: false)
+
+        XCTAssertEqual(entries.first { $0.kind == .provider }?.testClass, "ATests")
+    }
+
     func test_matches_nameAndSuffixedNames() {
         let entry = PreviewEntry(name: "Button", kind: .macro, file: "", line: 1, testClass: "", testMethod: "", isScreen: false)
 

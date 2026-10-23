@@ -21,12 +21,29 @@ struct RenderSetupOptions: ParsableArguments {
     var output: String?
     @Option(name: .customLong("source"), help: "Source file or directory the previews are in. Can be repeated.")
     var sources: [String] = []
+    @Option(
+        name: .customLong("xcodebuild-arg"),
+        parsing: .unconditionalSingleValue,
+        help: "Argument passed on to xcodebuild, like '--xcodebuild-arg -derivedDataPath --xcodebuild-arg .build'. Can be repeated."
+    )
+    var xcodebuildArgs: [String] = []
 
     @Flag(help: "Display full info")
     var verbose = false
 
     func loadConfig() -> Config? {
-        Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
+        Config.load(from: config, testTargetPath: nil, env: Self.environment(config: config))
+    }
+
+    /// Environment `.prefire.yml` is read with. Outside of Xcode `PROJECT_DIR`, which configs use for
+    /// their sources, is the folder of the config, or the current one.
+    static func environment(config: String?) -> [String: String] {
+        var environment = ProcessInfo.processInfo.environment
+        if environment["PROJECT_DIR"] == nil {
+            let directory = config.map { URL(fileURLWithPath: $0).deletingLastPathComponent().path }
+            environment["PROJECT_DIR"] = directory ?? FileManager.default.currentDirectoryPath
+        }
+        return environment
     }
 
     /// Directory of the render, which `prefire board` reads without building anything.
@@ -52,7 +69,8 @@ struct RenderSetupOptions: ParsableArguments {
             outputDirectory: outputDirectory(config: config),
             sources: sources,
             previewDefaultEnabled: config?.tests.previewDefaultEnabled ?? true,
-            useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true
+            useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true,
+            xcodebuildArguments: (config?.render.xcodebuildArgs ?? []) + xcodebuildArgs
         )
     }
 }

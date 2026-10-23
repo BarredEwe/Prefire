@@ -112,7 +112,7 @@ public struct MCPServer: Sendable {
             "serverInfo": ["name": "prefire", "version": .string(self.version)],
             "instructions": """
             Renders SwiftUI previews with Prefire: the generated snapshot tests are built and run by xcodebuild \
-            on a simulator, so each render shows the current code on the device asked for. Call list_previews to \
+            on the destination of the project (a simulator or the Mac), so each render shows the current code. Call list_previews to \
             find preview names, render_previews to look at them, build_board for an HTML board of the last render. \
             A render builds the project and can take minutes.
             """,
@@ -178,6 +178,7 @@ public struct MCPServer: Sendable {
         if result.manifest.previews.isEmpty {
             notes.append("No preview matched. Call list_previews for the names.")
         }
+        notes += result.warnings
         if result.status != 0 {
             notes.append("xcodebuild exited with \(result.status). Its output is in \(result.logFile.path).")
         }
@@ -203,7 +204,7 @@ public struct MCPServer: Sendable {
         [
             "name": "render_previews",
             "description": """
-            Builds the app and renders SwiftUI previews to PNG on a simulator, returning the images. \
+            Builds the app and renders SwiftUI previews to PNG, returning the images. \
             Use it to check how a view looks after changing it. Takes minutes, as it builds the project.
             """,
             "inputSchema": [

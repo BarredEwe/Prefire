@@ -21,7 +21,9 @@ extension Prefire {
         var output: String?
 
         func run() throws {
-            let config = Config.load(from: config, testTargetPath: nil, env: ProcessInfo.processInfo.environment)
+            // Standard output carries the path of the board only.
+            Logger.output = .standardError
+            let config = Config.load(from: config, testTargetPath: nil, env: RenderSetupOptions.environment(config: config))
             let directory = URL(fileURLWithPath: output ?? config?.render.outputDir ?? RenderConfiguration.defaultOutputDirectory)
 
             guard FileManager.default.fileExists(atPath: directory.appendingPathComponent(RenderManifest.fileName).path) else {

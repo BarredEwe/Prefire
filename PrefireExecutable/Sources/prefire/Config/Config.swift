@@ -78,6 +78,7 @@ struct RenderConfig {
     var testTarget: String?
     var outputDir: String?
     var sources: [String]?
+    var xcodebuildArgs: [String]?
 
     enum CodingKeys: String, CodingKey {
         case scheme = "scheme"
@@ -87,6 +88,7 @@ struct RenderConfig {
         case testTarget = "test_target"
         case outputDir = "output_dir"
         case sources = "sources"
+        case xcodebuildArgs = "xcodebuild_args"
     }
 }
 

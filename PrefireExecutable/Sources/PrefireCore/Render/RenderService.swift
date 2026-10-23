@@ -49,6 +49,8 @@ public struct RenderConfiguration: Equatable, Sendable {
     public var sources: [String]
     public var previewDefaultEnabled: Bool
     public var useGroupedSnapshots: Bool
+    /// Passed to `xcodebuild` after the arguments Prefire sets, like `-derivedDataPath`.
+    public var xcodebuildArguments: [String]
 
     public init(
         scheme: String,
@@ -59,7 +61,8 @@ public struct RenderConfiguration: Equatable, Sendable {
         outputDirectory: URL,
         sources: [String] = [],
         previewDefaultEnabled: Bool = true,
-        useGroupedSnapshots: Bool = true
+        useGroupedSnapshots: Bool = true,
+        xcodebuildArguments: [String] = []
     ) {
         self.scheme = scheme
         self.workspace = workspace
@@ -70,6 +73,12 @@ public struct RenderConfiguration: Equatable, Sendable {
         self.sources = sources
         self.previewDefaultEnabled = previewDefaultEnabled
         self.useGroupedSnapshots = useGroupedSnapshots
+        self.xcodebuildArguments = xcodebuildArguments
+    }
+
+    /// Whether `destination` is a Mac, where screens are not rendered on devices.
+    var rendersOnMac: Bool {
+        destination.replacingOccurrences(of: " ", with: "").lowercased().contains("platform=macos")
     }
 }
 
@@ -116,6 +125,8 @@ public struct RenderResult: Sendable {
     public var logFile: URL
     /// Exit status of `xcodebuild`. Not 0 when a preview failed to render, too.
     public var status: Int32
+    /// What was asked for but not done, like preview names that matched nothing.
+    public var warnings: [String] = []
 
     /// Absolute path of the image of `preview`, when it has one.
     public func imageURL(of preview: RenderedPreview) -> URL? {
@@ -186,6 +197,10 @@ public struct RenderService: Sendable {
         let directory = configuration.outputDirectory.standardizedFileURL
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
+        // Two renders into one directory would remove the records of each other.
+        let lock = try RenderLock(directory: directory)
+        defer { lock.unlock() }
+
         let catalog = (try? catalog()) ?? []
         let plan = Self.plan(for: request, catalog: catalog, testTarget: configuration.testTarget)
         let options = RenderOptions(
@@ -201,29 +216,41 @@ public struct RenderService: Sendable {
         Logger.info("Rendering with xcodebuild, its output goes to \(logFile.path)")
         let status = try runner.run(
             executable: "/usr/bin/xcrun",
-            arguments: xcodebuildArguments(onlyTesting: plan.onlyTesting),
+            arguments: xcodebuildArguments(onlyTesting: plan.onlyTesting, skipTesting: plan.skipTesting),
             environment: try environment(for: options),
             logFile: logFile
         )
 
-        let manifest = try Self.collect(in: directory, runID: options.runID, catalog: catalog, destination: configuration.destination)
+        // The images of the last render stay until a run renders anew, so a broken build keeps them.
+        let testsRan = Self.testsRan(in: directory, runID: options.runID)
+        let manifest = try Self.collect(
+            in: directory,
+            runID: options.runID,
+            catalog: catalog,
+            destination: configuration.destination,
+            removingOtherRuns: testsRan
+        )
         if manifest.previews.isEmpty {
             if status != 0 {
                 throw RenderError.nothingRendered(status: status, logFile: logFile.path)
             }
             // Tests that ignore the options pass as usual and leave nothing, like when no preview matched.
-            if !Self.testsRan(in: directory, runID: options.runID) {
+            if !testsRan {
                 throw RenderError.notInRenderMode(logFile: logFile.path)
             }
         }
         try manifest.write(to: directory)
-        return RenderResult(manifest: manifest, directory: directory, logFile: logFile, status: status)
+
+        var result = RenderResult(manifest: manifest, directory: directory, logFile: logFile, status: status)
+        result.warnings = warnings(for: request, catalog: catalog, manifest: manifest)
+        return result
     }
 
     // MARK: - xcodebuild
 
-    /// Arguments of `xcrun`, running `xcodebuild test` for the tests `onlyTesting` names.
-    func xcodebuildArguments(onlyTesting: [String]) -> [String] {
+    /// Arguments of `xcrun`, running `xcodebuild test` for the tests `onlyTesting` names, except those
+    /// `skipTesting` names.
+    func xcodebuildArguments(onlyTesting: [String], skipTesting: [String] = []) -> [String] {
         var arguments = ["xcodebuild", "test", "-scheme", configuration.scheme]
         if let workspace = configuration.workspace {
             arguments += ["-workspace", workspace]
@@ -234,6 +261,8 @@ public struct RenderService: Sendable {
         // Clones of the simulator would write into the same directory at the same time.
         arguments += ["-parallel-testing-enabled", "NO"]
         arguments += onlyTesting.map { "-only-testing:\($0)" }
+        arguments += skipTesting.map { "-skip-testing:\($0)" }
+        arguments += configuration.xcodebuildArguments
         return arguments
     }
 
@@ -250,38 +279,79 @@ public struct RenderService: Sendable {
     struct Plan: Equatable {
         /// `-only-testing:` identifiers. Empty runs every test of the scheme.
         var onlyTesting: [String]
+        /// `-skip-testing:` identifiers.
+        var skipTesting: [String] = []
         var runtimeFilter: [String]
     }
 
     /// Runs only the tests of the previews asked for when every name is found in `catalog`.
     /// Otherwise runs all snapshot tests, which skip the previews not asked for.
     static func plan(for request: RenderRequest, catalog: [PreviewEntry], testTarget: String?) -> Plan {
+        let runtimeFilter = runtimeFilter(for: request.previews, catalog: catalog)
         guard let testTarget else {
-            return Plan(onlyTesting: [], runtimeFilter: request.previews)
-        }
-        guard !request.previews.isEmpty else {
-            return Plan(onlyTesting: [testTarget], runtimeFilter: [])
-        }
-
-        var entries: [PreviewEntry] = []
-        for name in request.previews {
-            guard let entry = entry(named: name, in: catalog) else {
-                return Plan(onlyTesting: [testTarget], runtimeFilter: request.previews)
-            }
-            entries.append(entry)
+            return Plan(onlyTesting: [], runtimeFilter: runtimeFilter)
         }
 
         var tests: [String] = []
-        for entry in entries {
+        for name in request.previews {
+            guard let entry = entry(named: name, in: catalog) else {
+                tests = []
+                break
+            }
             let test = "\(testTarget)/\(entry.testClass)/\(entry.testMethod)"
             if !tests.contains(test) {
                 tests.append(test)
             }
         }
-        // Snapshots of a `PreviewProvider` are named by its previews, not by the type, so a
-        // filter by the type name would skip them all.
-        let hasProvider = entries.contains { $0.kind == .provider }
-        return Plan(onlyTesting: tests, runtimeFilter: hasProvider ? [] : request.previews)
+        guard tests.isEmpty else {
+            return Plan(onlyTesting: tests, runtimeFilter: runtimeFilter)
+        }
+        return Plan(
+            onlyTesting: [testTarget],
+            skipTesting: duplicateProviderTests(in: catalog, testTarget: testTarget),
+            runtimeFilter: runtimeFilter
+        )
+    }
+
+    /// Names the tests filter snapshots by: a `PreviewProvider` by its test, since its snapshots are
+    /// named by its previews rather than by the type.
+    static func runtimeFilter(for previews: [String], catalog: [PreviewEntry]) -> [String] {
+        previews.map { name in
+            guard let entry = entry(named: name, in: catalog), entry.kind == .provider else { return name }
+            return entry.testMethod
+        }
+    }
+
+    /// Tests of a `PreviewProvider` in every class but its own. Without `use_grouped_snapshots`
+    /// each generated class tests every provider, which would render each of its previews again.
+    static func duplicateProviderTests(in catalog: [PreviewEntry], testTarget: String) -> [String] {
+        var classes: [String] = []
+        for entry in catalog where entry.kind == .macro && !classes.contains(entry.testClass) {
+            classes.append(entry.testClass)
+        }
+        return catalog
+            .filter { $0.kind == .provider }
+            .flatMap { provider in
+                classes
+                    .filter { $0 != provider.testClass }
+                    .map { "\(testTarget)/\($0)/\(provider.testMethod)" }
+            }
+    }
+
+    /// What `request` asked for that the render could not do.
+    func warnings(for request: RenderRequest, catalog: [PreviewEntry], manifest: RenderManifest) -> [String] {
+        var warnings: [String] = []
+        let unmatched = request.previews.filter { name in
+            guard Self.entry(named: name, in: catalog) == nil else { return false }
+            return !manifest.previews.contains { $0.record.name == name || $0.record.name.hasPrefix(name + "-") }
+        }
+        if !unmatched.isEmpty {
+            warnings.append("No preview is named \(unmatched.map { "'\($0)'" }.joined(separator: ", ")). Run `prefire render --list` for the names.")
+        }
+        if !request.devices.isEmpty, configuration.rendersOnMac {
+            warnings.append("Devices are ignored on macOS: previews render at their own size.")
+        }
+        return warnings
     }
 
     /// Preview `name` is a snapshot of: a `#Preview` it is named after, or a `PreviewProvider` type.
@@ -293,8 +363,16 @@ public struct RenderService: Sendable {
 
     // MARK: - Records
 
-    /// Manifest of the records of run `runID` in `directory`. Records and images of other runs are removed.
-    static func collect(in directory: URL, runID: String, catalog: [PreviewEntry], destination: String?) throws -> RenderManifest {
+    /// Manifest of the records of run `runID` in `directory`.
+    ///
+    /// - Parameter removingOtherRuns: Removes the records and images of other runs.
+    static func collect(
+        in directory: URL,
+        runID: String,
+        catalog: [PreviewEntry],
+        destination: String?,
+        removingOtherRuns: Bool = true
+    ) throws -> RenderManifest {
         let decoder = JSONDecoder()
         var records: [RenderRecord] = []
 
@@ -305,7 +383,7 @@ public struct RenderService: Sendable {
 
             if record.runID == runID {
                 records.append(record)
-            } else {
+            } else if removingOtherRuns {
                 // A record and its image share their base name, so a record this run did not
                 // overwrite names an image this run did not write.
                 try? FileManager.default.removeItem(at: file)

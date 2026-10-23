@@ -75,6 +75,16 @@ final class RenderModeTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: marker, encoding: .utf8), "run")
     }
 
+    func testProviderIsAskedForByItsTest() throws {
+        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run", previews: ["test_card"]))
+
+        for preview in Card_Previews._allPreviews {
+            _ = session.failures(of: session.snapshot(of: preview, testName: "test_card()")) { _ in nil }
+        }
+
+        XCTAssertEqual(try record(named: "Card").name, "Card")
+    }
+
     func testSpriteKitIsRendered() throws {
         let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run"))
 
@@ -128,6 +138,12 @@ final class RenderModeTests: XCTestCase {
 
     private func snapshot(@ViewBuilder _ view: @escaping @MainActor () -> some View) -> PrefireSnapshot<some View> {
         PrefireSnapshot(view, name: "Text", isScreen: false, device: DeviceConfig())
+    }
+}
+
+private struct Card_Previews: PreviewProvider {
+    static var previews: some View {
+        Text("Card").previewDisplayName("Card")
     }
 }
 

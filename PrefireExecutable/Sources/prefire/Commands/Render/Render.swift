@@ -75,7 +75,8 @@ enum RenderOutput {
             }
             return "❌ \(name): \(record.error ?? "not rendered")"
         }
-        if result.manifest.previews.isEmpty {
+        lines += result.warnings.map { "⚠️ " + $0 }
+        if result.manifest.previews.isEmpty, result.warnings.isEmpty {
             lines.append("No preview matched. Run `prefire render --list` for the names.")
         }
         lines.append("Manifest: \(result.directory.appendingPathComponent(RenderManifest.fileName).path)")

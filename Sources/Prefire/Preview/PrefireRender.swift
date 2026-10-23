@@ -75,8 +75,11 @@ public struct PrefireRenderOptions: Codable, Equatable, Sendable {
     }
 
     /// Whether the preview snapshotted as `name` is to be rendered.
-    public func includes(_ name: String) -> Bool {
-        previews.isEmpty || previews.contains { name == $0 || name.hasPrefix($0 + "-") }
+    ///
+    /// - Parameter testName: Test of a `PreviewProvider` the snapshot is made in, like `test_card`.
+    ///   `prefire render` asks for a provider by its test, since its snapshots are named by its previews.
+    public func includes(_ name: String, testName: String? = nil) -> Bool {
+        previews.isEmpty || previews.contains { name == $0 || name.hasPrefix($0 + "-") || $0 == testName }
     }
 }
 

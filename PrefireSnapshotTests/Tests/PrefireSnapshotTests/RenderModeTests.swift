@@ -65,6 +65,20 @@ final class RenderModeTests: XCTestCase {
         XCTAssertEqual(try record(named: "Probe").state, "dark")
     }
 
+    func testUnknownDeviceIsRecordedInsteadOfStoppingTheTests() throws {
+        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run", devices: ["iphone 16", "iPad"]))
+        let snapshot = PrefireSnapshot({ Color.blue }, name: "Screen", isScreen: true, device: session.device)
+
+        let failures = session.failures(of: snapshot) { _ in nil }
+
+        XCTAssertEqual(failures.count, 1)
+        let record = try record(named: "Screen-iphone 16")
+        XCTAssertNil(record.image)
+        XCTAssertEqual(record.error, failures.first)
+        XCTAssertTrue(try XCTUnwrap(record.error).contains("iPhone 16"))
+        XCTAssertNotNil(try self.record(named: "Screen-iPad").image)
+    }
+
     func testSpriteKitIsRendered() throws {
         let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run"))
         let snapshot = PrefireSnapshot({ SpriteKitView().frame(width: 40, height: 40) }, name: "Sprite", isScreen: false, device: session.device)

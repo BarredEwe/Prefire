@@ -72,31 +72,54 @@ final class RenderServiceTests: XCTestCase {
         XCTAssertEqual(plan.onlyTesting, ["AppTests/PreviewTests/test_ButtonRow_Preview"])
     }
 
-    func test_plan_doesNotFilterByProviderTypeNames() {
+    func test_plan_filtersProvidersByTheirTest() {
         let plan = RenderService.plan(for: RenderRequest(previews: ["Card_Previews", "Login"]), catalog: catalog, testTarget: "AppTests")
 
         XCTAssertEqual(plan.onlyTesting, ["AppTests/PreviewTests/test_card", "AppTests/LoginTests/test_Login_Preview"])
-        XCTAssertEqual(plan.runtimeFilter, [])
+        // Snapshots of a provider are named by its previews, so the tests match it by its test.
+        XCTAssertEqual(plan.runtimeFilter, ["test_card", "Login"])
     }
 
     func test_plan_runsTheWholeTarget_whenANameIsNotFound() {
-        let plan = RenderService.plan(for: RenderRequest(previews: ["Button", "Unknown"]), catalog: catalog, testTarget: "AppTests")
+        let plan = RenderService.plan(for: RenderRequest(previews: ["Button", "Card_Previews", "Unknown"]), catalog: catalog, testTarget: "AppTests")
 
-        XCTAssertEqual(plan, RenderService.Plan(onlyTesting: ["AppTests"], runtimeFilter: ["Button", "Unknown"]))
+        XCTAssertEqual(plan.onlyTesting, ["AppTests"])
+        XCTAssertEqual(plan.runtimeFilter, ["Button", "test_card", "Unknown"])
     }
 
     func test_plan_runsTheTarget_whenNoPreviewsAreAskedFor() {
-        XCTAssertEqual(
-            RenderService.plan(for: RenderRequest(), catalog: catalog, testTarget: "AppTests"),
-            RenderService.Plan(onlyTesting: ["AppTests"], runtimeFilter: [])
-        )
+        XCTAssertEqual(RenderService.plan(for: RenderRequest(), catalog: catalog, testTarget: "AppTests").onlyTesting, ["AppTests"])
+    }
+
+    func test_plan_skipsTheProviderTestsOfOtherClasses() {
+        // Ungrouped, every generated class tests every provider.
+        let plan = RenderService.plan(for: RenderRequest(), catalog: catalog, testTarget: "AppTests")
+
+        XCTAssertEqual(plan.skipTesting, ["AppTests/LoginTests/test_card"])
+        XCTAssertTrue(service().xcodebuildArguments(onlyTesting: plan.onlyTesting, skipTesting: plan.skipTesting).contains("-skip-testing:AppTests/LoginTests/test_card"))
+    }
+
+    func test_plan_skipsNothing_whenSnapshotsAreGrouped() {
+        let grouped = catalog.filter { $0.testClass == "PreviewTests" }
+
+        XCTAssertEqual(RenderService.plan(for: RenderRequest(), catalog: grouped, testTarget: "AppTests").skipTesting, [])
     }
 
     func test_plan_filtersAtRuntime_withoutATestTarget() {
         XCTAssertEqual(
-            RenderService.plan(for: RenderRequest(previews: ["Button"]), catalog: catalog, testTarget: nil),
-            RenderService.Plan(onlyTesting: [], runtimeFilter: ["Button"])
+            RenderService.plan(for: RenderRequest(previews: ["Button", "Card_Previews"]), catalog: catalog, testTarget: nil),
+            RenderService.Plan(onlyTesting: [], runtimeFilter: ["Button", "test_card"])
         )
+    }
+
+    func test_xcodebuildArguments_endWithTheOnesConfigured() {
+        let service = RenderService(configuration: RenderConfiguration(
+            scheme: "App",
+            outputDirectory: directory,
+            xcodebuildArguments: ["-derivedDataPath", ".build/dd"]
+        ))
+
+        XCTAssertEqual(Array(service.xcodebuildArguments(onlyTesting: ["AppTests"]).suffix(3)), ["-only-testing:AppTests", "-derivedDataPath", ".build/dd"])
     }
 
     // MARK: - Records
@@ -195,11 +218,66 @@ final class RenderServiceTests: XCTestCase {
         XCTAssertThrowsError(try service.render(RenderRequest()))
     }
 
+    func test_render_keepsTheLastRender_whenTheBuildFails() throws {
+        try write(RenderRecord(runID: "earlier", name: "Button", image: "Button.png"), as: "Button")
+        try RenderManifest(runID: "earlier", destination: nil, previews: []).write(to: directory)
+        let service = RenderService(
+            configuration: RenderConfiguration(scheme: "App", outputDirectory: directory),
+            runner: FakeRunner { _, _ in 65 }
+        )
+
+        XCTAssertThrowsError(try service.render(RenderRequest()))
+
+        let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        XCTAssertTrue(files.contains("Button.json"))
+        XCTAssertTrue(files.contains("Button.png"))
+    }
+
+    func test_render_warnsAboutUnknownNamesAndDevicesOnTheMac() throws {
+        let runner = FakeRunner { _, environment in
+            let options = try JSONDecoder().decode(RenderOptions.self, from: Data(environment["TEST_RUNNER_PREFIRE_RENDER"]!.utf8))
+            let directory = URL(fileURLWithPath: options.directory)
+            try Data(options.runID.utf8).write(to: directory.appendingPathComponent(RenderOptions.runMarkerFileName))
+            try self.write(RenderRecord(runID: options.runID, name: "Button", image: "Button.png"), as: "Button", in: directory)
+            return 0
+        }
+        let service = RenderService(
+            configuration: RenderConfiguration(scheme: "App", destination: "platform=macOS", outputDirectory: directory),
+            runner: runner
+        )
+
+        let result = try service.render(RenderRequest(previews: ["Button", "Nope"], devices: ["iPad"]))
+
+        XCTAssertEqual(result.warnings.count, 2)
+        XCTAssertTrue(result.warnings[0].contains("'Nope'"))
+        XCTAssertFalse(result.warnings[0].contains("'Button'"))
+        XCTAssertTrue(result.warnings[1].contains("macOS"))
+    }
+
+    func test_lock_waitsForTheRenderBeforeIt() throws {
+        let first = try RenderLock(directory: directory)
+        let acquired = DispatchSemaphore(value: 0)
+        let directory = self.directory!
+        DispatchQueue.global().async {
+            let second = try? RenderLock(directory: directory)
+            acquired.signal()
+            second?.unlock()
+        }
+
+        XCTAssertEqual(acquired.wait(timeout: .now() + 0.3), .timedOut)
+        first.unlock()
+        XCTAssertEqual(acquired.wait(timeout: .now() + 5), .success)
+    }
+
     func test_render_rejectsUnknownAppearance() {
         let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory), runner: FakeRunner { _, _ in 0 })
 
         XCTAssertThrowsError(try service.render(RenderRequest(colorScheme: "sepia")))
         XCTAssertThrowsError(try service.render(RenderRequest(dynamicType: "huge")))
+    }
+
+    private func service() -> RenderService {
+        RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory))
     }
 
     private func write(_ record: RenderRecord, as baseName: String, in directory: URL? = nil) throws {

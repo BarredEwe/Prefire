@@ -139,6 +139,9 @@ class ConfigDecoderTests: XCTestCase {
               - sources:
                   - ${TARGET_DIR}/Views
                   - Sources
+              - xcodebuild_args:
+                  - -derivedDataPath
+                  - .build/dd
             """,
             env: env
         )
@@ -151,5 +154,6 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.render.testTarget, "PrefireExampleTests")
         XCTAssertEqual(config.render.outputDir, ".prefire/render")
         XCTAssertEqual(config.render.sources, ["/User/Tests/Views", "Sources"])
+        XCTAssertEqual(config.render.xcodebuildArgs, ["-derivedDataPath", ".build/dd"])
     }
 }

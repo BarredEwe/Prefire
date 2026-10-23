@@ -149,6 +149,8 @@ final class ConfigDecoder {
             config.render.outputDir = value
         case .sources:
             config.render.sources = getValues(from: components, lines: lines, env: env)
+        case .xcodebuildArgs:
+            config.render.xcodebuildArgs = getValues(from: components, lines: lines, env: env)
         }
     }
 

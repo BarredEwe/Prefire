@@ -100,11 +100,26 @@ public struct PrefireSnapshotSession {
     /// Rendering for `prefire render` runs on any simulator, so it only turns animations off.
     @MainActor
     public func prepareEnvironment() {
-        if render != nil {
+        if let render {
+            Self.announceRenderMode(render)
             PrefireSnapshotEnvironment().prepare()
         } else {
             environment.prepare()
         }
+    }
+
+    @MainActor private static var isRenderModeAnnounced = false
+
+    /// Says once that snapshots are not compared, so a `PREFIRE_RENDER` left set in a scheme or a shell
+    /// does not pass the tests unnoticed.
+    @MainActor
+    private static func announceRenderMode(_ render: PrefireRenderOptions) {
+        guard !isRenderModeAnnounced else { return }
+        isRenderModeAnnounced = true
+        print("""
+        ⚠️ Prefire render mode: \(PrefireRenderOptions.environmentKey) is set, so previews are written to \
+        \(render.directory) and NOT compared with their reference images. Unset it to run the snapshot tests.
+        """)
     }
 
     /// Snapshot of a `PreviewProvider` preview, on the device it names or on `device`.
@@ -139,8 +154,10 @@ public struct PrefireSnapshotSession {
             return [(nil, variant)]
         }
 
-        return deviceNames.map { deviceName in
+        return deviceNames.compactMap { deviceName in
             guard let device = DeviceConfig.named(deviceName) else {
+                // `failures(of:verify:)` reports the devices `prefire render` asked for by mistake.
+                guard renderDevices.isEmpty else { return nil }
                 fatalError("Unknown device name from configuration file: \(deviceName). Supported devices: \(DeviceConfig.supportedNames.joined(separator: ", "))")
             }
 
@@ -178,8 +195,8 @@ public struct PrefireSnapshotSession {
     ) -> [String] {
         if let render {
             PrefireRenderWriter.markRun(options: render)
-            guard render.includes(snapshot.name) else { return [] }
-            return namedVariants(of: snapshot).compactMap { device, variant in
+            guard render.includes(snapshot.name, testName: snapshot.testName) else { return [] }
+            return unknownRenderDevices(of: snapshot, options: render) + namedVariants(of: snapshot).compactMap { device, variant in
                 renderSnapshot(variant, device: device, options: render)
             }
         }
@@ -245,6 +262,31 @@ public struct PrefireSnapshotSession {
             capture.delay = 0
         }
         return capture
+        #endif
+    }
+
+    /// Records an error for each device `options` names that Prefire does not know, instead of
+    /// stopping the tests.
+    ///
+    /// - Returns: The errors.
+    @MainActor
+    private func unknownRenderDevices<Content: View>(of snapshot: PrefireSnapshot<Content>, options: PrefireRenderOptions) -> [String] {
+        #if os(iOS) || os(tvOS)
+        options.devices.filter { DeviceConfig.named($0) == nil }.map { deviceName in
+            let error = "Unknown device '\(deviceName)'. Supported devices: \(DeviceConfig.supportedNames.joined(separator: ", "))"
+            let record = PrefireRenderRecord(
+                runID: options.runID,
+                name: "\(snapshot.name)-\(deviceName)",
+                device: deviceName,
+                colorScheme: options.colorScheme,
+                dynamicType: options.dynamicType,
+                isScreen: snapshot.isScreen,
+                error: error
+            )
+            return PrefireRenderWriter.write(png: nil, record: record, options: options) ?? error
+        }
+        #else
+        []
         #endif
     }
 
