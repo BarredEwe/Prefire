@@ -137,7 +137,7 @@ without a user story come last. The page follows the light or dark appearance of
   for `xcodebuild`), which holds the options as JSON. The tests run as usual without it.
 - Images are rendered the way the snapshot tests render them. Previews that wait, with
   `.snapshot(delay:)`, `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)`, are rendered once they
-  settled. On macOS `SKView`, `SCNView` and `WKWebView` are drawn as images, as SnapshotTesting
+  settled. `SKView`, `SCNView` and `WKWebView` are drawn as images, as SnapshotTesting
   draws them.
 - Snapshots of a `PreviewProvider` marked `PrefireProvider` are named by its previews. With
   `test_target` set, asking for the provider type by name renders all its previews; without it, ask

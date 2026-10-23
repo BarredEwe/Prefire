@@ -285,7 +285,9 @@ public struct PrefireSnapshotSession {
                 if capture.delay > 0 {
                     RunLoop.main.run(until: Date(timeIntervalSinceNow: capture.delay))
                 }
+                let images = PrefireRenderedViews.drawAsImages(in: canvas.view)
                 image = canvas.capture()
+                images.forEach { $0.removeFromSuperview() }
             }
             png = image.pngData()
             record.width = Double(image.size.width)

@@ -5,15 +5,15 @@ import SwiftUI
 import UIKit
 #elseif os(macOS)
 import AppKit
-#if canImport(SceneKit)
+#endif
+#if canImport(SceneKit) && !os(watchOS)
 import SceneKit
 #endif
-#if canImport(SpriteKit)
+#if canImport(SpriteKit) && !os(watchOS)
 import SpriteKit
 #endif
-#if canImport(WebKit)
+#if canImport(WebKit) && (os(iOS) || os(macOS))
 import WebKit
-#endif
 #endif
 
 #if canImport(XCTest) && !os(watchOS)
@@ -303,7 +303,20 @@ func prefireRenderPNG(of view: NSView, size: CGSize?) -> Data? {
     return representation.representation(using: .png, properties: [:])
 }
 
-/// Views that draw with Metal or out of process, so `cacheDisplay` can't capture them.
+#endif
+
+// MARK: - Views drawn elsewhere
+
+#if os(iOS) || os(tvOS)
+typealias PrefireRenderedView = UIView
+typealias PrefireRenderedImage = UIImage
+#elseif os(macOS)
+typealias PrefireRenderedView = NSView
+typealias PrefireRenderedImage = NSImage
+#endif
+
+/// Views that draw with Metal or out of process, so `cacheDisplay` and `layer.render(in:)` leave
+/// them blank.
 ///
 /// Mirrors `addImagesForRenderedViews` of SnapshotTesting, so a render looks like the reference image
 /// of the preview.
@@ -314,19 +327,25 @@ enum PrefireRenderedViews {
 
     /// Puts an image of each such view in `view` above it.
     /// - Returns: The image views, to remove once `view` is captured.
-    static func drawAsImages(in view: NSView) -> [NSView] {
-        view.subviews.flatMap { subview -> [NSView] in
+    static func drawAsImages(in view: PrefireRenderedView) -> [PrefireRenderedView] {
+        view.subviews.flatMap { subview -> [PrefireRenderedView] in
             guard let image = image(of: subview) else { return drawAsImages(in: subview) }
 
+            #if os(iOS) || os(tvOS)
+            let imageView = UIImageView(image: image)
+            imageView.frame = subview.frame
+            subview.superview?.insertSubview(imageView, aboveSubview: subview)
+            #elseif os(macOS)
             let imageView = NSImageView()
             imageView.image = image
             imageView.frame = subview.frame
             subview.superview?.addSubview(imageView, positioned: .above, relativeTo: subview)
+            #endif
             return [imageView]
         }
     }
 
-    private static func image(of view: NSView) -> NSImage? {
+    private static func image(of view: PrefireRenderedView) -> PrefireRenderedImage? {
         #if canImport(SceneKit)
         if let sceneView = view as? SCNView {
             return inWindow(view) { sceneView.snapshot() }
@@ -336,10 +355,14 @@ enum PrefireRenderedViews {
         if let spriteView = view as? SKView {
             guard let scene = spriteView.scene,
                   let image = inWindow(view, { spriteView.texture(from: scene)?.cgImage() }) else { return nil }
+            #if os(iOS) || os(tvOS)
+            return UIImage(cgImage: image)
+            #elseif os(macOS)
             return NSImage(cgImage: image, size: spriteView.bounds.size)
+            #endif
         }
         #endif
-        #if canImport(WebKit)
+        #if canImport(WebKit) && (os(iOS) || os(macOS))
         if let webView = view as? WKWebView {
             return image(of: webView)
         }
@@ -347,15 +370,15 @@ enum PrefireRenderedViews {
         return nil
     }
 
-    #if canImport(WebKit)
-    private static func image(of webView: WKWebView) -> NSImage? {
+    #if canImport(WebKit) && (os(iOS) || os(macOS))
+    private static func image(of webView: WKWebView) -> PrefireRenderedImage? {
         let deadline = Date(timeIntervalSinceNow: webViewTimeout)
         while webView.isLoading, Date() < deadline {
             RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
         }
-        guard webView.frame.width > 0, webView.frame.height > 0 else { return NSImage() }
+        guard webView.frame.width > 0, webView.frame.height > 0 else { return PrefireRenderedImage() }
 
-        var image: NSImage?
+        var image: PrefireRenderedImage?
         var isDone = false
         inWindow(webView) {
             let configuration = WKSnapshotConfiguration()
@@ -372,6 +395,12 @@ enum PrefireRenderedViews {
     }
     #endif
 
+    #if os(iOS) || os(tvOS)
+    /// SnapshotTesting takes these images where the view is on iOS and tvOS.
+    private static func inWindow<T>(_ view: UIView, _ perform: () -> T) -> T {
+        perform()
+    }
+    #elseif os(macOS)
     /// Runs `perform` with `view` in a window of its own, as SnapshotTesting does, then puts it back.
     private static func inWindow<T>(_ view: NSView, _ perform: () -> T) -> T {
         let superview = view.superview
@@ -388,6 +417,6 @@ enum PrefireRenderedViews {
     private final class ScaledWindow: NSWindow {
         override var backingScaleFactor: CGFloat { 2 }
     }
+    #endif
 }
-#endif
 #endif
