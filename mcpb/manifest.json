@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/dist/mcpb-manifest.schema.json",
+  "manifest_version": "0.3",
+  "name": "prefire",
+  "display_name": "Prefire",
+  "version": "0.0.0",
+  "description": "Render SwiftUI #Preview as PNG images, so an AI agent sees the views it changes",
+  "long_description": "Prefire renders the SwiftUI previews of an iOS or macOS project through its generated snapshot tests, on the devices, color schemes and text sizes asked for, and returns the images. Needs Xcode and a project set up for `prefire render`: see https://github.com/BarredEwe/Prefire/blob/main/Documentation/AI.md",
+  "author": {
+    "name": "Maksim Grishutin",
+    "url": "https://github.com/BarredEwe"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BarredEwe/Prefire"
+  },
+  "homepage": "https://github.com/BarredEwe/Prefire",
+  "documentation": "https://github.com/BarredEwe/Prefire/blob/main/Documentation/AI.md",
+  "support": "https://github.com/BarredEwe/Prefire/issues",
+  "server": {
+    "type": "binary",
+    "entry_point": "server/prefire",
+    "mcp_config": {
+      "command": "${__dirname}/server/prefire",
+      "args": ["mcp", "--config", "${user_config.config}"],
+      "env": {}
+    }
+  },
+  "user_config": {
+    "config": {
+      "type": "file",
+      "title": "Prefire config",
+      "description": "The .prefire.yml of the project, with its render_configuration. Paths in it are read relative to its folder.",
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "list_previews",
+      "description": "List the previews of the project, with the file and line each is declared on"
+    },
+    {
+      "name": "render_previews",
+      "description": "Build the project and render previews as PNG images, on the devices, color scheme and text size asked for"
+    },
+    {
+      "name": "build_board",
+      "description": "Lay the last render out as an HTML board, grouped by user story"
+    }
+  ],
+  "keywords": ["swiftui", "preview", "xcode", "ios", "snapshot", "render"],
+  "license": "Apache-2.0",
+  "compatibility": {
+    "platforms": ["darwin"]
+  }
+}

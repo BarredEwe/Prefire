@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.BarredEwe/prefire",
+  "title": "Prefire",
+  "description": "Render SwiftUI #Preview as PNG images, so an AI agent sees the views it changes",
+  "websiteUrl": "https://github.com/BarredEwe/Prefire/blob/main/Documentation/AI.md",
+  "repository": {
+    "url": "https://github.com/BarredEwe/Prefire",
+    "source": "github",
+    "id": "529987661"
+  },
+  "version": "6.4.0",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/BarredEwe/Prefire/releases/download/6.4.0/prefire-mcp-6.4.0.mcpb",
+      "version": "6.4.0",
+      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
