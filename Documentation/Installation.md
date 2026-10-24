@@ -3,7 +3,8 @@
 Supports:
 - ✅ SPM Plugin (`Package.swift`)
 - ✅ Xcode Build Tool Plugin
-- ✅ CLI (`brew install prefire`)
+- ✅ CLI (`brew install barredewe/prefire/prefire`)
+- ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
 - ✅ GitHub Actions / CI
 
 
@@ -21,7 +22,7 @@ You can integrate Prefire as an Xcode Build Tool Plug-in if you're working on a 
 
 > 💡 If your project doesn't have a test target yet, create one via "File → New → Target → Unit Testing Bundle".
 
-3. Select the target to which you want to add linting and open the `Build Phases` inspector.
+3. Select the test target and open the `Build Phases` inspector.
 
 4. Locate `Run Build Tool Plug-ins` and click the `+` button. Select `PrefireTestsPlugin` from the list.
 
@@ -41,7 +42,7 @@ You can integrate Prefire as a Swift Package Manager Plug-in if you're working w
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/BarredEwe/Prefire", from: "4.0.0")
+    .package(url: "https://github.com/BarredEwe/Prefire", from: "6.3.0")
 ]
 ```
 

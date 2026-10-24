@@ -2,7 +2,7 @@
 
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
-<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS-green.svg"/></a>
+<a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20tvOS-green.svg"/></a>
 <a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
 <a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
 <img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
@@ -48,7 +48,7 @@
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "5.4.0")
+    .package(url: "https://github.com/BarredEwe/Prefire.git", from: "6.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
 ],
 .testTarget(
@@ -87,7 +87,7 @@ Supports:
 
 - ✅ SPM Plugin (`Package.swift`)
 - ✅ Xcode Build Tool Plugin
-- ✅ CLI (`brew install prefire`)
+- ✅ CLI (`brew install barredewe/prefire/prefire`)
 - ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
 - ✅ GitHub Actions / CI
 
@@ -181,8 +181,20 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 
 ---
 
-## API
-**Prefire** provide new commands for previews:
+## 🧰 API
+
+| Feature | Modifier |
+|--------|----------|
+| Include in snapshot | `.prefireEnabled()` |
+| Exclude from snapshot | `.prefireIgnored()` |
+| Group in a flow | `.previewUserStory(.auth)` |
+| Mark a UI state | `.previewState(.error)` |
+| Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
+| Wait until the preview settles | `.snapshot(waitForIdle: true, timeout: 2.0)` |
+| Wait for a condition | `.snapshot(waitUntil: { viewModel.isLoaded })` |
+| Parameterized preview | `#Preview(..., arguments: values)` |
+
+**Prefire** provides new commands for previews:
 
 - You can set the delay, precision and perceptualPrecision parameters for the snapshot:
 
@@ -313,21 +325,6 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
     ```
 
     Prefire expands each argument into its own snapshot and Playbook preview.
-
----
-
-## 🧰 API Summary
-
-| Feature | Modifier |
-|--------|----------|
-| Include in snapshot | `.prefireEnabled()` |
-| Exclude from snapshot | `.prefireIgnored()` |
-| Group in a flow | `.previewUserStory(.auth)` |
-| Mark a UI state | `.previewState(.error)` |
-| Customize snapshot | `.snapshot(delay: 0.3, precision: 0.95)` |
-| Wait until the preview settles | `.snapshot(waitForIdle: true, timeout: 2.0)` |
-| Wait for a condition | `.snapshot(waitUntil: { viewModel.isLoaded })` |
-| Parameterized preview | `#Preview(..., arguments: values)` |
 
 ---
 
