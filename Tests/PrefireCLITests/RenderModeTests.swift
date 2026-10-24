@@ -6,16 +6,12 @@ import XCTest
 
 @MainActor
 final class RenderModeTests: XCTestCase {
-    private var directory: URL!
+    // XCTest makes an instance for each test. Overriding the async `setUp` of a `@MainActor` case does
+    // not compile with Swift 6.0, so the directory is made with the instance.
+    private let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PrefireRender-\(UUID().uuidString)")
 
-    override func setUp() async throws {
-        try await super.setUp()
-        directory = FileManager.default.temporaryDirectory.appendingPathComponent("PrefireRender-\(UUID().uuidString)")
-    }
-
-    override func tearDown() async throws {
+    deinit {
         try? FileManager.default.removeItem(at: directory)
-        try await super.tearDown()
     }
 
     func testOptionsAreReadFromTheEnvironment() throws {
