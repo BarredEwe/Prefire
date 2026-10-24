@@ -1,0 +1,24 @@
+{
+  "name": "prefire",
+  "owner": {
+    "name": "BarredEwe",
+    "url": "https://github.com/BarredEwe"
+  },
+  "description": "Prefire for Claude Code: render SwiftUI previews to images an agent can see.",
+  "plugins": [
+    {
+      "name": "prefire",
+      "source": "./claude-code-plugin",
+      "description": "Lets Claude see SwiftUI: renders #Preview blocks to PNG on any iPhone or iPad, light or dark, through the Prefire MCP server, without Xcode Previews.",
+      "category": "development",
+      "tags": [
+        "swiftui",
+        "ios",
+        "xcode",
+        "previews",
+        "snapshot-testing",
+        "mcp"
+      ]
+    }
+  ]
+}

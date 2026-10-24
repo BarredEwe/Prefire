@@ -1,0 +1,33 @@
+{
+  "name": "prefire",
+  "version": "1.0.0",
+  "description": "Lets Claude see SwiftUI: renders #Preview blocks to PNG on any iPhone or iPad, light or dark, through the Prefire MCP server, without Xcode Previews.",
+  "author": {
+    "name": "BarredEwe",
+    "url": "https://github.com/BarredEwe"
+  },
+  "homepage": "https://github.com/BarredEwe/Prefire/blob/main/Documentation/AI.md",
+  "repository": "https://github.com/BarredEwe/Prefire",
+  "license": "Apache-2.0",
+  "keywords": [
+    "swiftui",
+    "ios",
+    "macos",
+    "xcode",
+    "previews",
+    "snapshot-testing",
+    "mcp"
+  ],
+  "mcpServers": {
+    "prefire": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "cd \"$PREFIRE_PROJECT_DIR\" && exec prefire mcp"
+      ],
+      "env": {
+        "PREFIRE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}

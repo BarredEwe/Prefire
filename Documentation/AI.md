@@ -88,14 +88,19 @@ prefire render --list
 
 ### `prefire mcp`
 
-Runs an MCP server over standard input and output. Add it to Claude Code from the folder with
+Runs an MCP server over standard input and output. Add it to your agent from the folder with
 `.prefire.yml`:
 
-```bash
-claude mcp add prefire -- prefire mcp
-```
+| Agent       | Install |
+| ----------- | ------- |
+| Claude Code | `claude mcp add prefire -- prefire mcp` |
+| Claude Code, with a skill that tells Claude when and how to render | `/plugin marketplace add BarredEwe/Prefire`, then `/plugin install prefire@prefire` |
+| Cursor      | [Add to Cursor](https://cursor.com/en/install-mcp?name=prefire&config=eyJjb21tYW5kIjoicHJlZmlyZSIsImFyZ3MiOlsibWNwIl19) |
+| Codex       | `codex mcp add prefire -- prefire mcp` |
+| VS Code     | `code --add-mcp '{"name":"prefire","command":"prefire","args":["mcp"]}'` |
 
-or to any MCP client:
+A client that does not start servers in the project folder needs `--config` with the path of
+`.prefire.yml`, or any other MCP client:
 
 ```json
 {
@@ -114,6 +119,9 @@ or to any MCP client:
 A render builds the project, so it takes as long as a test run. Raise the tool timeout of your
 client if it gives up sooner (Claude Code: `MCP_TOOL_TIMEOUT`, in milliseconds). Ask for the
 previews you need rather than all of them: with `test_target` set, only their tests run.
+
+The Claude Code plugin adds the `swiftui-preview` skill: Claude lists the previews, renders the ones
+it changed on a few devices and in dark mode, and reads the errors, before it calls a UI change done.
 
 ### `prefire board`
 
