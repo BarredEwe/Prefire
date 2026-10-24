@@ -72,6 +72,10 @@ public struct PrefireSnapshotSession {
     /// Canvas of previews that do not name a device.
     public var device: DeviceConfig
 
+    /// Renders the previews into a directory instead of comparing them, when `prefire render` asks
+    /// for it. Read from the `PREFIRE_RENDER` environment variable by default.
+    public var render: PrefireRenderOptions?
+
     public init(
         simulatorDevice: String? = nil,
         osVersion: Int? = nil,
@@ -79,7 +83,8 @@ public struct PrefireSnapshotSession {
         drawHierarchyInKeyWindow: Bool = false,
         fullPage: Bool = false,
         waitDefaults: SnapshotWaitDefaults = .init(),
-        device: DeviceConfig = .defaultSnapshotDevice
+        device: DeviceConfig = .defaultSnapshotDevice,
+        render: PrefireRenderOptions? = .fromEnvironment()
     ) {
         environment = PrefireSnapshotEnvironment(simulatorDevice: simulatorDevice, osVersion: osVersion)
         self.devices = devices
@@ -87,12 +92,34 @@ public struct PrefireSnapshotSession {
         self.fullPage = fullPage
         self.waitDefaults = waitDefaults
         self.device = device
+        self.render = render
     }
 
     /// Prepares `environment` for the tests. Call it from `setUp`.
+    ///
+    /// Rendering for `prefire render` runs on any simulator, so it only turns animations off.
     @MainActor
     public func prepareEnvironment() {
-        environment.prepare()
+        if let render {
+            Self.announceRenderMode(render)
+            PrefireSnapshotEnvironment().prepare()
+        } else {
+            environment.prepare()
+        }
+    }
+
+    @MainActor private static var isRenderModeAnnounced = false
+
+    /// Says once that snapshots are not compared, so a `PREFIRE_RENDER` left set in a scheme or a shell
+    /// does not pass the tests unnoticed.
+    @MainActor
+    private static func announceRenderMode(_ render: PrefireRenderOptions) {
+        guard !isRenderModeAnnounced else { return }
+        isRenderModeAnnounced = true
+        print("""
+        ⚠️ Prefire render mode: \(PrefireRenderOptions.environmentKey) is set, so previews are written to \
+        \(render.directory) and NOT compared with their reference images. Unset it to run the snapshot tests.
+        """)
     }
 
     /// Snapshot of a `PreviewProvider` preview, on the device it names or on `device`.
@@ -105,25 +132,56 @@ public struct PrefireSnapshotSession {
     /// there are none.
     @MainActor
     public func variants<Content: View>(of snapshot: PrefireSnapshot<Content>) -> [PrefireSnapshot<Content>] {
-        #if os(iOS) || os(tvOS)
-        guard !devices.isEmpty else { return [snapshot] }
+        namedVariants(of: snapshot).map(\.snapshot)
+    }
 
-        return devices.map { deviceName in
+    /// `variants(of:)`, with the name of the device each one is on.
+    ///
+    /// The devices `render` asks for are rendered as they are, with their safe area and display
+    /// scale, since nothing is compared with references recorded elsewhere.
+    @MainActor
+    private func namedVariants<Content: View>(of snapshot: PrefireSnapshot<Content>) -> [(device: String?, snapshot: PrefireSnapshot<Content>)] {
+        #if os(iOS) || os(tvOS)
+        // A component keeps its canvas: the devices `prefire render` asks for are those of screens.
+        let renderDevices = snapshot.isScreen ? render?.devices ?? [] : []
+        let deviceNames = renderDevices.isEmpty ? devices : renderDevices
+        let renderTraits = render?.traits
+
+        guard !deviceNames.isEmpty else {
+            var variant = snapshot
+            if let renderTraits {
+                variant.traits = UITraitCollection(traitsFrom: [variant.traits, renderTraits])
+            }
+            return [(nil, variant)]
+        }
+
+        return deviceNames.compactMap { deviceName in
             guard let device = DeviceConfig.named(deviceName) else {
+                // `failures(of:verify:)` reports the devices `prefire render` asked for by mistake.
+                guard renderDevices.isEmpty else { return nil }
                 fatalError("Unknown device name from configuration file: \(deviceName). Supported devices: \(DeviceConfig.supportedNames.joined(separator: ", "))")
             }
 
             var variant = snapshot
             variant.name = "\(snapshot.name)-\(deviceName)"
             variant.device = device
-            // Ignore specific device safe area
-            variant.device.safeArea = .zero
-            // Ignore specific device display scale
-            variant.traits = UITraitCollection(displayScale: 2.0)
-            return variant
+            if renderDevices.isEmpty {
+                // Ignore specific device safe area
+                variant.device.safeArea = .zero
+                // Ignore specific device display scale
+                variant.traits = UITraitCollection(displayScale: 2.0)
+            }
+            if let renderTraits {
+                variant.traits = UITraitCollection(traitsFrom: [variant.traits, renderTraits])
+            }
+            return (deviceName, variant)
         }
         #else
-        return [snapshot]
+        var variant = snapshot
+        #if os(macOS)
+        variant.renderOptions = render
+        #endif
+        return [(nil, variant)]
         #endif
     }
 
@@ -136,7 +194,15 @@ public struct PrefireSnapshotSession {
         of snapshot: PrefireSnapshot<Content>,
         verify: (PrefireSnapshotCapture) -> String?
     ) -> [String] {
-        variants(of: snapshot).compactMap { variant -> String? in
+        if let render {
+            PrefireRenderWriter.markRun(options: render)
+            guard render.includes(snapshot.name, testName: snapshot.testName) else { return [] }
+            return unknownRenderDevices(of: snapshot, options: render) + namedVariants(of: snapshot).compactMap { device, variant in
+                renderSnapshot(variant, device: device, options: render)
+            }
+        }
+
+        return variants(of: snapshot).compactMap { variant -> String? in
             do throws(SnapshotWaitTimeout) {
                 return verify(try capture(variant))
             } catch {
@@ -199,6 +265,103 @@ public struct PrefireSnapshotSession {
         return capture
         #endif
     }
+
+    /// Records an error for each device `options` names that Prefire does not know, instead of
+    /// stopping the tests.
+    ///
+    /// - Returns: The errors.
+    @MainActor
+    private func unknownRenderDevices<Content: View>(of snapshot: PrefireSnapshot<Content>, options: PrefireRenderOptions) -> [String] {
+        #if os(iOS) || os(tvOS)
+        guard snapshot.isScreen else { return [] }
+        return options.devices.filter { DeviceConfig.named($0) == nil }.map { deviceName in
+            let error = "Unknown device '\(deviceName)'. Supported devices: \(DeviceConfig.supportedNames.joined(separator: ", "))"
+            let record = PrefireRenderRecord(
+                runID: options.runID,
+                name: "\(snapshot.name)-\(deviceName)",
+                device: deviceName,
+                colorScheme: options.colorScheme,
+                dynamicType: options.dynamicType,
+                isScreen: snapshot.isScreen,
+                error: error
+            )
+            return PrefireRenderWriter.write(png: nil, record: record, options: options) ?? error
+        }
+        #else
+        []
+        #endif
+    }
+
+    /// Renders `snapshot` into `options.directory`, next to a record of it.
+    ///
+    /// - Returns: Why it could not be rendered, or `nil`.
+    @MainActor
+    private func renderSnapshot<Content: View>(_ snapshot: PrefireSnapshot<Content>, device: String?, options: PrefireRenderOptions) -> String? {
+        var record = PrefireRenderRecord(
+            runID: options.runID,
+            name: snapshot.name,
+            device: device,
+            colorScheme: options.colorScheme,
+            dynamicType: options.dynamicType,
+            isScreen: snapshot.isScreen
+        )
+        var png: Data?
+
+        do throws(SnapshotWaitTimeout) {
+            let capture = try capture(snapshot)
+            record.userStory = capture.userStory
+            record.state = capture.state
+
+            #if os(iOS) || os(tvOS)
+            let image: UIImage
+            switch capture.comparison {
+            case let .image(captured):
+                image = captured
+            case let .view(layout):
+                let canvas = SnapshotCanvas(
+                    view: capture.view,
+                    isScreen: layout != nil,
+                    device: layout ?? snapshot.device,
+                    traits: capture.traits,
+                    drawHierarchyInKeyWindow: drawHierarchyInKeyWindow
+                )
+                defer { canvas.dispose() }
+                if capture.delay > 0 {
+                    RunLoop.main.run(until: Date(timeIntervalSinceNow: capture.delay))
+                }
+                let images = PrefireRenderedViews.drawAsImages(in: canvas.view)
+                image = canvas.capture()
+                images.forEach { $0.removeFromSuperview() }
+            }
+            png = image.pngData()
+            record.width = Double(image.size.width)
+            record.height = Double(image.size.height)
+            record.scale = Double(image.scale)
+            #elseif os(macOS)
+            if capture.delay > 0 {
+                RunLoop.main.run(until: Date(timeIntervalSinceNow: capture.delay))
+            }
+            let size: CGSize?
+            switch capture.comparison {
+            case let .view(comparedSize):
+                size = comparedSize
+            }
+            png = prefireRenderPNG(of: capture.view, size: size)
+            let renderedSize = size ?? capture.view.bounds.size
+            record.width = Double(renderedSize.width)
+            record.height = Double(renderedSize.height)
+            record.scale = Double(snapshot.device.scale)
+            #endif
+
+            if png == nil {
+                record.error = "Prefire could not render \(snapshot.name): the preview has no size."
+            }
+        } catch {
+            record.error = error.message
+        }
+
+        return PrefireRenderWriter.write(png: png, record: record, options: options) ?? record.error
+    }
 }
 
 /// A rendered preview, and how SnapshotTesting compares it.
@@ -235,6 +398,12 @@ public struct PrefireSnapshotCapture {
     /// Time to let `view` settle before snapshotting it.
     public internal(set) var delay: TimeInterval
 
+    /// `previewUserStory(_:)` of the preview.
+    public let userStory: PreviewModel.UserStory?
+
+    /// `previewState(_:)` of the preview.
+    public let state: PreviewModel.State?
+
     #if os(iOS) || os(tvOS)
     public internal(set) var traits = UITraitCollection()
 
@@ -250,6 +419,8 @@ public struct PrefireSnapshotCapture {
         perceptualPrecision = preferences.perceptualPrecision
         record = preferences.record
         delay = preferences.delay
+        userStory = preferences.userStory
+        state = preferences.state
     }
 
     #if os(iOS) || os(tvOS)

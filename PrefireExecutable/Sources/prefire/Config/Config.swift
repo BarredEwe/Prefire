@@ -4,10 +4,12 @@ import PrefireCore
 struct Config {
     var tests = TestsConfig()
     var playbook = PlaybookConfig()
+    var render = RenderConfig()
 
     enum CodingKeys: String, CodingKey {
         case tests = "test_configuration"
         case playbook = "playbook_configuration"
+        case render = "render_configuration"
     }
 }
 
@@ -64,6 +66,29 @@ struct PlaybookConfig {
         case previewDefaultEnabled = "preview_default_enabled"
         case imports = "imports"
         case testableImports = "testable_imports"
+    }
+}
+
+/// How `prefire render`, `prefire board` and `prefire mcp` build and run the snapshot tests.
+struct RenderConfig {
+    var scheme: String?
+    var workspace: String?
+    var project: String?
+    var destination: String?
+    var testTarget: String?
+    var outputDir: String?
+    var sources: [String]?
+    var xcodebuildArgs: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case scheme = "scheme"
+        case workspace = "workspace"
+        case project = "project"
+        case destination = "destination"
+        case testTarget = "test_target"
+        case outputDir = "output_dir"
+        case sources = "sources"
+        case xcodebuildArgs = "xcodebuild_args"
     }
 }
 

@@ -194,6 +194,12 @@ public class PreferenceKeys: @unchecked Sendable {
     /// What the preview asked to wait for.
     var wait: SnapshotWait?
 
+    /// `previewUserStory(_:)` of the preview.
+    public internal(set) var userStory: PreviewModel.UserStory?
+
+    /// `previewState(_:)` of the preview.
+    public internal(set) var state: PreviewModel.State?
+
     public init(delay: TimeInterval = 0, precision: Float = 1, perceptualPrecision: Float = 1, record: Bool = false) {
         self.delay = delay
         self.precision = precision

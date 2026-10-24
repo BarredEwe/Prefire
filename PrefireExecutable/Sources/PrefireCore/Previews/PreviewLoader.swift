@@ -24,12 +24,22 @@ enum PreviewLoader {
     }
 
     static func previewModels(from content: String, filename: String, defaultEnabled: Bool) -> [String: RawPreviewModel]? {
+        guard let previews = locatedPreviewModels(from: content, filename: filename, defaultEnabled: defaultEnabled) else { return nil }
+
+        return Dictionary(previews.map { ($0.key, $0.model) }, uniquingKeysWith: { current, _ in current })
+    }
+
+    /// Models of the previews in `content`, in source order, with their keys and the line each starts on.
+    static func locatedPreviewModels(
+        from content: String,
+        filename: String,
+        defaultEnabled: Bool
+    ) -> [(key: String, model: RawPreviewModel, line: Int)]? {
         guard let previews = rawPreviews(from: content, defaultEnabled: defaultEnabled) else { return nil }
 
-        var models: [String: RawPreviewModel] = [:]
-        for (index, preview) in previews.enumerated() {
+        return previews.enumerated().map { index, preview in
             let key = "\(filename)_\(index)"
-            models[key] = RawPreviewModel(
+            let model = RawPreviewModel(
                 displayName: preview.parser.displayName ?? key,
                 traits: preview.parser.traits ?? [Constants.defaultTrait],
                 fixedLayoutSize: preview.parser.fixedLayoutSize,
@@ -38,9 +48,8 @@ enum PreviewLoader {
                 arguments: preview.parser.arguments,
                 argumentPattern: preview.parser.argumentPattern
             )
+            return (key, model, preview.line)
         }
-
-        return models.isEmpty ? nil : models
     }
 }
 
@@ -48,6 +57,8 @@ private extension PreviewLoader {
     struct RawPreview {
         let body: String
         let parser: PreviewParser
+        /// Line the `#Preview` starts on, counted from 1.
+        let line: Int
     }
 
     static func rawPreviews(from content: String, defaultEnabled: Bool) -> [RawPreview]? {
@@ -74,7 +85,8 @@ private extension PreviewLoader {
             }
 
             if viewMustBeLoaded {
-                previews.append(RawPreview(body: body, parser: preview.parser))
+                let line = sourceBytes[..<preview.startOffset].reduce(1) { $1 == UInt8(ascii: "\n") ? $0 + 1 : $0 }
+                previews.append(RawPreview(body: body, parser: preview.parser, line: line))
             }
         }
 

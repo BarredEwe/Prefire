@@ -141,8 +141,15 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
     public var isScreen: Bool
     public var device: DeviceConfig
 
+    /// Test a preview of a `PreviewProvider` is snapshotted in, like `test_card`. `prefire render`
+    /// asks for a provider by it.
+    public internal(set) var testName: String?
+
     #if os(iOS) || os(tvOS)
     public var traits: UITraitCollection = .init()
+    #elseif os(macOS)
+    /// Appearance `prefire render` asked for. On iOS/tvOS it is put into `traits` instead.
+    var renderOptions: PrefireRenderOptions?
     #endif
 
     private var content: AnyView {
@@ -157,17 +164,23 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
             )
         }
         #else
-        if let size = device.size {
+        let sized = if let size = device.size {
             AnyView(previewContent.frame(width: size.width, height: size.height))
         } else {
             AnyView(previewContent)
         }
+        #if os(macOS)
+        return renderOptions?.applyingAppearance(to: sized) ?? sized
+        #else
+        return sized
+        #endif
         #endif
     }
 
     public init(_ preview: _Preview, testName: String = #function, device: DeviceConfig) where Content == AnyView {
         previewContent = preview.content
         name = preview.displayName ?? testName
+        self.testName = testName.hasSuffix("()") ? String(testName.dropLast(2)) : testName
         isScreen = preview.layout == .device
         self.device = Self.resolvedDevice(device, layout: preview.layout)
     }
@@ -325,6 +338,12 @@ private func isRenderableSize(_ size: CGSize) -> Bool {
                 }
                 .onPreferenceChange(WaitPreferenceKey.self) {
                     preferences.wait = $0
+                }
+                .onPreferenceChange(UserStoryPreferenceKey.self) {
+                    preferences.userStory = $0
+                }
+                .onPreferenceChange(StatePreferenceKey.self) {
+                    preferences.state = $0
                 }
         )
     }
