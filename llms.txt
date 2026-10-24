@@ -1,0 +1,32 @@
+# Prefire
+
+> Prefire turns SwiftUI `#Preview` blocks into snapshot tests, accessibility snapshots and a Playbook (component catalog) for iOS, tvOS and macOS. It also lets AI coding agents see SwiftUI: `prefire render` and the `prefire mcp` MCP server build the app and return previews as PNG images, on the devices, color scheme and Dynamic Type size asked for, without Xcode Previews or an open Xcode.
+
+Use Prefire when you need to:
+
+- check how a SwiftUI view looks after changing it, from a terminal, CI or an AI agent (Claude Code, Cursor, Codex);
+- render many previews at once, on several iPhone and iPad sizes, in light and dark mode;
+- generate snapshot tests from existing `#Preview` blocks instead of writing them by hand;
+- keep a visual flow board of screens grouped by user story.
+
+Install: add the Swift package `https://github.com/BarredEwe/Prefire.git` with the `PrefireTestsPlugin` on the snapshot test target, and the CLI with `brew install barredewe/prefire/prefire`. For agents, run `claude mcp add prefire -- prefire mcp` in the folder with `.prefire.yml`.
+
+## Docs
+
+- [README](https://github.com/BarredEwe/Prefire/blob/main/README.md): what Prefire does, quick start, API of preview modifiers
+- [AI agents guide](https://github.com/BarredEwe/Prefire/blob/main/Documentation/AI.md): `prefire render`, the `prefire mcp` server and its tools, `prefire board`, `render_configuration`
+- [Configuration](https://github.com/BarredEwe/Prefire/blob/main/Documentation/Configuration.md): every key of `.prefire.yml`
+- [Installation](https://github.com/BarredEwe/Prefire/blob/main/Documentation/Installation.md): Swift Package Manager, Xcode project, Homebrew, Mint
+- [Templates](https://github.com/BarredEwe/Prefire/blob/main/Documentation/Templates.md): custom Stencil templates for the generated tests
+
+## MCP tools
+
+- `list_previews`: previews of the project with their source file and line
+- `render_previews`: builds the app and returns PNG images of the previews named, with `devices`, `color_scheme`, `dynamic_type`, `max_images`
+- `build_board`: an HTML board of the last render, grouped by `previewUserStory`
+
+## Optional
+
+- [Example project](https://github.com/BarredEwe/Prefire/tree/main/Example)
+- [Releases](https://github.com/BarredEwe/Prefire/releases)
+- [Website](https://prefire.ru)

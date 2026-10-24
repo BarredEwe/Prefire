@@ -15,6 +15,9 @@
 - ✅ Playbook views
 - ✅ Visual flows with states and user stories
 - ✅ Living documentation — fully automated
+- ✅ Images an AI agent can see: an [MCP server](#-let-ai-agents-see-swiftui) renders your previews for Claude Code, Cursor and Codex
+
+> 🤖 **Using an AI agent?** `brew install barredewe/prefire/prefire`, then `claude mcp add prefire -- prefire mcp` in your project. The agent renders SwiftUI previews on any iPhone or iPad, light or dark, without Xcode Previews. [Setup →](Documentation/AI.md)
 
 ## 🚀 Key Features
 
@@ -352,14 +355,23 @@ show them to an AI agent as images, which Xcode Previews can't do reliably outsi
 # Render previews to PNG + JSON
 prefire render "Sign in" --device "iPhone 16 Pro" --color-scheme dark
 
-# Let Claude Code render previews itself
-claude mcp add prefire -- prefire mcp
-
 # An HTML board of the last render, grouped by user story
 prefire board
 ```
 
-Set the scheme to build in `render_configuration` of `.prefire.yml`. See the [AI guide](Documentation/AI.md).
+Add the MCP server to your agent, from the folder with `.prefire.yml`:
+
+| Agent | Install |
+| --- | --- |
+| Claude Code | `claude mcp add prefire -- prefire mcp`, or the plugin with a skill: `/plugin marketplace add BarredEwe/Prefire` then `/plugin install prefire@prefire` |
+| Cursor | [![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=prefire&config=eyJjb21tYW5kIjoicHJlZmlyZSIsImFyZ3MiOlsibWNwIl19) |
+| Codex | `codex mcp add prefire -- prefire mcp` |
+| VS Code | `code --add-mcp '{"name":"prefire","command":"prefire","args":["mcp"]}'` |
+
+An agent then calls `list_previews`, `render_previews` and `build_board`. Set the scheme to build in
+`render_configuration` of `.prefire.yml`; see the [AI guide](Documentation/AI.md). Why not Xcode's own
+`RenderPreview`? Prefire needs no running Xcode, renders many previews in one build, on the devices,
+color scheme and Dynamic Type you ask for, and works in CI.
 
 ---
 ## 🗂 Configuration: `.prefire.yml`
