@@ -4,8 +4,10 @@ import SwiftUI
 #if os(iOS)
 
 extension CGFloat {
-    static let scale: CGFloat = 0.55
+    static let scale: CGFloat = 0.46
     static let infoViewHeight: CGFloat = 42
+    static let cardCornerRadius: CGFloat = 20
+    static let horizontalInset: CGFloat = 20
     @MainActor static let screenHeight = UIScreen.main.bounds.height
     @MainActor static let screenWidth = UIScreen.main.bounds.width
 }
@@ -31,8 +33,13 @@ public struct PlaybookView: View {
         _sectionNames = State(initialValue: previewModels.compactMap { $0.name }.uniqued())
     }
 
+    private var visibleSectionNames: [String] {
+        guard !searchText.isEmpty else { return sectionNames }
+        return sectionNames.filter { $0.lowercased().contains(searchText.lowercased()) }
+    }
+
     public var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             NavigationLink(
                 isActive: $navigationLinkTriggered,
                 destination: { selectedView },
@@ -40,24 +47,25 @@ public struct PlaybookView: View {
             )
 
             ScrollView {
-                VStack {
-                    ForEach(sectionNames, id: \.self) { name in
-                        if searchText.isEmpty || name.lowercased().contains(searchText.lowercased()) {
-                            VStack(alignment: .leading) {
-                                Text(isComponent ? name : "📙 \(name.capitalized)")
-                                    .font(.title.bold())
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, -8)
+                // Not lazy: user stories are collected from the preferences of rendered previews
+                VStack(alignment: .leading, spacing: 28) {
+                    ForEach(visibleSectionNames, id: \.self) { name in
+                        VStack(alignment: .leading, spacing: 4) {
+                            SectionHeader(
+                                title: isComponent ? name : name.capitalized,
+                                isUserStory: !isComponent,
+                                count: indices(for: name).count
+                            )
 
-                                componentList(for: name)
-
-                                if sectionNames.last != name {
-                                    Divider()
-                                }
-                            }
+                            componentList(for: name)
                         }
                     }
+
+                    if visibleSectionNames.isEmpty {
+                        EmptySearchView(searchText: searchText)
+                    }
                 }
+                .padding(.vertical, 16)
             }
             .transformIf(true) { view -> AnyView in
                 if #available(iOS 15.0, *) {
@@ -73,34 +81,123 @@ public struct PlaybookView: View {
                 }
             }
         }
+        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("SwiftUI System")
+        .navigationTitle(isComponent ? "Components" : "User Stories")
+    }
+
+    private func indices(for name: String) -> [Int] {
+        viewModels.indices.filter { viewModels[$0].name == name || viewModels[$0].story == name }
     }
 
     @ViewBuilder
     private func componentList(for name: String) -> some View {
+        let indices = indices(for: name)
+
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 16) {
-                ForEach($viewModels, id: \.id) { $viewModel in
-                    if viewModel.name == name || viewModel.story == name {
-                        VStack {
-                            if !isComponent {
-                                Text(viewModel.name)
-                                    .font(.callout.bold())
-                            }
-                            PreviewView(
-                                isComponent: isComponent,
-                                selectedId: $selectedId,
-                                navigationLinkTriggered: $navigationLinkTriggered,
-                                viewModel: $viewModel,
-                                viewModels: $viewModels,
-                                sectionNames: $sectionNames
-                            )
+            HStack(alignment: .top, spacing: 14) {
+                ForEach(Array(indices.enumerated()), id: \.element) { step, index in
+                    if !isComponent && step > 0 {
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.bold))
+                            .foregroundColor(Color(UIColor.tertiaryLabel))
+                            .padding(.top, 60)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        if !isComponent {
+                            StepLabel(step: step + 1, name: viewModels[index].name)
                         }
+
+                        PreviewView(
+                            isComponent: isComponent,
+                            selectedId: $selectedId,
+                            navigationLinkTriggered: $navigationLinkTriggered,
+                            viewModel: $viewModels[index],
+                            viewModels: $viewModels,
+                            sectionNames: $sectionNames
+                        )
                     }
                 }
             }
-            .padding(16)
+            .padding(.horizontal, .horizontalInset)
+            .padding(.top, 8)
+            .padding(.bottom, 20)
+        }
+    }
+
+    struct SectionHeader: View {
+        let title: String
+        let isUserStory: Bool
+        let count: Int
+
+        var body: some View {
+            HStack(spacing: 10) {
+                Image(systemName: isUserStory ? "book.closed.fill" : "square.on.square")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: isUserStory ? [.orange, .red] : [.purple, Color(UIColor.systemIndigo)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                    )
+
+                Text(title)
+                    .font(.title2.bold())
+                    .lineLimit(1)
+
+                Text("\(count)")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color(UIColor.tertiarySystemFill)))
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, .horizontalInset)
+        }
+    }
+
+    struct StepLabel: View {
+        let step: Int
+        let name: String
+
+        var body: some View {
+            HStack(spacing: 6) {
+                Text("\(step)")
+                    .font(.caption2.weight(.heavy))
+                    .foregroundColor(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Circle().fill(Color.orange))
+
+                Text(name)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .screenWidth * .scale, alignment: .leading)
+        }
+    }
+
+    struct EmptySearchView: View {
+        let searchText: String
+
+        var body: some View {
+            VStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundColor(Color(UIColor.tertiaryLabel))
+                Text("No previews match “\(searchText)”")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 80)
         }
     }
 
@@ -114,7 +211,6 @@ public struct PlaybookView: View {
         @Binding var viewModel: PreviewModel
         @Binding var viewModels: [PreviewModel]
         @Binding var sectionNames: [String]
-        @Environment(\.colorScheme) private var colorScheme
 
         init(isComponent: Bool, selectedId: Binding<String>, navigationLinkTriggered: Binding<Bool>, viewModel: Binding<PreviewModel>, viewModels: Binding<[PreviewModel]>, sectionNames: Binding<[String]>) {
             self.id = viewModel.wrappedValue.id
@@ -137,6 +233,7 @@ public struct PlaybookView: View {
                         isScreen: viewModel.type == .screen,
                         view: viewModel.content()
                     )
+                    .background(Color(UIColor.systemBackground))
                     .modifier(LoadingTimeModifier { loadingTime in
                         guard viewModel.renderTime == nil else { return }
                         viewModel.renderTime = loadingTime
@@ -158,13 +255,15 @@ public struct PlaybookView: View {
                         }
                     }
 
-                    Divider()
-
                     InfoView(renderTime: $viewModel.renderTime, state: $viewModel.state)
                 }
-                .background(colorScheme == .dark ? Color(UIColor.darkGray) : Color.white)
-                .cornerRadius(16)
-                .shadow(color: Color.gray.opacity(0.7), radius: 8)
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
+                        .strokeBorder(Color(UIColor.separator).opacity(0.6), lineWidth: 0.5)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 14, x: 0, y: 8)
             }
             .buttonStyle(ScaleEffectButtonStyle())
         }
@@ -189,38 +288,53 @@ public struct PlaybookView: View {
     }
 
     struct InfoView: View {
-        @Environment(\.colorScheme) private var colorScheme
-
         @Binding var renderTime: String?
         @Binding var state: PreviewModel.State?
 
         var body: some View {
             HStack(alignment: .center, spacing: 8) {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("State")
-                        .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                        .font(.caption.smallCaps())
-                    Text((state ?? "default").capitalized)
-                        .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                        .font(.caption.weight(.heavy))
-                }
-                .padding(8)
+                StateBadge(state: state)
 
-                Spacer()
+                Spacer(minLength: 0)
 
                 if let renderTime = renderTime {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("Render time")
-                            .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                            .font(.caption.smallCaps())
+                    HStack(spacing: 3) {
+                        Image(systemName: "timer")
                         Text(renderTime)
-                            .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
-                            .font(.caption.weight(.heavy))
+                            .font(Font.caption.weight(.semibold).monospacedDigit())
                     }
-                    .padding(8)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundColor(.secondary)
                 }
             }
+            .padding(.horizontal, 10)
             .frame(width: UIScreen.main.bounds.width * .scale, height: .infoViewHeight)
+            .overlay(Divider().opacity(0.6), alignment: .top)
+        }
+    }
+
+    struct StateBadge: View {
+        let state: PreviewModel.State?
+
+        private static let palette: [Color] = [.orange, .purple, .blue, .pink, Color(UIColor.systemTeal), .green]
+
+        private var tint: Color? {
+            guard let state, state.lowercased() != "default" else { return nil }
+            let seed = state.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+            return Self.palette[seed % Self.palette.count]
+        }
+
+        var body: some View {
+            Text((state ?? "default").uppercased())
+                .font(.system(size: 10, weight: .heavy))
+                .kerning(0.6)
+                .lineLimit(1)
+                .foregroundColor(tint ?? .secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule().fill(tint.map { $0.opacity(0.15) } ?? Color(UIColor.tertiarySystemFill))
+                )
         }
     }
 
@@ -232,6 +346,7 @@ public struct PlaybookView: View {
 
             Spacer()
         }
+        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
         .navigationTitle(wrapperView?.name ?? "")
     }
 }
