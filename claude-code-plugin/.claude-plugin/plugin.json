@@ -20,10 +20,14 @@
   ],
   "mcpServers": {
     "prefire": {
-      "command": "prefire",
+      "command": "sh",
       "args": [
-        "mcp"
-      ]
+        "-c",
+        "cd \"$PREFIRE_PROJECT_DIR\" && exec prefire mcp"
+      ],
+      "env": {
+        "PREFIRE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+      }
     }
   }
 }
