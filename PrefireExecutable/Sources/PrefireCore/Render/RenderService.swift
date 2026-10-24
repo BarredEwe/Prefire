@@ -51,6 +51,9 @@ public struct RenderConfiguration: Equatable, Sendable {
     public var useGroupedSnapshots: Bool
     /// Passed to `xcodebuild` after the arguments Prefire sets, like `-derivedDataPath`.
     public var xcodebuildArguments: [String]
+    /// Whether the tests are named as the default template names them, so single ones can be run.
+    /// `false` with a `template_file_path` of one's own.
+    public var testsHaveDefaultNames: Bool
 
     public init(
         scheme: String,
@@ -62,7 +65,8 @@ public struct RenderConfiguration: Equatable, Sendable {
         sources: [String] = [],
         previewDefaultEnabled: Bool = true,
         useGroupedSnapshots: Bool = true,
-        xcodebuildArguments: [String] = []
+        xcodebuildArguments: [String] = [],
+        testsHaveDefaultNames: Bool = true
     ) {
         self.scheme = scheme
         self.workspace = workspace
@@ -74,6 +78,7 @@ public struct RenderConfiguration: Equatable, Sendable {
         self.previewDefaultEnabled = previewDefaultEnabled
         self.useGroupedSnapshots = useGroupedSnapshots
         self.xcodebuildArguments = xcodebuildArguments
+        self.testsHaveDefaultNames = testsHaveDefaultNames
     }
 
     /// Whether `destination` is a Mac, where screens are not rendered on devices.
@@ -202,7 +207,12 @@ public struct RenderService: Sendable {
         defer { lock.unlock() }
 
         let catalog = (try? catalog()) ?? []
-        let plan = Self.plan(for: request, catalog: catalog, testTarget: configuration.testTarget)
+        let plan = Self.plan(
+            for: request,
+            catalog: catalog,
+            testTarget: configuration.testTarget,
+            testsHaveDefaultNames: configuration.testsHaveDefaultNames
+        )
         let options = RenderOptions(
             directory: directory.path,
             runID: makeRunID(),
@@ -230,6 +240,10 @@ public struct RenderService: Sendable {
             destination: configuration.destination,
             removingOtherRuns: testsRan
         )
+        // The manifest lists what the directory holds: written whenever the files of other runs went.
+        if testsRan || !manifest.previews.isEmpty {
+            try manifest.write(to: directory)
+        }
         if manifest.previews.isEmpty {
             if status != 0 {
                 throw RenderError.nothingRendered(status: status, logFile: logFile.path)
@@ -239,7 +253,6 @@ public struct RenderService: Sendable {
                 throw RenderError.notInRenderMode(logFile: logFile.path)
             }
         }
-        try manifest.write(to: directory)
 
         var result = RenderResult(manifest: manifest, directory: directory, logFile: logFile, status: status)
         result.warnings = warnings(for: request, catalog: catalog, manifest: manifest)
@@ -286,7 +299,13 @@ public struct RenderService: Sendable {
 
     /// Runs only the tests of the previews asked for when every name is found in `catalog`.
     /// Otherwise runs all snapshot tests, which skip the previews not asked for.
-    static func plan(for request: RenderRequest, catalog: [PreviewEntry], testTarget: String?) -> Plan {
+    ///
+    /// - Parameter testsHaveDefaultNames: Whether `catalog` names the tests as they are. A template of
+    ///   one's own may name them otherwise, so then the whole target runs and the tests filter.
+    static func plan(for request: RenderRequest, catalog: [PreviewEntry], testTarget: String?, testsHaveDefaultNames: Bool = true) -> Plan {
+        guard testsHaveDefaultNames else {
+            return Plan(onlyTesting: testTarget.map { [$0] } ?? [], runtimeFilter: request.previews)
+        }
         let runtimeFilter = runtimeFilter(for: request.previews, catalog: catalog)
         guard let testTarget else {
             return Plan(onlyTesting: [], runtimeFilter: runtimeFilter)

@@ -123,6 +123,21 @@ final class RenderModeTests: XCTestCase {
         XCTAssertEqual(record.error, failures.first)
     }
 
+    func testImageOfAnEarlierRunGoes_whenThePreviewNoLongerRenders() throws {
+        _ = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "earlier"))
+            .failures(of: snapshot { Text("Prefire") }) { _ in nil }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: directory.appendingPathComponent("Text.png").path))
+
+        let session = PrefireSnapshotSession(
+            waitDefaults: SnapshotWaitDefaults(timeout: 0.2),
+            render: PrefireRenderOptions(directory: directory.path, runID: "now")
+        )
+        _ = session.failures(of: snapshot { Text("Prefire").snapshot(waitUntil: { false }) }) { _ in nil }
+
+        XCTAssertNil(try record(named: "Text").image)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("Text.png").path))
+    }
+
     func testFileNamesKeepOnlySafeCharacters() {
         let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run"))
 

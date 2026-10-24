@@ -47,6 +47,20 @@ final class PreviewCatalogTests: XCTestCase {
         XCTAssertEqual(entries.first { $0.kind == .provider }?.testClass, "ATests")
     }
 
+    func test_entries_findProvidersThatConformThroughAProtocol() throws {
+        let directory = Path(NSTemporaryDirectory()) + "PreviewCatalogTests-\(UUID().uuidString)"
+        try directory.mkpath()
+        defer { try? directory.delete() }
+        try (directory + "Providers.swift").write("protocol MyProvider: PrefireProvider {}\n")
+        try (directory + "Card.swift").write("struct Card_Previews: PreviewProvider, MyProvider {\n    static var previews: some View { Text(\"Card\") }\n}\n")
+
+        let entries = try PreviewCatalog.entries(sources: [directory], defaultEnabled: true, useGroupedSnapshots: true)
+
+        XCTAssertEqual(entries.map(\.name), ["Card_Previews"])
+        XCTAssertEqual(entries.first?.line, 1)
+        XCTAssertEqual(entries.first?.testMethod, "test_card")
+    }
+
     func test_matches_nameAndSuffixedNames() {
         let entry = PreviewEntry(name: "Button", kind: .macro, file: "", line: 1, testClass: "", testMethod: "", isScreen: false)
 

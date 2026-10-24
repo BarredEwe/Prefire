@@ -53,8 +53,20 @@ public enum PreviewCatalog {
             }
         }
 
-        var catalog = try files.sorted { $0.string < $1.string }.flatMap { file in
-            try entries(in: file.read(.utf8), file: file, defaultEnabled: defaultEnabled, useGroupedSnapshots: useGroupedSnapshots)
+        let contents = try files.sorted { $0.string < $1.string }.map { file in (file: file, content: try file.read(.utf8) as String) }
+
+        // Providers are found as the generator finds them: through the types of every file, so one
+        // conforming through `protocol MyProvider: PrefireProvider` counts too.
+        let graph = TypeGraph(types: TypeScanner.merge(contents.map { TypeScanner.scan(contents: $0.content) }))
+        let providers = Set(graph.types.filter { type in
+            type.kind != .protocol && (graph.based(of: type).contains("PrefireProvider") || type.annotations["PrefireProvider"] != nil)
+        }.map(\.name))
+
+        var providersFound: Set<String> = []
+        var catalog = contents.flatMap { file in
+            entries(in: file.content, file: file.file, defaultEnabled: defaultEnabled, useGroupedSnapshots: useGroupedSnapshots, providers: providers)
+                // A provider extended in another file is tested once.
+                .filter { $0.kind == .macro || providersFound.insert($0.name).inserted }
         }
 
         // Ungrouped, each generated class tests every provider and no `PreviewTests` class exists,
@@ -67,7 +79,15 @@ public enum PreviewCatalog {
         return catalog
     }
 
-    static func entries(in content: String, file: Path, defaultEnabled: Bool, useGroupedSnapshots: Bool) -> [PreviewEntry] {
+    /// - Parameter providers: Names of the `PrefireProvider` types of the sources. When `nil`, a type
+    ///   is one when it conforms to `PrefireProvider` itself.
+    static func entries(
+        in content: String,
+        file: Path,
+        defaultEnabled: Bool,
+        useGroupedSnapshots: Bool,
+        providers: Set<String>? = nil
+    ) -> [PreviewEntry] {
         let fileName = file.lastComponentWithoutExtension
         let macroClass = useGroupedSnapshots ? "PreviewTests" : "\(fileName)Tests"
         var entries: [PreviewEntry] = []
@@ -87,10 +107,10 @@ public enum PreviewCatalog {
             }
         }
 
-        if content.contains("PrefireProvider") {
+        if providers.map({ !$0.isEmpty }) ?? content.contains("PrefireProvider") {
             let lines = content.components(separatedBy: .newlines)
             entries += TypeScanner.scan(contents: content)
-                .filter { $0.kind != .protocol && $0.isPrefireProvider }
+                .filter { $0.kind != .protocol && (providers?.contains($0.name) ?? $0.isPrefireProvider) }
                 .map { type in
                     PreviewEntry(
                         name: type.name,

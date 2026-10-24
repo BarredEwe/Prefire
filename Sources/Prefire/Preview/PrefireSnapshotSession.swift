@@ -142,7 +142,8 @@ public struct PrefireSnapshotSession {
     @MainActor
     private func namedVariants<Content: View>(of snapshot: PrefireSnapshot<Content>) -> [(device: String?, snapshot: PrefireSnapshot<Content>)] {
         #if os(iOS) || os(tvOS)
-        let renderDevices = render?.devices ?? []
+        // A component keeps its canvas: the devices `prefire render` asks for are those of screens.
+        let renderDevices = snapshot.isScreen ? render?.devices ?? [] : []
         let deviceNames = renderDevices.isEmpty ? devices : renderDevices
         let renderTraits = render?.traits
 
@@ -272,7 +273,8 @@ public struct PrefireSnapshotSession {
     @MainActor
     private func unknownRenderDevices<Content: View>(of snapshot: PrefireSnapshot<Content>, options: PrefireRenderOptions) -> [String] {
         #if os(iOS) || os(tvOS)
-        options.devices.filter { DeviceConfig.named($0) == nil }.map { deviceName in
+        guard snapshot.isScreen else { return [] }
+        return options.devices.filter { DeviceConfig.named($0) == nil }.map { deviceName in
             let error = "Unknown device '\(deviceName)'. Supported devices: \(DeviceConfig.supportedNames.joined(separator: ", "))"
             let record = PrefireRenderRecord(
                 runID: options.runID,

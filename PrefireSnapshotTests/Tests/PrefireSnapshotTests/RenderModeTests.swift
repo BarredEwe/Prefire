@@ -44,6 +44,18 @@ final class RenderModeTests: XCTestCase {
         XCTAssertEqual(try record(named: "Screen-iPad").device, "iPad")
     }
 
+    func testComponentKeepsItsCanvas_whenDevicesAreAskedFor() throws {
+        let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run", devices: ["iPad", "iphone 16"]))
+        let snapshot = PrefireSnapshot({ Color.red.frame(height: 40) }, name: "Component", isScreen: false, device: session.device)
+
+        XCTAssertEqual(session.failures(of: snapshot) { _ in "verified" }, [])
+
+        let record = try record(named: "Component")
+        XCTAssertNil(record.device)
+        XCTAssertEqual(record.width, 375)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("Component-iPad.json").path))
+    }
+
     func testComponentIsRenderedAtTheSizeThatFits() throws {
         let session = PrefireSnapshotSession(render: PrefireRenderOptions(directory: directory.path, runID: "run"))
         let snapshot = PrefireSnapshot({ Color.red.frame(height: 40) }, name: "Component", isScreen: false, device: session.device)

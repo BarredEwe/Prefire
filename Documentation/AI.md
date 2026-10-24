@@ -38,7 +38,7 @@ render_configuration:
 | `workspace`   | `.xcworkspace` to build. Optional.                                                                                                                                  |
 | `project`     | `.xcodeproj` to build, when there is no workspace. Optional.                                                                                                        |
 | `destination` | `-destination` of `xcodebuild`. Default: `platform=iOS Simulator,name=iPhone 16`                                                                                    |
-| `test_target` | Target of the generated tests. With it, `xcodebuild` runs only the tests of the previews asked for, and never the other tests of the scheme. Recommended.          |
+| `test_target` | Target of the generated tests. With it, `xcodebuild` runs only the tests of the previews asked for, and never the other tests of the scheme. Recommended. With a `template_file_path` of your own, the whole target runs and the tests pick the previews. |
 | `output_dir`  | Directory of the images, their records, `manifest.json` and `board.html`. Default: `.prefire/render`. Add it to `.gitignore`.                                       |
 | `sources`     | Files or folders the previews are looked for in. Default: `sources` of `test_configuration`, or the current directory.                                             |
 | `xcodebuild_args` | Arguments passed on to `xcodebuild` after Prefire's own, like `-derivedDataPath` and its value, or `-skipPackagePluginValidation`. Optional.                   |
@@ -66,7 +66,7 @@ prefire render --list
 - Previews are named as their snapshots are: the name of the `#Preview`, or `<File>_<index>` for an
   unnamed one. A name also selects the snapshots that add a suffix to it, like those of
   `#Preview(..., arguments:)` or of each of `snapshot_devices`.
-- `--device` renders screen previews on the devices named, with their real safe area and scale,
+- `--device` renders screen previews (components keep their canvas) on the devices named, with their real safe area and scale,
   instead of `snapshot_devices`. The names are those of `snapshot_devices`; an unknown one gets a
   record with the error and the names Prefire knows. Devices are ignored on macOS.
 - A `PreviewProvider` marked `PrefireProvider` is asked for by its type name, like `Card_Previews`,

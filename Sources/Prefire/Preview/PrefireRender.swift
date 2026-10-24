@@ -163,9 +163,13 @@ enum PrefireRenderWriter {
 
             let baseName = availableBaseName(for: record.name, in: directory, runID: options.runID)
             var record = record
+            let imageURL = directory.appendingPathComponent(baseName + ".png")
             if let png {
-                record.image = baseName + ".png"
-                try png.write(to: directory.appendingPathComponent(baseName + ".png"), options: .atomic)
+                record.image = imageURL.lastPathComponent
+                try png.write(to: imageURL, options: .atomic)
+            } else {
+                // An image of an earlier run under this name would outlive the record that named it.
+                try? FileManager.default.removeItem(at: imageURL)
             }
 
             let encoder = JSONEncoder()

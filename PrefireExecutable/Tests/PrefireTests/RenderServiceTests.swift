@@ -105,6 +105,13 @@ final class RenderServiceTests: XCTestCase {
         XCTAssertEqual(RenderService.plan(for: RenderRequest(), catalog: grouped, testTarget: "AppTests").skipTesting, [])
     }
 
+    func test_plan_runsTheWholeTarget_withATemplateOfOnesOwn() {
+        // A template of one's own may name its tests otherwise than the catalog does.
+        let plan = RenderService.plan(for: RenderRequest(previews: ["Button", "Card_Previews"]), catalog: catalog, testTarget: "AppTests", testsHaveDefaultNames: false)
+
+        XCTAssertEqual(plan, RenderService.Plan(onlyTesting: ["AppTests"], runtimeFilter: ["Button", "Card_Previews"]))
+    }
+
     func test_plan_filtersAtRuntime_withoutATestTarget() {
         XCTAssertEqual(
             RenderService.plan(for: RenderRequest(previews: ["Button", "Card_Previews"]), catalog: catalog, testTarget: nil),
@@ -231,6 +238,23 @@ final class RenderServiceTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
         XCTAssertTrue(files.contains("Button.json"))
         XCTAssertTrue(files.contains("Button.png"))
+    }
+
+    func test_render_writesTheManifest_whenTheTestsRanButTheBuildFailed() throws {
+        try write(RenderRecord(runID: "earlier", name: "Button", image: "Button.png"), as: "Button")
+        try RenderManifest(runID: "earlier", destination: nil, previews: [RenderedPreview(record: RenderRecord(runID: "earlier", name: "Button", image: "Button.png"), source: nil)]).write(to: directory)
+        let runner = FakeRunner { _, environment in
+            let options = try JSONDecoder().decode(RenderOptions.self, from: Data(environment["TEST_RUNNER_PREFIRE_RENDER"]!.utf8))
+            try Data(options.runID.utf8).write(to: URL(fileURLWithPath: options.directory).appendingPathComponent(RenderOptions.runMarkerFileName))
+            return 65
+        }
+        let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory), runner: runner)
+
+        XCTAssertThrowsError(try service.render(RenderRequest()))
+
+        // The files of the earlier run went, so its manifest must not list them.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("Button.png").path))
+        XCTAssertEqual(try RenderManifest.read(from: directory).previews, [])
     }
 
     func test_render_warnsAboutUnknownNamesAndDevicesOnTheMac() throws {
