@@ -91,3 +91,35 @@ Use `--help` with any command to see available options:
 prefire tests --help
 prefire playbook --help
 ```
+
+---
+
+### Mint
+
+Install the bundled CLI via [Mint](https://github.com/yonaskolb/Mint):
+
+```bash
+mint install BarredEwe/Prefire
+```
+
+The installed `prefire` wrapper ships the `PrefireBinary` artifactbundle as an embedded SwiftPM resource, so it is self-contained — no external binary path is required. To override the path of the embedded binary (e.g. for local development against an in-progress build), set `PREFIRE_BINARY_PATH` to the absolute path of the `prefire` executable.
+
+---
+
+### Excluding previews from release builds
+
+When preparing for distribution, you may want to exclude your `PreviewProvider` and mock data from release builds. This can be achieved by wrapping them in `#if DEBUG` compiler directives. Alternatively, you can pass a compiler flag to exclude `PreviewModels` from release builds.
+
+To exclude `PreviewModels` using Swift Package Manager, pass the `PLAYBOOK_DISABLED` swift setting in the package that links `PrefirePlaybookPlugin`:
+
+```swift
+swiftSettings: [
+    .define("PLAYBOOK_DISABLED", .when(configuration: .release)),
+]
+```
+
+If you are using Xcode, you can pass the compiler flag in the Xcode build settings:
+
+```
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
+```

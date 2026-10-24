@@ -21,7 +21,7 @@
 
 ## 🚀 Key Features
 
-<img src="https://i.ibb.co/LNYBfMw/ezgif-com-gif-maker-2.gif" alt="Playbook" width="200" align="right">
+<img src="Documentation/Images/playbook.webp" alt="Playbook: user stories built from previews" width="230" align="right">
 
 - 🧠 **Smart Preview Parsing** — including `#Preview`, `@Previewable`
 - 📸 **Snapshot Testing** — automatic test generation from previews (iOS, tvOS, macOS)
@@ -82,65 +82,42 @@ Just run the test target 🚀 — Prefire will auto-generate snapshots based on 
 
 <img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
 
-
 ---
 
 ## 📦 Installation
 
-Supports:
+| Method | How |
+|--------|-----|
+| SPM Plugin | `PrefireTestsPlugin` / `PrefirePlaybookPlugin` in `Package.swift` |
+| Xcode Build Tool Plugin | Add `PrefireTestsPlugin` to the test target's build phases |
+| CLI | `brew install barredewe/prefire/prefire` |
+| Mint (*Beta*) | `mint install BarredEwe/Prefire` |
+| GitHub Actions / CI | Any of the above, see [Troubleshooting](#-troubleshooting) |
 
-- ✅ SPM Plugin (`Package.swift`)
-- ✅ Xcode Build Tool Plugin
-- ✅ CLI (`brew install barredewe/prefire/prefire`)
-- ✅ Mint (*Beta*) (`mint install BarredEwe/Prefire`)
-- ✅ GitHub Actions / CI
+Step-by-step setup is in the [Installation guide](Documentation/Installation.md).
 
-See detailed setup in the [Installation guide](Documentation/Installation.md)
+### Requirements
 
-### Mint
-
-Install the bundled CLI via [Mint](https://github.com/yonaskolb/Mint):
-
-```sh
-mint install BarredEwe/Prefire
-```
-
-The installed `prefire` wrapper ships the `PrefireBinary` artifactbundle as an embedded SwiftPM resource, so it is self-contained — no external binary path is required. To override the path of the embedded binary (e.g. for local development against an in-progress build), set `PREFIRE_BINARY_PATH` to the absolute path of the `prefire` executable.
-
-## 🧠 How It Works
-
-### 🔍 1. Parses all source files
-
-- Finds all `#Preview` and `PreviewProvider` blocks
-- Supports modifiers: `.prefireEnabled()`, `.prefireIgnored()`
-
-### 📂 2. Caches `Types` and `PreviewBodies`
-
-- Based on file modification date + SHA-256 of inputs
-- Avoids re-parsing if nothing changed
-
-### 🔢 3. Generates Snapshot Tests
-
-- Uses `Stencil` templates
-- Respects `.prefire.yml` configuration
-
-### 📘 4. Generates Playbook View
-
-- Groups by `UserStory`, `State`
-- Outputs `PreviewModels.generated.swift`
+- Swift 6.0 or higher
+- Xcode 16.0 or higher
+- iOS 14 or higher; macOS 13 or higher (macOS: snapshot tests only, see [Configuration](Documentation/Configuration.md#macos-snapshot-tests))
 
 ---
 
-## 🛠 Advanced Usage
-To generate **tests** and **playbook**, simply mark your preview using the `PrefireProvider` protocol:
+## 🛠 Usage
+
+### Choose previews
+
+Prefire finds every **`#Preview`** automatically. For `PreviewProvider`, add the `PrefireProvider` protocol:
+
 ```swift
 struct Text_Previews: PreviewProvider, PrefireProvider {
     static var previews: some View { ... }
 }
 ```
-If you use the **`#Preview`** macro, **🔥Prefire** will automatically find it!
 
-If you don't need it, mark view - `.prefireIgnored()`:
+Exclude a preview with `.prefireIgnored()`:
+
 ```swift
 #Preview {
     Text("")
@@ -148,7 +125,8 @@ If you don't need it, mark view - `.prefireIgnored()`:
 }
 ```
 
-If you want to disable the automatic get of all previews, use the setting `preview_default_enabled`: false. Then to include preview in the test, you need to call the `.prefireEnabled()`:
+To opt in instead of opting out, set `preview_default_enabled: false` in [`.prefire.yml`](#-configuration-prefireyml) and mark the previews you want with `.prefireEnabled()`:
+
 ```swift
 #Preview {
     Text("")
@@ -156,11 +134,36 @@ If you want to disable the automatic get of all previews, use the setting `previ
 }
 ```
 
-### **Playbook (Demo) View**
-To use Playbook, simply use `PlaybookView`
+### Snapshot tests
 
-- If you want to see a list of all the Views, use `isComponent: true`
-- If you want to sort by UserStory, use `isComponent: false`
+`PrefireTestsPlugin` generates the tests into the DerivedData folder when the test target builds. Run the test target as usual.
+
+Tune the timing and precision of a single snapshot:
+
+```swift
+#Preview {
+    TestView()
+        .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
+}
+```
+
+For previews that load or animate, wait instead of guessing a delay:
+
+```swift
+.snapshot(waitForIdle: true)                     // until nothing changes on screen
+.snapshot(waitUntil: { viewModel.isLoaded })     // until a condition is true
+```
+
+How waiting works, its limits and how the modifiers combine: [Snapshot timing and precision](Documentation/Snapshots.md).
+
+Snapshots are compared with [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing).
+
+### Playbook (Demo) View
+
+Show all previews as an interactive catalog with `PlaybookView`:
+
+- `isComponent: true` lists all the Views
+- `isComponent: false` groups them by UserStory
 
 ```swift
 import Prefire 
@@ -172,16 +175,54 @@ struct ContentView: View {
 }
 ```
 
-### **Snapshot tests**
+To keep previews and `PreviewModels` out of release builds, see [Excluding previews from release builds](Documentation/Installation.md#excluding-previews-from-release-builds).
 
-Just run generated tests 🚀
-All tests will be generated in the DerivedData folder.
+### Flows
 
-<img src="https://i.postimg.cc/XNPVPL1G/Untitled-2.gif" width="300">
+<img src="Documentation/Images/flow.webp" alt="The auth user story in Playbook: PrefireView, then AuthView" width="350" align="right">
 
-Plugin `PrefireTestsPlugin` will handle everything for you 🛠️
+Connect previews into one **Flow** with `.previewUserStory`. Playbook shows them together, in order:
 
-For detailed instruction, check out [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) or examine an example project.
+```swift
+static var previews: some View {
+    PrefireView()
+        .previewUserStory(.auth)
+}
+
+static var previews: some View {
+    AuthView()
+        .previewUserStory(.auth)
+}
+```
+
+<br clear="all">
+
+### States
+
+<img src="Documentation/Images/states.webp" alt="TestView in the Default and Loading states" width="350" align="right">
+
+If a preview contains more than one `View`, mark the `State` of each:
+
+```swift
+static var previews: some View {
+    TestView("Default")
+
+    TestView("Loading")
+        .previewState(.loading)
+}
+```
+
+<br clear="all">
+
+### Parameterized previews
+
+Prefire expands each argument of a native SwiftUI parameterized preview into its own snapshot and Playbook preview:
+
+```swift
+#Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B", "- C"]) { suffix in
+    Text("1 \(suffix)")
+}
+```
 
 ---
 
@@ -198,141 +239,9 @@ For detailed instruction, check out [swift-snapshot-testing](https://github.com/
 | Wait for a condition | `.snapshot(waitUntil: { viewModel.isLoaded })` |
 | Parameterized preview | `#Preview(..., arguments: values)` |
 
-**Prefire** provides new commands for previews:
-
-- You can set the delay, precision and perceptualPrecision parameters for the snapshot:
-
-    ```swift
-    .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
-    ```
-    
-    ```swift
-    static var previews: some View {
-        TestView()
-            .snapshot(delay: 0.3, precision: 0.95, perceptualPrecision: 0.98)
-    }
-    ```
-
-- Instead of guessing a delay, you can wait until the preview stops changing:
-
-    ```swift
-    .snapshot(waitForIdle: true)
-    .snapshot(waitForIdle: true, timeout: 2.0)
-    ```
-
-    Prefire renders the preview, compares the frames it would capture every 50 ms, and takes the
-    snapshot once nothing changed for 300 ms. A preview that never settles fails with a message
-    instead of hanging, after `timeout` (5 seconds by default).
-
-    Put the modifier on content that is there from the first render: one inside content that only
-    shows up later, such as an `if isLoaded` branch or a `List` row, is not seen.
-
-    Waiting for idle only sees what is drawn: a preview that shows the same frame for longer while
-    it loads, or runs a Core Animation animation such as a `ProgressView` spinner, looks idle. Use
-    `.snapshot(waitUntil:)` for those, or a `delay` as a floor: Prefire spends it before it starts
-    comparing frames, and does not wait it out a second time when capturing. Both modifiers can be
-    combined, since they configure different things:
-
-    ```swift
-    static var previews: some View {
-        TestView()
-            .snapshot(delay: 0.1, precision: 0.95)
-            .snapshot(waitForIdle: true)
-    }
-    ```
-
-    Set `snapshot_wait_for_idle: true` in [`.prefire.yml`](Documentation/Configuration.md) to make
-    it the default for every preview, and opt single previews out with `.snapshot(waitForIdle: false)`.
-
-- When the preview itself knows when it is ready, wait for a condition:
-
-    ```swift
-    .snapshot(waitUntil: { viewModel.isLoaded })
-    .snapshot(waitUntil: { viewModel.isLoaded }, timeout: 2.0)
-    ```
-
-    The condition is checked on the main thread while the preview keeps rendering, and the test
-    fails with the call site of the modifier when it is still `false` after `timeout`.
-
-    A helper wrapping the modifier can pass its own call site on, so a timeout names the preview
-    that uses it:
-
-    ```swift
-    extension View {
-        func waitingUntilLoaded(_ viewModel: ViewModel, fileID: String = #fileID, line: UInt = #line) -> some View {
-            snapshot(waitUntil: { viewModel.isLoaded }, fileID: fileID, line: line)
-        }
-    }
-    ```
-
-    When several views of a preview wait, a condition is waited for over idle, every condition has
-    to be met, `.snapshot(waitForIdle: false)` of one view does not cancel the wait of another, and
-    the longest timeout applies.
-
-    The preview is hosted once, waited on and captured in the same window, so state it reached in
-    `.onAppear` or `.task` is kept. Accessibility snapshots are the exception: they render the
-    preview anew and only honor `delay`.
-
-    Waiting runs the main run loop in place, so snapshots that wait have to be taken from a
-    synchronous test method, as the generated tests do. From `async` code `.task` never runs, and
-    the timeout message says so.
-
-- Function for connecting preview together in one **Flow**:
-
-    <img src="https://i.postimg.cc/jSh23G8W/temp-Image9a-EDKU.avif" width="350" align="right">
-
-    ```swift
-    .previewUserStory(.auth)
-    ```
-
-    ```swift
-    static var previews: some View {
-        PrefireView()
-            .previewUserStory(.auth)
-    }
-
-    static var previews: some View {
-        AuthView()
-            .previewUserStory(.auth)
-    }
-    ```
-
-    For example Authorization flow: `LoginView`, `OTPView` and `PincodeView`
-
-    <br clear="all">
-
-- If a preview contains more than one `View`, you can mark `State` for these views.
-
-    <img src="https://i.postimg.cc/Z5JKNwTJ/temp-Imageh19pin.avif" width="350" align="right">
-
-    ```swift
-    .previewState(.loading)
-    ```
-
-    ```swift
-    static var previews: some View {
-        TestView("Default")
-
-        TestView("Loading")
-            .previewState(.loading)
-    }
-    ```
-
-    <br clear="all">
-
-- Prefire supports native SwiftUI parameterized previews:
-
-    ```swift
-    #Preview("TextView", traits: .sizeThatFitsLayout, arguments: ["- A", "- B", "- C"]) { suffix in
-        Text("1 \(suffix)")
-    }
-    ```
-
-    Prefire expands each argument into its own snapshot and Playbook preview.
-
 ---
 
-## 💡 Advanced: CLI Usage
+## 💡 CLI Usage
 
 ```bash
 # Generate snapshot tests
@@ -374,9 +283,8 @@ An agent then calls `list_previews`, `render_previews` and `build_board`. Set th
 color scheme and Dynamic Type you ask for, and works in CI.
 
 ---
-## 🗂 Configuration: `.prefire.yml`
 
-See detailed configuration in the [Configuration guide](Documentation/Configuration.md)
+## 🗂 Configuration: `.prefire.yml`
 
 ```yaml
 test_configuration:
@@ -386,55 +294,28 @@ playbook_configuration:
   preview_default_enabled: true
 ```
 
----
-
-## Distribution
-
-When preparing for distribution, you may want to exclude your `PreviewProvider` and mock data from release builds. This can be achieved by wrapping them in `#if DEBUG` compiler directives. Alternatively, you can pass a compiler flag to exclude `PreviewModels` from release builds.
-
-To exclude `PreviewModels` using Swift Package Manager, pass the `PLAYBOOK_DISABLED` swift setting in the package that links `PrefirePlaybookPlugin`:
-
-```swift
-swiftSettings: [
-    .define("PLAYBOOK_DISABLED", .when(configuration: .release)),
-]
-```
-
-If you are using Xcode, you can pass the compiler flag in the Xcode build settings:
-
-```
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = PLAYBOOK_DISABLED;
-```
+All options are in the [Configuration guide](Documentation/Configuration.md). To change the generated code, see [Templates](Documentation/Templates.md).
 
 ---
 
-## 🧠 Internal Architecture
+## 🧠 How It Works
 
-- `PrefireCore` — AST + preview parsing, caching, logic
-- `PrefireGenerator` — handles stencil templating + snapshot generation
-- `PrefireCacheManager` — unifies caching for `Types` and `Previews`
-- `PrefireTestsPlugin` / `PrefirePlaybookPlugin` — SPM/Xcode integrations
-- `prefire` — CLI entry point, calls shared generator code
+1. 🔍 **Parses all source files** — finds `#Preview` and `PreviewProvider` blocks and the `.prefireEnabled()` / `.prefireIgnored()` modifiers
+2. 📂 **Caches `Types` and `PreviewBodies`** — keyed by file modification date + SHA-256 of inputs, so nothing is re-parsed if nothing changed
+3. 🔢 **Generates snapshot tests** — from `Stencil` templates, respecting `.prefire.yml`
+4. 📘 **Generates Playbook models** — groups by `UserStory` and `State` into `PreviewModels.generated.swift`
 
 ---
 
-## Requirements
+## 🩺 Troubleshooting
 
-- Swift 6.0 or higher
-- Xcode 16.0 or higher
-- iOS 14 or higher; macOS 13 or higher (macOS: snapshot tests only, see [Configuration](Documentation/Configuration.md#macos-snapshot-tests))
+| Problem | Fix |
+|---------|-----|
+| `NavigationView` in a preview doesn't work in Playbook | Use other views or layouts for your Playbook needs |
+| Plugins don't run on CI | `defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES` |
+| Xcode can't generate tests in a custom path | Disable the plugin sandbox: `defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES` |
 
-## Troubleshooting
-`NavigationView` in Preview not supported for Playbook
-- Consider using other views or layouts for your Playbook needs.
-
-Running Prefire via CI
-- To run Prefire via Continuous Integration (CI), you need to configure permissions:
-`defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES`
-
-Xcode is unable to generate tests in a custom path.
-- To resolve this, you’ll need to disable the sandbox for file generation by running the following command in your terminal:
-`defaults write com.apple.dt.Xcode IDEPackageSupportDisablePluginExecutionSandbox -bool YES`
+---
 
 ## 🐱 Also by the author
 
@@ -449,11 +330,8 @@ Swift, AppKit + SwiftUI, 29 MB. Free; only skins are paid.
 <br clear="all">
 
 ## 🤝 Contributing
-We welcome contributions! Please follow these steps:
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a Pull Request
+We welcome contributions! Development setup, tests and the internal architecture are described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 Prefire is released under the Apache License 2.0. See [LICENSE](https://github.com/BarredEwe/Prefire/blob/main/LICENSE) for details.
