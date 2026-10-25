@@ -1,21 +1,51 @@
-![Prefire](https://i.postimg.cc/Y9cbLVY4/temp-Image-P7o5-NQ.jpg)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="Documentation/Images/hero-dark.svg">
+    <img alt="Prefire: turn #Preview into snapshot tests, a Playbook and AI-ready renders" src="Documentation/Images/hero-light.svg" width="100%">
+  </picture>
+</p>
 
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
+<a href="https://github.com/BarredEwe/Prefire/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/BarredEwe/Prefire?style=flat&logo=github&color=ff7a1a"/></a>
 <a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20tvOS-green.svg"/></a>
 <a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
 <a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
-<img alt="Swift Package Manager" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
+<img alt="Xcode Plugins" src="https://img.shields.io/badge/Xcode%20Plugins-Supported-brightgreen.svg"/>
+</p>
+
+<p align="center">
+  <a href="#-quick-start"><b>Quick Start</b></a> ·
+  <a href="#-installation"><b>Installation</b></a> ·
+  <a href="#-usage"><b>Usage</b></a> ·
+  <a href="#-let-ai-agents-see-swiftui"><b>AI agents</b></a> ·
+  <a href="#-configuration-prefireyml"><b>Configuration</b></a> ·
+  <a href="Documentation"><b>Docs</b></a>
 </p>
 
 ## 🔥 What is Prefire?
 
-**Prefire** transforms your `#Preview` blocks into:
-- ✅ Snapshot tests
-- ✅ Playbook views
-- ✅ Visual flows with states and user stories
-- ✅ Living documentation — fully automated
-- ✅ Images an AI agent can see: an [MCP server](#-let-ai-agents-see-swiftui) renders your previews for Claude Code, Cursor and Codex
+**Prefire** turns the `#Preview` blocks you already write into tests, a catalog and images, with no extra code.
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>📸 Snapshot tests</h3>
+      Every preview becomes a snapshot test, on the devices you pick. Catch visual regressions before users do.
+      <br><br><a href="#snapshot-tests">How it works →</a>
+    </td>
+    <td width="33%" valign="top">
+      <h3>📚 Playbook</h3>
+      An interactive catalog of your components and user stories, with states and render times. Living documentation.
+      <br><br><a href="#playbook-demo-view">See Playbook →</a>
+    </td>
+    <td width="33%" valign="top">
+      <h3>🤖 AI-ready renders</h3>
+      Claude Code, Cursor and Codex render your previews through an MCP server, on any iPhone or iPad, light or dark.
+      <br><br><a href="#-let-ai-agents-see-swiftui">Set up →</a>
+    </td>
+  </tr>
+</table>
 
 > 🤖 **Using an AI agent?** `brew install barredewe/prefire/prefire`, then `claude mcp add prefire -- prefire mcp` in your project. The agent renders SwiftUI previews on any iPhone or iPad, light or dark, without Xcode Previews. [Setup →](Documentation/AI.md)
 
@@ -43,7 +73,7 @@
 <br clear="all">
 
 ---
-## ⚡️ Quick Start
+## ⚡ Quick Start
 
 > 📦 Example project available at: [Prefire Example](https://github.com/BarredEwe/Prefire/tree/main/Example)
 
@@ -332,6 +362,17 @@ Swift, AppKit + SwiftUI, 29 MB. Free; only skins are paid.
 ## 🤝 Contributing
 
 We welcome contributions! Development setup, tests and the internal architecture are described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## ⭐ Star history
+
+If Prefire saves you time, give it a star: it helps other iOS developers find it.
+
+<a href="https://star-history.com/#BarredEwe/Prefire&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=BarredEwe/Prefire&type=Date&theme=dark">
+    <img alt="Star history of Prefire" src="https://api.star-history.com/svg?repos=BarredEwe/Prefire&type=Date" width="600">
+  </picture>
+</a>
 
 ## 📄 License
 Prefire is released under the Apache License 2.0. See [LICENSE](https://github.com/BarredEwe/Prefire/blob/main/LICENSE) for details.
