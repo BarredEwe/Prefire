@@ -142,6 +142,9 @@ public struct RenderConfiguration: Equatable, Sendable {
     /// Whether the tests are built with `build-for-testing` and run without the test session of
     /// `xcodebuild test`: on a simulator they are launched with `simctl`. Needs `testTarget`.
     public var launchesTestsDirectly: Bool
+    /// Whether renders build into derived data of their own, in the output directory, with settings
+    /// for quicker builds, instead of sharing Xcode's.
+    public var usesOwnDerivedData: Bool
 
     public init(
         scheme: String,
@@ -155,7 +158,8 @@ public struct RenderConfiguration: Equatable, Sendable {
         useGroupedSnapshots: Bool = true,
         xcodebuildArguments: [String] = [],
         testsHaveDefaultNames: Bool = true,
-        launchesTestsDirectly: Bool = true
+        launchesTestsDirectly: Bool = true,
+        usesOwnDerivedData: Bool = false
     ) {
         self.scheme = scheme
         self.workspace = workspace
@@ -169,6 +173,7 @@ public struct RenderConfiguration: Equatable, Sendable {
         self.xcodebuildArguments = xcodebuildArguments
         self.testsHaveDefaultNames = testsHaveDefaultNames
         self.launchesTestsDirectly = launchesTestsDirectly
+        self.usesOwnDerivedData = usesOwnDerivedData
     }
 
     /// Whether `destination` is a Mac, where screens are not rendered on devices.
@@ -440,7 +445,7 @@ public struct RenderService: Sendable {
     /// Arguments of `xcrun`, running the tests `plan` names from `testRun` without building them.
     func testWithoutBuildingArguments(testRun: URL, plan: Plan) -> [String] {
         var arguments = ["xcodebuild", "test-without-building", "-xctestrun", testRun.path, "-destination", configuration.destination]
-        arguments += configuration.xcodebuildArguments.contains("-derivedDataPath") ? [] : ["-derivedDataPath", derivedDataDirectory.path]
+        arguments += buildsIntoOwnDerivedData ? ["-derivedDataPath", derivedDataDirectory.path] : []
         arguments += ["-parallel-testing-enabled", "NO"]
         arguments += plan.onlyTesting.map { "-only-testing:\($0)" }
         arguments += plan.skipTesting.map { "-skip-testing:\($0)" }
@@ -525,17 +530,24 @@ public struct RenderService: Sendable {
         return arguments + derivedDataArguments
     }
 
-    /// Derived data of the renders, apart from Xcode's, so a render builds with settings of its own
-    /// without rebuilding what Xcode built, and never waits for a build of Xcode to finish.
+    /// Derived data of the renders when `usesOwnDerivedData`, apart from Xcode's, so a render builds
+    /// with settings of its own without rebuilding what Xcode built, and never waits for a build of
+    /// Xcode to finish. A first render builds the whole project into it, though.
     var derivedDataDirectory: URL {
         configuration.outputDirectory.standardizedFileURL.appendingPathComponent(".derived-data", isDirectory: true)
     }
 
+    /// Whether renders build into `derivedDataDirectory`: asked for, and `xcodebuild_args` does not
+    /// pick the derived data.
+    private var buildsIntoOwnDerivedData: Bool {
+        configuration.usesOwnDerivedData && !configuration.xcodebuildArguments.contains("-derivedDataPath")
+    }
+
     /// Builds into `derivedDataDirectory` without an index, which only Xcode reads and which takes
-    /// a third of a clean build, and with implicit modules, quicker for one changed file. Nothing
-    /// is set when `xcodebuild_args` picks the derived data.
+    /// up to a third of a clean build, and with implicit modules, quicker for one changed file of a
+    /// small project. With Xcode's derived data, its settings stay, or every build would redo the other's.
     private var derivedDataArguments: [String] {
-        guard !configuration.xcodebuildArguments.contains("-derivedDataPath") else { return [] }
+        guard buildsIntoOwnDerivedData else { return [] }
         return ["-derivedDataPath", derivedDataDirectory.path, "COMPILER_INDEX_STORE_ENABLE=NO", "SWIFT_ENABLE_EXPLICIT_MODULES=NO"]
     }
 

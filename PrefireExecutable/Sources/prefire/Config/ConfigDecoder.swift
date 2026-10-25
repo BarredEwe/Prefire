@@ -153,6 +153,8 @@ final class ConfigDecoder {
             config.render.xcodebuildArgs = getValues(from: components, lines: lines, env: env)
         case .directLaunch:
             config.render.directLaunch = value == "true"
+        case .ownDerivedData:
+            config.render.ownDerivedData = value == "true"
         }
     }
 

@@ -42,6 +42,7 @@ render_configuration:
 | `output_dir`  | Directory of the images, their records, `manifest.json` and `board.html`. Default: `.prefire/render`. Add it to `.gitignore`.                                       |
 | `sources`     | Files or folders the previews are looked for in. Default: `sources` of `test_configuration`, or the current directory.                                             |
 | `xcodebuild_args` | Arguments passed on to `xcodebuild` after Prefire's own, like `-derivedDataPath` and its value, or `-skipPackagePluginValidation`. Optional.                   |
+| `own_derived_data` | `true` builds renders into derived data of their own, `.derived-data` in the output directory, without an index and with implicit modules. Default: `false`, Xcode's derived data with Xcode's settings. |
 | `direct_launch` | `false` runs the tests with plain `xcodebuild test`. Default: `true`, see [How a render runs](#how-a-render-runs).                                        |
 
 Outside of Xcode `${PROJECT_DIR}` is the folder of the config given with `--config`, or the current
@@ -171,10 +172,12 @@ them, which takes most of the time of a small render:
 - Elsewhere, like on a Mac, the tests run with `xcodebuild test-without-building`.
 - The build skips resolving packages again (`-disableAutomaticPackageResolution`), and does it only
   when `Package.resolved` is out of date.
-- Renders build into derived data of their own, `.derived-data` in the output directory, without
-  an index and with implicit modules: a first render builds about a third faster, and Xcode's own
-  builds are neither rebuilt nor waited for. Set `-derivedDataPath` in `xcodebuild_args` to build
-  elsewhere, with Xcode's settings.
+- Renders share Xcode's derived data and build with Xcode's settings, so a render reuses what Xcode
+  built. With `own_derived_data: true`, they build into `.derived-data` in the output directory,
+  without an index and with implicit modules: they never wait for a build of Xcode, and a first
+  render of a small project builds about a third faster, but it builds the whole project once and
+  takes as much disk as Xcode's derived data. On a large macOS app (Mewmori) the settings made no
+  difference. `-derivedDataPath` in `xcodebuild_args` wins over both.
 
 Without `test_target`, with `direct_launch: false`, or when the tests can't be launched that way,
 the render runs `xcodebuild test` as before.

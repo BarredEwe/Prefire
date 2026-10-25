@@ -80,6 +80,7 @@ struct RenderConfig {
     var sources: [String]?
     var xcodebuildArgs: [String]?
     var directLaunch: Bool?
+    var ownDerivedData: Bool?
 
     enum CodingKeys: String, CodingKey {
         case scheme = "scheme"
@@ -91,6 +92,7 @@ struct RenderConfig {
         case sources = "sources"
         case xcodebuildArgs = "xcodebuild_args"
         case directLaunch = "direct_launch"
+        case ownDerivedData = "own_derived_data"
     }
 }
 

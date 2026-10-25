@@ -33,17 +33,28 @@ final class RenderServiceTests: XCTestCase {
 
         XCTAssertEqual(service.xcodebuildArguments(onlyTesting: ["AppTests/PreviewTests/test_Button_Preview"]), [
             "xcodebuild", "test", "-scheme", "App", "-workspace", "App.xcworkspace",
-            "-derivedDataPath", directory.standardizedFileURL.appendingPathComponent(".derived-data").path,
-            "COMPILER_INDEX_STORE_ENABLE=NO", "SWIFT_ENABLE_EXPLICIT_MODULES=NO",
             "-destination", "platform=iOS Simulator,name=iPhone 16",
             "-parallel-testing-enabled", "NO",
             "-only-testing:AppTests/PreviewTests/test_Button_Preview",
         ])
     }
 
+    func test_xcodebuildArguments_buildIntoOwnDerivedData_whenAsked() {
+        let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory, usesOwnDerivedData: true))
+
+        let arguments = service.xcodebuildArguments(onlyTesting: [])
+
+        XCTAssertEqual(Array(arguments[2...6]), [
+            "-scheme", "App",
+            "-derivedDataPath", directory.standardizedFileURL.appendingPathComponent(".derived-data").path,
+            "COMPILER_INDEX_STORE_ENABLE=NO",
+        ])
+        XCTAssertTrue(arguments.contains("SWIFT_ENABLE_EXPLICIT_MODULES=NO"))
+    }
+
     func test_xcodebuildArguments_keepTheDerivedDataAsked() {
         let service = RenderService(configuration: RenderConfiguration(
-            scheme: "App", outputDirectory: directory, xcodebuildArguments: ["-derivedDataPath", "/dd"]
+            scheme: "App", outputDirectory: directory, xcodebuildArguments: ["-derivedDataPath", "/dd"], usesOwnDerivedData: true
         ))
 
         let arguments = service.xcodebuildArguments(onlyTesting: [])
