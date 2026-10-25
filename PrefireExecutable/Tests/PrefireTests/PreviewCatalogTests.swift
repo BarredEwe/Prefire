@@ -61,6 +61,19 @@ final class PreviewCatalogTests: XCTestCase {
         XCTAssertEqual(entries.first?.testMethod, "test_card")
     }
 
+    func test_entries_skipHiddenAndBuildFolders() throws {
+        let directory = Path(NSTemporaryDirectory()) + "PreviewCatalogTests-\(UUID().uuidString)"
+        defer { try? directory.delete() }
+        for folder in ["Views", ".prefire/.derived-data/SourcePackages", "DerivedData/Build", "Pods/Lib"] {
+            try (directory + folder).mkpath()
+            try (directory + folder + "View.swift").write("#Preview(\"\(folder)\") { Text(\"A\") }\n")
+        }
+
+        let entries = try PreviewCatalog.entries(sources: [directory], defaultEnabled: true, useGroupedSnapshots: true)
+
+        XCTAssertEqual(entries.map(\.name), ["Views"])
+    }
+
     func test_matches_nameAndSuffixedNames() {
         let entry = PreviewEntry(name: "Button", kind: .macro, file: "", line: 1, testClass: "", testMethod: "", isScreen: false)
 

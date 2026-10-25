@@ -5,11 +5,17 @@ import XCTest
 final class DirectLaunchTests: XCTestCase {
     private var directory: URL!
     private var products: URL!
+    private var deviceSet: URL!
 
     override func setUpWithError() throws {
         directory = FileManager.default.temporaryDirectory.appendingPathComponent("DirectLaunchTests-\(UUID().uuidString)")
         products = directory.appendingPathComponent("Products")
         try FileManager.default.createDirectory(at: products, withIntermediateDirectories: true)
+        deviceSet = directory.appendingPathComponent("Devices")
+        let device = deviceSet.appendingPathComponent("BOOTED")
+        try FileManager.default.createDirectory(at: device, withIntermediateDirectories: true)
+        let plist: [String: Any] = ["UDID": "BOOTED", "name": "iPhone 16", "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-1", "state": 3]
+        try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0).write(to: device.appendingPathComponent("device.plist"))
     }
 
     override func tearDownWithError() throws {
@@ -107,9 +113,26 @@ final class DirectLaunchTests: XCTestCase {
         XCTAssertEqual(SimulatorTestLauncher.device(for: "platform=tvOS Simulator,name=Apple TV", in: devices)?.udid, "TV")
     }
 
+    func test_devices_areReadFromTheDeviceSet() {
+        XCTAssertEqual(
+            SimulatorTestLauncher.devices(inDeviceSet: deviceSet),
+            [SimulatorDevice(udid: "BOOTED", name: "iPhone 16", runtime: "com.apple.CoreSimulator.SimRuntime.iOS-26-1", isBooted: true)]
+        )
+    }
+
     func test_device_isNil_forAMacOrAnUnknownName() {
         XCTAssertNil(SimulatorTestLauncher.device(for: "platform=macOS", in: devices))
         XCTAssertNil(SimulatorTestLauncher.device(for: "platform=iOS Simulator,name=iPhone 99", in: devices))
+    }
+
+    func test_testsFinished_waitsForTheSummaryOfTheWholeRun() {
+        let suite = "Test Suite 'UpgradeViewTests' passed at 2026-10-26 00:21:42.087.\n\t Executed 1 test, with 0 failures (0 unexpected) in 0.05 seconds\n"
+        let top = "Test Suite 'Selected tests' passed at 2026-10-26 00:21:42.087.\n"
+
+        XCTAssertFalse(SimulatorTestLauncher.testsFinished(suite))
+        XCTAssertFalse(SimulatorTestLauncher.testsFinished(suite + top))
+        XCTAssertTrue(SimulatorTestLauncher.testsFinished(suite + top + "\t Executed 1 test, with 0 failures (0 unexpected) in 0.05 seconds\n"))
+        XCTAssertTrue(SimulatorTestLauncher.testsFinished("Test Suite 'All tests' failed at 1.\n\t Executed 2 tests, with 1 failure (0 unexpected) in 1 seconds\n"))
     }
 
     func test_status_readsTheLastSummary() {
@@ -124,7 +147,7 @@ final class DirectLaunchTests: XCTestCase {
         let log = CallLog()
         let source = directory.appendingPathComponent("Button.swift")
         try Data("#Preview(\"Button\") { Text(\"Button\") }\n".utf8).write(to: source)
-        let service = RenderService(
+        var service = RenderService(
             configuration: RenderConfiguration(
                 scheme: "App", project: "App.xcodeproj", destination: "platform=iOS Simulator,name=iPhone 16",
                 testTarget: "AppTests", outputDirectory: directory.appendingPathComponent("render"), sources: [source.path]
@@ -132,6 +155,7 @@ final class DirectLaunchTests: XCTestCase {
             runner: simulatorRunner(log: log),
             makeRunID: { "run" }
         )
+        service.simulatorDeviceSet = deviceSet
 
         let result = try service.render(RenderRequest(previews: ["Button"]))
 
@@ -147,36 +171,37 @@ final class DirectLaunchTests: XCTestCase {
         let launch = try XCTUnwrap(log.runs.first { $0.arguments.starts(with: ["simctl", "launch"]) })
         XCTAssertEqual(Array(launch.arguments.suffix(2)), ["-XCTest", "AppTests.PreviewTests/test_Button_Preview"])
         XCTAssertNotNil(launch.environment["SIMCTL_CHILD_PREFIRE_RENDER"])
-        XCTAssertEqual(launch.environment["SIMCTL_CHILD_XCInjectBundleInto"], "/sim/App.app/App")
+        XCTAssertTrue(launch.environment["SIMCTL_CHILD_XCInjectBundleInto"]?.hasSuffix("/Devices/BOOTED/data/Containers/Bundle/Application/NEW/App.app/App") == true)
     }
 
     func test_render_copiesChangedFiles_intoAnInstalledApp() throws {
         let log = CallLog()
         try writeTestRun()
-        let installed = directory.appendingPathComponent("Installed.app")
+        let installed = deviceSet.appendingPathComponent("BOOTED/data/Containers/Bundle/Application/ABC/App.app")
         try FileManager.default.createDirectory(at: installed, withIntermediateDirectories: true)
         try FileManager.default.copyItem(
             at: products.appendingPathComponent("Debug-iphonesimulator/App.app/Info.plist"),
             to: installed.appendingPathComponent("Info.plist")
         )
-        let service = RenderService(
+        var service = RenderService(
             configuration: RenderConfiguration(
                 scheme: "App", destination: "platform=iOS Simulator,name=iPhone 16",
                 testTarget: "AppTests", outputDirectory: directory.appendingPathComponent("render")
             ),
-            runner: simulatorRunner(log: log, installedContainer: installed.path),
+            runner: simulatorRunner(log: log),
             makeRunID: { "run" }
         )
+        service.simulatorDeviceSet = deviceSet
 
         _ = try service.render(RenderRequest(previews: ["Button"]))
 
-        XCTAssertTrue(log.runs.contains { $0.arguments.first == "-a" && $0.arguments.last == installed.path + "/" })
+        XCTAssertTrue(log.runs.contains { $0.arguments.first == "-a" && $0.arguments.last?.hasSuffix("/Application/ABC/App.app/") == true })
         XCTAssertFalse(log.runs.contains { $0.arguments.starts(with: ["simctl", "install"]) })
     }
 
     func test_render_runsTestWithoutBuilding_onAMac() throws {
         let log = CallLog()
-        let service = RenderService(
+        var service = RenderService(
             configuration: RenderConfiguration(
                 scheme: "App", destination: "platform=macOS",
                 testTarget: "AppTests", outputDirectory: directory.appendingPathComponent("render")
@@ -184,6 +209,7 @@ final class DirectLaunchTests: XCTestCase {
             runner: simulatorRunner(log: log, rendersOn: ["test-without-building"]),
             makeRunID: { "run" }
         )
+        service.simulatorDeviceSet = deviceSet
 
         let result = try service.render(RenderRequest(previews: ["Button"]))
 
@@ -211,7 +237,7 @@ final class DirectLaunchTests: XCTestCase {
             },
             capture: base.captureBody
         )
-        let service = RenderService(
+        var service = RenderService(
             configuration: RenderConfiguration(
                 scheme: "App", destination: "platform=iOS Simulator,name=iPhone 16",
                 testTarget: "AppTests", outputDirectory: directory.appendingPathComponent("render")
@@ -219,6 +245,7 @@ final class DirectLaunchTests: XCTestCase {
             runner: runner,
             makeRunID: { "run" }
         )
+        service.simulatorDeviceSet = deviceSet
 
         _ = try service.render(RenderRequest(previews: ["Button"]))
 
@@ -236,10 +263,11 @@ final class DirectLaunchTests: XCTestCase {
             },
             capture: { _ in (1, "") }
         )
-        let service = RenderService(
+        var service = RenderService(
             configuration: RenderConfiguration(scheme: "App", testTarget: "AppTests", outputDirectory: directory.appendingPathComponent("render")),
             runner: runner
         )
+        service.simulatorDeviceSet = deviceSet
 
         XCTAssertThrowsError(try service.render(RenderRequest())) { error in
             guard case RenderError.nothingRendered(65, _) = error else { return XCTFail("Unexpected error \(error)") }
@@ -274,9 +302,9 @@ final class DirectLaunchTests: XCTestCase {
 
     /// A runner that acts like `xcodebuild` and `simctl`: the build writes an `.xctestrun`, and the
     /// launch (or `rendersOn`) writes a record and the run marker.
-    private func simulatorRunner(log: CallLog, installedContainer: String? = nil, rendersOn: [String] = ["launch"]) -> FakeRunner {
+    private func simulatorRunner(log: CallLog, rendersOn: [String] = ["launch"]) -> FakeRunner {
         let products = products!
-        var installed = installedContainer
+        let deviceSet = deviceSet!
         return FakeRunner(
             run: { arguments, environment, logFile in
                 log.runs.append((arguments, environment))
@@ -284,7 +312,9 @@ final class DirectLaunchTests: XCTestCase {
                     _ = try self.writeTestRun()
                 }
                 if arguments.starts(with: ["simctl", "install"]) {
-                    installed = "/sim/App.app"
+                    let app = deviceSet.appendingPathComponent("\(arguments[2])/data/Containers/Bundle/Application/NEW/App.app")
+                    try FileManager.default.createDirectory(at: app, withIntermediateDirectories: true)
+                    try FileManager.default.copyItem(at: URL(fileURLWithPath: arguments[3]).appendingPathComponent("Info.plist"), to: app.appendingPathComponent("Info.plist"))
                 }
                 if arguments.contains(where: rendersOn.contains) {
                     let json = environment["SIMCTL_CHILD_PREFIRE_RENDER"] ?? environment["TEST_RUNNER_PREFIRE_RENDER"] ?? ""
@@ -303,8 +333,6 @@ final class DirectLaunchTests: XCTestCase {
                     return (0, "    SYMROOT = \(products.path)\n")
                 case ["simctl", "list"]:
                     return (0, String(decoding: self.devices, as: UTF8.self))
-                case ["simctl", "get_app_container"]:
-                    return installed.map { (0, $0) } ?? (1, "")
                 default:
                     return command.first == "/usr/bin/xcode-select" ? (0, "/Xcode") : (1, "")
                 }
@@ -316,7 +344,7 @@ final class DirectLaunchTests: XCTestCase {
     private func writeTestRun() throws -> URL {
         let app = products.appendingPathComponent("Debug-iphonesimulator/App.app")
         try FileManager.default.createDirectory(at: app, withIntermediateDirectories: true)
-        try PropertyListSerialization.data(fromPropertyList: ["CFBundleExecutable": "App"], format: .xml, options: 0)
+        try PropertyListSerialization.data(fromPropertyList: ["CFBundleExecutable": "App", "CFBundleIdentifier": "com.example.app"], format: .xml, options: 0)
             .write(to: app.appendingPathComponent("Info.plist"))
 
         let url = products.appendingPathComponent("App_iphonesimulator26.0-arm64.xctestrun")

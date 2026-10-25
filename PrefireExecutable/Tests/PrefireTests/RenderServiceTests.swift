@@ -33,10 +33,23 @@ final class RenderServiceTests: XCTestCase {
 
         XCTAssertEqual(service.xcodebuildArguments(onlyTesting: ["AppTests/PreviewTests/test_Button_Preview"]), [
             "xcodebuild", "test", "-scheme", "App", "-workspace", "App.xcworkspace",
+            "-derivedDataPath", directory.standardizedFileURL.appendingPathComponent(".derived-data").path,
+            "COMPILER_INDEX_STORE_ENABLE=NO", "SWIFT_ENABLE_EXPLICIT_MODULES=NO",
             "-destination", "platform=iOS Simulator,name=iPhone 16",
             "-parallel-testing-enabled", "NO",
             "-only-testing:AppTests/PreviewTests/test_Button_Preview",
         ])
+    }
+
+    func test_xcodebuildArguments_keepTheDerivedDataAsked() {
+        let service = RenderService(configuration: RenderConfiguration(
+            scheme: "App", outputDirectory: directory, xcodebuildArguments: ["-derivedDataPath", "/dd"]
+        ))
+
+        let arguments = service.xcodebuildArguments(onlyTesting: [])
+
+        XCTAssertEqual(arguments.filter { $0 == "-derivedDataPath" }.count, 1)
+        XCTAssertFalse(arguments.contains("COMPILER_INDEX_STORE_ENABLE=NO"))
     }
 
     func test_xcodebuildArguments_withProject() {

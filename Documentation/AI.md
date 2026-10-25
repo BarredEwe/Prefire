@@ -166,11 +166,15 @@ them, which takes most of the time of a small render:
 
 - On a simulator, the host app is installed with `simctl` (after the first time, only the files the
   build changed are copied into it) and launched with the test bundle injected, the way `xcodebuild`
-  launches it. A render after a one-line change of the Prefire example takes about 12 s instead of
+  launches it. A render after a one-line change of the Prefire example takes about 8 s instead of
   about 38 s.
 - Elsewhere, like on a Mac, the tests run with `xcodebuild test-without-building`.
 - The build skips resolving packages again (`-disableAutomaticPackageResolution`), and does it only
   when `Package.resolved` is out of date.
+- Renders build into derived data of their own, `.derived-data` in the output directory, without
+  an index and with implicit modules: a first render builds about a third faster, and Xcode's own
+  builds are neither rebuilt nor waited for. Set `-derivedDataPath` in `xcodebuild_args` to build
+  elsewhere, with Xcode's settings.
 
 Without `test_target`, with `direct_launch: false`, or when the tests can't be launched that way,
 the render runs `xcodebuild test` as before.

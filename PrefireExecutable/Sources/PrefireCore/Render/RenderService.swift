@@ -9,6 +9,27 @@ public protocol ProcessRunning: Sendable {
 
     /// Runs `executable` with `arguments` and returns its standard output.
     func capture(executable: String, arguments: [String]) throws -> (status: Int32, output: String)
+
+    /// `run`, stopping the program once `isFinished` is true of its output so far.
+    func run(
+        executable: String,
+        arguments: [String],
+        environment: [String: String],
+        logFile: URL,
+        until isFinished: @escaping @Sendable (String) -> Bool
+    ) throws -> Int32
+}
+
+public extension ProcessRunning {
+    func run(
+        executable: String,
+        arguments: [String],
+        environment: [String: String],
+        logFile: URL,
+        until isFinished: @escaping @Sendable (String) -> Bool
+    ) throws -> Int32 {
+        try run(executable: executable, arguments: arguments, environment: environment, logFile: logFile)
+    }
 }
 
 /// Runs programs with `Process`.
@@ -34,6 +55,49 @@ public struct ProcessRunner: ProcessRunning {
         try process.run()
         process.waitUntilExit()
         return process.terminationStatus
+    }
+
+    public func run(
+        executable: String,
+        arguments: [String],
+        environment: [String: String],
+        logFile: URL,
+        until isFinished: @escaping @Sendable (String) -> Bool
+    ) throws -> Int32 {
+        try FileManager.default.createDirectory(at: logFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: logFile.path) {
+            _ = FileManager.default.createFile(atPath: logFile.path, contents: nil)
+        }
+        let log = try FileHandle(forWritingTo: logFile)
+        defer { try? log.close() }
+        try log.seekToEnd()
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.environment = environment
+        process.standardInput = FileHandle.nullDevice
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        try process.run()
+
+        // Read on this thread until the output says it is done or the program ends.
+        var output = ""
+        let reader = pipe.fileHandleForReading
+        while true {
+            let data = reader.availableData
+            if data.isEmpty { break }
+            log.write(data)
+            output += String(decoding: data, as: UTF8.self)
+            if isFinished(output) {
+                // simctl waits for the app to quit on SIGTERM; nothing it does after this is needed.
+                kill(process.processIdentifier, SIGKILL)
+                break
+            }
+        }
+        process.waitUntilExit()
+        return process.terminationReason == .uncaughtSignal ? 0 : process.terminationStatus
     }
 
     public func capture(executable: String, arguments: [String]) throws -> (status: Int32, output: String) {
@@ -196,6 +260,8 @@ public struct RenderService: Sendable {
     public static let logFileName = "xcodebuild.log"
 
     public var configuration: RenderConfiguration
+    /// Folder of the simulators the tests may be launched on.
+    var simulatorDeviceSet = SimulatorTestLauncher.defaultDeviceSet
     private let runner: any ProcessRunning
     private let makeRunID: @Sendable () -> String
 
@@ -337,7 +403,7 @@ public struct RenderService: Sendable {
         step("Read \(testRun.lastPathComponent)")
 
         let identifiers = Self.testIdentifiers(for: plan, catalog: catalog, testTarget: testTarget)
-        let launcher = SimulatorTestLauncher(runner: runner)
+        let launcher = SimulatorTestLauncher(runner: runner, deviceSet: simulatorDeviceSet)
         if let launched = try launcher.run(
             target: target,
             destination: configuration.destination,
@@ -374,6 +440,7 @@ public struct RenderService: Sendable {
     /// Arguments of `xcrun`, running the tests `plan` names from `testRun` without building them.
     func testWithoutBuildingArguments(testRun: URL, plan: Plan) -> [String] {
         var arguments = ["xcodebuild", "test-without-building", "-xctestrun", testRun.path, "-destination", configuration.destination]
+        arguments += configuration.xcodebuildArguments.contains("-derivedDataPath") ? [] : ["-derivedDataPath", derivedDataDirectory.path]
         arguments += ["-parallel-testing-enabled", "NO"]
         arguments += plan.onlyTesting.map { "-only-testing:\($0)" }
         arguments += plan.skipTesting.map { "-skip-testing:\($0)" }
@@ -455,7 +522,21 @@ public struct RenderService: Sendable {
         } else if let project = configuration.project {
             arguments += ["-project", project]
         }
-        return arguments
+        return arguments + derivedDataArguments
+    }
+
+    /// Derived data of the renders, apart from Xcode's, so a render builds with settings of its own
+    /// without rebuilding what Xcode built, and never waits for a build of Xcode to finish.
+    var derivedDataDirectory: URL {
+        configuration.outputDirectory.standardizedFileURL.appendingPathComponent(".derived-data", isDirectory: true)
+    }
+
+    /// Builds into `derivedDataDirectory` without an index, which only Xcode reads and which takes
+    /// a third of a clean build, and with implicit modules, quicker for one changed file. Nothing
+    /// is set when `xcodebuild_args` picks the derived data.
+    private var derivedDataArguments: [String] {
+        guard !configuration.xcodebuildArguments.contains("-derivedDataPath") else { return [] }
+        return ["-derivedDataPath", derivedDataDirectory.path, "COMPILER_INDEX_STORE_ENABLE=NO", "SWIFT_ENABLE_EXPLICIT_MODULES=NO"]
     }
 
     // MARK: - xcodebuild

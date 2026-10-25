@@ -19,18 +19,17 @@ struct SimulatorDevice: Equatable, Sendable {
 /// load the test bundle, but without the test session `xcodebuild` sets up around it, which takes
 /// most of the time of a render.
 struct SimulatorTestLauncher {
+    /// Simulators `simctl` manages by default.
+    static let defaultDeviceSet = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Developer/CoreSimulator/Devices", isDirectory: true)
+
     let runner: any ProcessRunning
+    /// Folder of the simulators, read directly: every `simctl` command takes over a second.
+    var deviceSet: URL = defaultDeviceSet
 
-    /// Simulator a `-destination` names, or `nil` when it names none, like a Mac.
+    /// Simulator a `-destination` names among the `devices` of `simctl list devices --json`, or
+    /// `nil` when it names none, like a Mac.
     static func device(for destination: String, in devicesJSON: Data) -> SimulatorDevice? {
-        var keys: [String: String] = [:]
-        for part in destination.split(separator: ",") {
-            let pair = part.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-            if pair.count == 2 { keys[pair[0].lowercased()] = pair[1] }
-        }
-        guard let platform = keys["platform"], platform.hasSuffix("Simulator") else { return nil }
-        let os = platform.replacingOccurrences(of: " Simulator", with: "")
-
         guard let json = try? JSONSerialization.jsonObject(with: devicesJSON) as? [String: Any],
               let byRuntime = json["devices"] as? [String: [[String: Any]]] else { return nil }
         let devices = byRuntime.flatMap { runtime, devices in
@@ -40,6 +39,32 @@ struct SimulatorTestLauncher {
                 return SimulatorDevice(udid: udid, name: name, runtime: runtime, isBooted: device["state"] as? String == "Booted")
             }
         }
+        return device(for: destination, among: devices)
+    }
+
+    /// Simulators in `deviceSet`, read from their `device.plist`.
+    static func devices(inDeviceSet deviceSet: URL) -> [SimulatorDevice] {
+        let folders = (try? FileManager.default.contentsOfDirectory(at: deviceSet, includingPropertiesForKeys: nil)) ?? []
+        return folders.compactMap { folder in
+            guard let data = try? Data(contentsOf: folder.appendingPathComponent("device.plist")),
+                  let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+                  plist["isDeleted"] as? Bool != true,
+                  let udid = plist["UDID"] as? String, let name = plist["name"] as? String,
+                  let runtime = plist["runtime"] as? String else { return nil }
+            // CoreSimulator's state 3 is booted.
+            return SimulatorDevice(udid: udid, name: name, runtime: runtime, isBooted: plist["state"] as? Int == 3)
+        }
+    }
+
+    /// Simulator a `-destination` names among `devices`, or `nil` when it names none, like a Mac.
+    static func device(for destination: String, among devices: [SimulatorDevice]) -> SimulatorDevice? {
+        var keys: [String: String] = [:]
+        for part in destination.split(separator: ",") {
+            let pair = part.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            if pair.count == 2 { keys[pair[0].lowercased()] = pair[1] }
+        }
+        guard let platform = keys["platform"], platform.hasSuffix("Simulator") else { return nil }
+        let os = platform.replacingOccurrences(of: " Simulator", with: "")
 
         if let id = keys["id"] {
             return devices.first { $0.udid == id }
@@ -71,8 +96,7 @@ struct SimulatorTestLauncher {
               let hostPath = target.testHostPath, let bundleID = target.testHostBundleIdentifier,
               let executableName = Self.executableName(ofApp: hostPath),
               let developerDirectory = try capture(["/usr/bin/xcode-select", "-p"]),
-              let list = try capture(["/usr/bin/xcrun", "simctl", "list", "devices", "available", "--json"]),
-              let device = Self.device(for: destination, in: Data(list.utf8)) else { return nil }
+              let device = try device(for: destination) else { return nil }
 
         let started = Date()
         let step = { (name: String) in Logger.verbose(String(format: "  %@: %.1f s", name, Date().timeIntervalSince(started))) }
@@ -102,9 +126,35 @@ struct SimulatorTestLauncher {
         }
         arguments += target.commandLineArguments
 
-        _ = try runner.run(executable: "/usr/bin/xcrun", arguments: arguments, environment: processEnvironment, logFile: logFile)
+        // The host app takes a second to quit after the tests; their summary is all a render needs.
+        _ = try runner.run(executable: "/usr/bin/xcrun", arguments: arguments, environment: processEnvironment, logFile: logFile, until: Self.testsFinished)
         step("Ran the tests")
         return Self.status(ofTestOutput: (try? String(contentsOf: logFile, encoding: .utf8)) ?? "")
+    }
+
+    /// Simulator `destination` names, from the device set, or from `simctl` when that has none.
+    private func device(for destination: String) throws -> SimulatorDevice? {
+        if let device = Self.device(for: destination, among: Self.devices(inDeviceSet: deviceSet)) {
+            return device
+        }
+        guard let list = try capture(["/usr/bin/xcrun", "simctl", "list", "devices", "available", "--json"]) else { return nil }
+        return Self.device(for: destination, in: Data(list.utf8))
+    }
+
+    /// Path of the app `bundleID` installed on simulator `udid`, read from its containers.
+    func installedApp(bundleID: String, udid: String) -> String? {
+        let applications = deviceSet.appendingPathComponent("\(udid)/data/Containers/Bundle/Application", isDirectory: true)
+        let containers = (try? FileManager.default.contentsOfDirectory(at: applications, includingPropertiesForKeys: nil)) ?? []
+        for container in containers {
+            let apps = (try? FileManager.default.contentsOfDirectory(at: container, includingPropertiesForKeys: nil)) ?? []
+            for app in apps where app.pathExtension == "app" {
+                guard let data = try? Data(contentsOf: app.appendingPathComponent("Info.plist")),
+                      let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+                      plist["CFBundleIdentifier"] as? String == bundleID else { continue }
+                return app.path
+            }
+        }
+        return nil
     }
 
     /// Puts the host app at `path` on the simulator.
@@ -116,18 +166,27 @@ struct SimulatorTestLauncher {
     /// - Returns: Path of the installed app.
     private func install(app path: String, bundleID: String, on udid: String, logFile: URL) throws -> String? {
         let containerCommand = ["/usr/bin/xcrun", "simctl", "get_app_container", udid, bundleID]
-        if let installed = try capture(containerCommand), Self.sameInfoPlist(path, installed),
+        if let installed = installedApp(bundleID: bundleID, udid: udid), Self.sameInfoPlist(path, installed),
            try runner.run(executable: "/usr/bin/rsync", arguments: ["-a", "--delete", path + "/", installed + "/"], environment: [:], logFile: logFile) == 0 {
             return installed
         }
         guard try runner.run(executable: "/usr/bin/xcrun", arguments: ["simctl", "install", udid, path], environment: [:], logFile: logFile) == 0 else { return nil }
-        return try capture(containerCommand)
+        return try installedApp(bundleID: bundleID, udid: udid) ?? capture(containerCommand)
     }
 
     private static func sameInfoPlist(_ lhs: String, _ rhs: String) -> Bool {
         let plist = { (app: String) in try? Data(contentsOf: URL(fileURLWithPath: app).appendingPathComponent("Info.plist")) }
         guard let lhs = plist(lhs) else { return false }
         return lhs == plist(rhs)
+    }
+
+    /// Whether `output` holds the summary of the whole test run: the line after its top suite ends.
+    static func testsFinished(_ output: String) -> Bool {
+        let lines = output.components(separatedBy: .newlines)
+        guard let end = lines.lastIndex(where: {
+            $0.hasPrefix("Test Suite 'Selected tests'") || $0.hasPrefix("Test Suite 'All tests'")
+        }), lines[end].contains(" passed at ") || lines[end].contains(" failed at ") else { return false }
+        return lines[(end + 1)...].contains { $0.contains("Executed ") && $0.contains(" with ") }
     }
 
     /// 0 when the output ends with tests that all passed, 1 when one failed or they never finished.
