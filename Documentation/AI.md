@@ -42,6 +42,7 @@ render_configuration:
 | `output_dir`  | Directory of the images, their records, `manifest.json` and `board.html`. Default: `.prefire/render`. Add it to `.gitignore`.                                       |
 | `sources`     | Files or folders the previews are looked for in. Default: `sources` of `test_configuration`, or the current directory.                                             |
 | `xcodebuild_args` | Arguments passed on to `xcodebuild` after Prefire's own, like `-derivedDataPath` and its value, or `-skipPackagePluginValidation`. Optional.                   |
+| `direct_launch` | `false` runs the tests with plain `xcodebuild test`. Default: `true`, see [How a render runs](#how-a-render-runs).                                        |
 
 Outside of Xcode `${PROJECT_DIR}` is the folder of the config given with `--config`, or the current
 directory, so `sources` written for `prefire tests` work as they are.
@@ -123,7 +124,8 @@ SHA-256 into `server.json`, which the release workflow publishes.
 | `render_previews` | `previews`, `devices`, `color_scheme`, `dynamic_type`, `max_images` (default 6)                  | A JSON summary with the path of every image, then up to `max_images` images.            |
 | `build_board`     | `embed_images`                                                                                    | Path of the board of the last render.                                                    |
 
-A render builds the project, so it takes as long as a test run. Raise the tool timeout of your
+A render builds the project, so the first one takes as long as a build; later ones take seconds,
+see [How a render runs](#how-a-render-runs). Raise the tool timeout of your
 client if it gives up sooner (Claude Code: `MCP_TOOL_TIMEOUT`, in milliseconds). Ask for the
 previews you need rather than all of them: with `test_target` set, only their tests run.
 
@@ -155,6 +157,23 @@ without a user story come last. The page follows the light or dark appearance of
         .previewState(.error)
 }
 ```
+
+### How a render runs
+
+With `test_target` set, a render builds the tests once with `xcodebuild build-for-testing`, then runs
+them from the `.xctestrun` file it writes, skipping the test session `xcodebuild test` sets up around
+them, which takes most of the time of a small render:
+
+- On a simulator, the host app is installed with `simctl` (after the first time, only the files the
+  build changed are copied into it) and launched with the test bundle injected, the way `xcodebuild`
+  launches it. A render after a one-line change of the Prefire example takes about 12 s instead of
+  about 38 s.
+- Elsewhere, like on a Mac, the tests run with `xcodebuild test-without-building`.
+- The build skips resolving packages again (`-disableAutomaticPackageResolution`), and does it only
+  when `Package.resolved` is out of date.
+
+Without `test_target`, with `direct_launch: false`, or when the tests can't be launched that way,
+the render runs `xcodebuild test` as before.
 
 ### Notes
 

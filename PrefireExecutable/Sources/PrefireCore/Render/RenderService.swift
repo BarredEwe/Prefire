@@ -3,9 +3,12 @@ import PathKit
 
 /// Runs a program to its end.
 public protocol ProcessRunning: Sendable {
-    /// Runs `executable` with `arguments` and `environment`, writing its output to `logFile`.
+    /// Runs `executable` with `arguments` and `environment`, adding its output to `logFile`.
     /// - Returns: Exit status of the program.
     func run(executable: String, arguments: [String], environment: [String: String], logFile: URL) throws -> Int32
+
+    /// Runs `executable` with `arguments` and returns its standard output.
+    func capture(executable: String, arguments: [String]) throws -> (status: Int32, output: String)
 }
 
 /// Runs programs with `Process`.
@@ -14,9 +17,12 @@ public struct ProcessRunner: ProcessRunning {
 
     public func run(executable: String, arguments: [String], environment: [String: String], logFile: URL) throws -> Int32 {
         try FileManager.default.createDirectory(at: logFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-        _ = FileManager.default.createFile(atPath: logFile.path, contents: nil)
+        if !FileManager.default.fileExists(atPath: logFile.path) {
+            _ = FileManager.default.createFile(atPath: logFile.path, contents: nil)
+        }
         let log = try FileHandle(forWritingTo: logFile)
         defer { try? log.close() }
+        try log.seekToEnd()
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
@@ -28,6 +34,21 @@ public struct ProcessRunner: ProcessRunning {
         try process.run()
         process.waitUntilExit()
         return process.terminationStatus
+    }
+
+    public func capture(executable: String, arguments: [String]) throws -> (status: Int32, output: String) {
+        let output = Pipe()
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        // Read before waiting: a full pipe would block the program.
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return (process.terminationStatus, String(decoding: data, as: UTF8.self))
     }
 }
 
@@ -54,6 +75,9 @@ public struct RenderConfiguration: Equatable, Sendable {
     /// Whether the tests are named as the default template names them, so single ones can be run.
     /// `false` with a `template_file_path` of one's own.
     public var testsHaveDefaultNames: Bool
+    /// Whether the tests are built with `build-for-testing` and run without the test session of
+    /// `xcodebuild test`: on a simulator they are launched with `simctl`. Needs `testTarget`.
+    public var launchesTestsDirectly: Bool
 
     public init(
         scheme: String,
@@ -66,7 +90,8 @@ public struct RenderConfiguration: Equatable, Sendable {
         previewDefaultEnabled: Bool = true,
         useGroupedSnapshots: Bool = true,
         xcodebuildArguments: [String] = [],
-        testsHaveDefaultNames: Bool = true
+        testsHaveDefaultNames: Bool = true,
+        launchesTestsDirectly: Bool = true
     ) {
         self.scheme = scheme
         self.workspace = workspace
@@ -79,6 +104,7 @@ public struct RenderConfiguration: Equatable, Sendable {
         self.useGroupedSnapshots = useGroupedSnapshots
         self.xcodebuildArguments = xcodebuildArguments
         self.testsHaveDefaultNames = testsHaveDefaultNames
+        self.launchesTestsDirectly = launchesTestsDirectly
     }
 
     /// Whether `destination` is a Mac, where screens are not rendered on devices.
@@ -223,13 +249,21 @@ public struct RenderService: Sendable {
         )
 
         let logFile = directory.appendingPathComponent(Self.logFileName)
+        // Each render writes a log of its own; the steps of one add to it.
+        try? FileManager.default.removeItem(at: logFile)
         Logger.info("Rendering with xcodebuild, its output goes to \(logFile.path)")
-        let status = try runner.run(
-            executable: "/usr/bin/xcrun",
-            arguments: xcodebuildArguments(onlyTesting: plan.onlyTesting, skipTesting: plan.skipTesting),
-            environment: try environment(for: options),
-            logFile: logFile
-        )
+        let environment = try environment(for: options)
+        let status: Int32
+        if let directStatus = try runDirectly(plan: plan, catalog: catalog, options: options, environment: environment, logFile: logFile) {
+            status = directStatus
+        } else {
+            status = try runner.run(
+                executable: "/usr/bin/xcrun",
+                arguments: xcodebuildArguments(onlyTesting: plan.onlyTesting, skipTesting: plan.skipTesting),
+                environment: environment,
+                logFile: logFile
+            )
+        }
 
         // The images of the last render stay until a run renders anew, so a broken build keeps them.
         let testsRan = Self.testsRan(in: directory, runID: options.runID)
@@ -259,17 +293,177 @@ public struct RenderService: Sendable {
         return result
     }
 
-    // MARK: - xcodebuild
+    // MARK: - Direct launch
 
-    /// Arguments of `xcrun`, running `xcodebuild test` for the tests `onlyTesting` names, except those
-    /// `skipTesting` names.
-    func xcodebuildArguments(onlyTesting: [String], skipTesting: [String] = []) -> [String] {
-        var arguments = ["xcodebuild", "test", "-scheme", configuration.scheme]
+    /// Builds the tests with `build-for-testing` and runs them from the `.xctestrun` it writes:
+    /// app-hosted tests on a simulator with `simctl`, others with `xcodebuild test-without-building`.
+    ///
+    /// The test session of `xcodebuild test` takes most of a render: launched directly, a
+    /// simulator runs the tests in seconds.
+    ///
+    /// - Returns: Exit status, or `nil` to run `xcodebuild test` instead.
+    func runDirectly(plan: Plan, catalog: [PreviewEntry], options: RenderOptions, environment: [String: String], logFile: URL) throws -> Int32? {
+        guard configuration.launchesTestsDirectly, let testTarget = configuration.testTarget else { return nil }
+        let started = Date()
+        let step = { (name: String) in Logger.verbose(String(format: "%@: %.1f s", name, Date().timeIntervalSince(started))) }
+
+        // Xcode takes the environment into the build settings, so options that change on every render
+        // would have it plan the build anew each time. The tests get them when they run.
+        var buildEnvironment = environment
+        buildEnvironment[RenderOptions.environmentKey] = nil
+        buildEnvironment[RenderOptions.testRunnerEnvironmentKey] = nil
+
+        var status = try runner.run(
+            executable: "/usr/bin/xcrun",
+            arguments: buildForTestingArguments(testTarget: testTarget, resolvingPackages: false),
+            environment: buildEnvironment,
+            logFile: logFile
+        )
+        if status != 0, Self.needsPackageResolution(logFile: logFile) {
+            status = try runner.run(
+                executable: "/usr/bin/xcrun",
+                arguments: buildForTestingArguments(testTarget: testTarget, resolvingPackages: true),
+                environment: buildEnvironment,
+                logFile: logFile
+            )
+        }
+        step("Built for testing")
+        // A broken build is the answer: running the tests would only build it again.
+        guard status == 0 else { return status }
+
+        guard let products = try productsDirectory(),
+              let testRun = Self.latestTestRun(in: products, scheme: configuration.scheme, since: started),
+              let target = try? XCTestRun.targets(in: testRun).first(where: { $0.name == testTarget }) else { return nil }
+        step("Read \(testRun.lastPathComponent)")
+
+        let identifiers = Self.testIdentifiers(for: plan, catalog: catalog, testTarget: testTarget)
+        let launcher = SimulatorTestLauncher(runner: runner)
+        if let launched = try launcher.run(
+            target: target,
+            destination: configuration.destination,
+            selectors: XCTestRun.selectors(for: identifiers, target: target),
+            environment: [RenderOptions.environmentKey: environment[RenderOptions.environmentKey] ?? ""],
+            logFile: logFile
+        ), Self.testsRan(in: URL(fileURLWithPath: options.directory), runID: options.runID) {
+            return launched
+        }
+
+        Logger.info("Running the tests with xcodebuild test-without-building")
+        return try runner.run(
+            executable: "/usr/bin/xcrun",
+            arguments: testWithoutBuildingArguments(testRun: testRun, plan: plan),
+            environment: environment,
+            logFile: logFile
+        )
+    }
+
+    /// Arguments of `xcrun`, building the tests of `testTarget` for `test-without-building`.
+    ///
+    /// - Parameter resolvingPackages: Lets `xcodebuild` resolve the packages again, which takes
+    ///   seconds on every run. Needed only when `Package.resolved` is out of date.
+    func buildForTestingArguments(testTarget: String, resolvingPackages: Bool) -> [String] {
+        var arguments = ["xcodebuild", "build-for-testing"] + projectArguments
+        arguments += ["-destination", configuration.destination, "-only-testing:\(testTarget)"]
+        if !resolvingPackages {
+            arguments += ["-disableAutomaticPackageResolution", "-skipPackageUpdates"]
+        }
+        arguments += configuration.xcodebuildArguments
+        return arguments
+    }
+
+    /// Arguments of `xcrun`, running the tests `plan` names from `testRun` without building them.
+    func testWithoutBuildingArguments(testRun: URL, plan: Plan) -> [String] {
+        var arguments = ["xcodebuild", "test-without-building", "-xctestrun", testRun.path, "-destination", configuration.destination]
+        arguments += ["-parallel-testing-enabled", "NO"]
+        arguments += plan.onlyTesting.map { "-only-testing:\($0)" }
+        arguments += plan.skipTesting.map { "-skip-testing:\($0)" }
+        arguments += configuration.xcodebuildArguments
+        return arguments
+    }
+
+    static func needsPackageResolution(logFile: URL) -> Bool {
+        let log = ((try? String(contentsOf: logFile, encoding: .utf8)) ?? "").lowercased()
+        return log.contains("package.resolved") || log.contains("resolve package")
+    }
+
+    /// Tests to run, as `Target/Class/method`, or only the target to run all of them.
+    ///
+    /// A run of the whole target that skips tests lists the others instead, since `simctl` can
+    /// only name the tests to run.
+    static func testIdentifiers(for plan: Plan, catalog: [PreviewEntry], testTarget: String) -> [String] {
+        guard plan.onlyTesting == [testTarget], !plan.skipTesting.isEmpty else { return plan.onlyTesting }
+        var identifiers: [String] = []
+        for entry in catalog {
+            let identifier = "\(testTarget)/\(entry.testClass)/\(entry.testMethod)"
+            if !identifiers.contains(identifier), !plan.skipTesting.contains(identifier) {
+                identifiers.append(identifier)
+            }
+        }
+        return identifiers
+    }
+
+    /// Newest `.xctestrun` of `scheme` in `directory` written since `date`.
+    static func latestTestRun(in directory: URL, scheme: String, since date: Date) -> URL? {
+        let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        return files
+            .filter { $0.pathExtension == "xctestrun" && $0.lastPathComponent.hasPrefix(scheme + "_") }
+            .compactMap { file -> (URL, Date)? in
+                guard let modified = try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
+                      modified >= date.addingTimeInterval(-2) else { return nil }
+                return (file, modified)
+            }
+            .max { $0.1 < $1.1 }?
+            .0
+    }
+
+    /// `Build/Products` of the scheme in its derived data, where `.xctestrun` files go.
+    ///
+    /// Asking `xcodebuild` takes seconds, so the answer is kept in the output directory for the
+    /// same arguments.
+    func productsDirectory() throws -> URL? {
+        var arguments = ["xcodebuild", "-showBuildSettings"] + projectArguments
+        arguments += ["-destination", configuration.destination, "-disableAutomaticPackageResolution", "-skipPackageUpdates"]
+        arguments += configuration.xcodebuildArguments
+
+        let cache = configuration.outputDirectory.standardizedFileURL.appendingPathComponent(Self.productsCacheFileName)
+        let key = arguments.joined(separator: "\u{1F}")
+        if let cached = try? JSONDecoder().decode([String: String].self, from: Data(contentsOf: cache)),
+           cached["key"] == key, let path = cached["path"], FileManager.default.fileExists(atPath: path) {
+            return URL(fileURLWithPath: path, isDirectory: true)
+        }
+
+        let result = try runner.capture(executable: "/usr/bin/xcrun", arguments: arguments)
+        guard result.status == 0, let path = Self.symroot(inBuildSettings: result.output) else { return nil }
+        try? JSONEncoder().encode(["key": key, "path": path]).write(to: cache, options: .atomic)
+        return URL(fileURLWithPath: path, isDirectory: true)
+    }
+
+    static let productsCacheFileName = ".prefire-products.json"
+
+    /// `SYMROOT` in the output of `xcodebuild -showBuildSettings`.
+    static func symroot(inBuildSettings output: String) -> String? {
+        output.components(separatedBy: .newlines).lazy
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { $0.hasPrefix("SYMROOT = ") }
+            .map { String($0.dropFirst("SYMROOT = ".count)) }
+    }
+
+    private var projectArguments: [String] {
+        var arguments = ["-scheme", configuration.scheme]
         if let workspace = configuration.workspace {
             arguments += ["-workspace", workspace]
         } else if let project = configuration.project {
             arguments += ["-project", project]
         }
+        return arguments
+    }
+
+    // MARK: - xcodebuild
+
+    /// Arguments of `xcrun`, running `xcodebuild test` for the tests `onlyTesting` names, except those
+    /// `skipTesting` names.
+    func xcodebuildArguments(onlyTesting: [String], skipTesting: [String] = []) -> [String] {
+        var arguments = ["xcodebuild", "test"] + projectArguments
         arguments += ["-destination", configuration.destination]
         // Clones of the simulator would write into the same directory at the same time.
         arguments += ["-parallel-testing-enabled", "NO"]

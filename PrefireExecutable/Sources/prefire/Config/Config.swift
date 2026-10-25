@@ -79,6 +79,7 @@ struct RenderConfig {
     var outputDir: String?
     var sources: [String]?
     var xcodebuildArgs: [String]?
+    var directLaunch: Bool?
 
     enum CodingKeys: String, CodingKey {
         case scheme = "scheme"
@@ -89,6 +90,7 @@ struct RenderConfig {
         case outputDir = "output_dir"
         case sources = "sources"
         case xcodebuildArgs = "xcodebuild_args"
+        case directLaunch = "direct_launch"
     }
 }
 
