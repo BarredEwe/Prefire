@@ -65,6 +65,7 @@ jobs:
 
           make update version="${VERSION}"
           make test
+          make mcpb
 
           bundled="Binaries/PrefireBinary.artifactbundle/prefire-${VERSION}-macos/bin/prefire"
           actual="$("$bundled" --version)"
@@ -77,15 +78,18 @@ jobs:
           git config user.email "$GIT_EMAIL"
           git add -- \
             Binaries/PrefireBinary.artifactbundle \
-            PrefireExecutable/Sources/prefire/Commands/Version/Version.swift
+            PrefireExecutable/Sources/prefire/Commands/Version/Version.swift \
+            server.json
           git commit -m "Update version to ${VERSION}"
           git tag "${VERSION}"
           git push origin "HEAD:${BRANCH}" "refs/tags/${VERSION}"
           echo "rebuilt=true" >> "$GITHUB_OUTPUT"
 
-      - name: Rebuild bundled binary from current source
+      - name: Rebuild bundled binary and MCP bundle from current source
         if: steps.bump.outputs.rebuilt != 'true'
-        run: make binary
+        run: |
+          make binary
+          make mcpb
 
       - name: Create archive
         run: make archive
@@ -95,7 +99,17 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.value }}
           generate_release_notes: true
-          files: prefire.tar.gz
+          files: |
+            prefire.tar.gz
+            prefire-mcp-${{ steps.version.outputs.value }}.mcpb
+
+      # server.json points at the .mcpb of this release, with its SHA-256, written by `make mcpb`.
+      - name: Keep server.json for the MCP Registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-json
+          path: server.json
+          if-no-files-found: error
 
   update-homebrew:
     needs: release
@@ -112,3 +126,29 @@ jobs:
           download-url: "https://github.com/barredewe/prefire/releases/download/${{ needs.release.outputs.version }}/prefire.tar.gz"
         env:
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+
+  publish-mcp-registry:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC login to the MCP Registry, for the io.github.BarredEwe/* names
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.4
+    steps:
+      - name: Download server.json
+        uses: actions/download-artifact@v4
+        with:
+          name: server-json
+
+      - name: Install mcp-publisher
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz" \
+            | tar xz mcp-publisher
+
+      - name: Publish to the MCP Registry
+        run: |
+          set -euo pipefail
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

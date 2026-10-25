@@ -12,6 +12,11 @@ CUR_VERSION = $(shell sed -n 's/.*static let value: String = "\([^"]*\)".*/\1/p'
 BUNDLE_DIR = $(ARTIFACT_BUNDLE)/prefire-$(CUR_VERSION)-macos
 BUNDLE_BIN = $(BUNDLE_DIR)/bin
 
+# MCP Bundle of `prefire mcp` for the MCP Registry, which wants "mcp" in the file name.
+MCPB_CLI := npx --yes @anthropic-ai/mcpb@2.1.2
+MCPB_STAGE := .build/mcpb
+MCPB_FILE = prefire-mcp-$(CUR_VERSION).mcpb
+
 # Build destination. Unversioned, so the build uses whichever iOS Simulator SDK the selected
 # Xcode provides; `OS=` resolves against the SDK version and fails when it is not installed.
 # Override for other platforms: make build DESTINATION='generic/platform=iOS'
@@ -81,7 +86,7 @@ IOS_SIMULATOR_SLIM_JOBS := \
 # `make slim-sim` are added and removed. It survives `simctl erase`.
 IOS_SIMULATOR_DISABLED_STORE = /private/var/tmp/com.apple.CoreSimulator.SimDevice.$(IOS_SIMULATOR_ID)/disabled.plist
 
-.PHONY: help build binary cli test test-cli test-ios slim-sim restore-sim update archive clean
+.PHONY: help build binary cli test test-cli test-ios slim-sim restore-sim update archive mcpb clean
 
 ##@ General
 
@@ -94,8 +99,8 @@ help: ## Show this help
 	/^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo
 
-clean: ## Remove local SwiftPM build products and prefire.tar.gz
-	rm -rf PrefireExecutable/.build PrefireSnapshotTests/.build .build prefire.tar.gz
+clean: ## Remove local SwiftPM build products, prefire.tar.gz and .mcpb files
+	rm -rf PrefireExecutable/.build PrefireSnapshotTests/.build .build prefire.tar.gz prefire-mcp-*.mcpb
 
 ##@ Build
 
@@ -185,6 +190,22 @@ update: ## Bump version and rebuild the bundled CLI (make update version=x.y.z)
 archive: ## Pack the bundled CLI into prefire.tar.gz
 	$(call require-version)
 	tar -czf prefire.tar.gz -C "$(BUNDLE_BIN)" prefire
+
+mcpb: ## Pack the bundled CLI into prefire-mcp-<version>.mcpb and point server.json at it (needs Node)
+	$(call require-version)
+	rm -rf "$(MCPB_STAGE)"
+	mkdir -p "$(MCPB_STAGE)/server"
+	cp "$(BUNDLE_BIN)/prefire" "$(MCPB_STAGE)/server/prefire"
+	cp LICENSE "$(MCPB_STAGE)/LICENSE"
+	jq --arg v "$(CUR_VERSION)" '.version = $$v' mcpb/manifest.json > "$(MCPB_STAGE)/manifest.json"
+	$(MCPB_CLI) validate "$(MCPB_STAGE)/manifest.json"
+	$(MCPB_CLI) pack "$(MCPB_STAGE)" "$(MCPB_FILE)"
+	sha=$$(shasum -a 256 "$(MCPB_FILE)" | cut -d' ' -f1); \
+	jq --arg v "$(CUR_VERSION)" --arg sha "$$sha" \
+		--arg url "https://github.com/BarredEwe/Prefire/releases/download/$(CUR_VERSION)/$(MCPB_FILE)" \
+		'.version = $$v | .packages[0].version = $$v | .packages[0].identifier = $$url | .packages[0].fileSha256 = $$sha' \
+		server.json > server.json.tmp
+	mv server.json.tmp server.json
 
 define require-version
 $(if $(CUR_VERSION),,$(error Could not read version from $(VERSION_FILE)))
