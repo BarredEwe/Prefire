@@ -71,7 +71,9 @@ struct RenderSetupOptions: ParsableArguments {
             previewDefaultEnabled: config?.tests.previewDefaultEnabled ?? true,
             useGroupedSnapshots: config?.tests.useGroupedSnapshots ?? true,
             xcodebuildArguments: (config?.render.xcodebuildArgs ?? []) + xcodebuildArgs,
-            testsHaveDefaultNames: config?.tests.template == nil
+            testsHaveDefaultNames: config?.tests.template == nil,
+            launchesTestsDirectly: config?.render.directLaunch ?? true,
+            usesOwnDerivedData: config?.render.ownDerivedData ?? false
         )
     }
 }

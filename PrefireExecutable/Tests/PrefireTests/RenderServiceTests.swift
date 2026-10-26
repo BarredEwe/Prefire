@@ -39,6 +39,30 @@ final class RenderServiceTests: XCTestCase {
         ])
     }
 
+    func test_xcodebuildArguments_buildIntoOwnDerivedData_whenAsked() {
+        let service = RenderService(configuration: RenderConfiguration(scheme: "App", outputDirectory: directory, usesOwnDerivedData: true))
+
+        let arguments = service.xcodebuildArguments(onlyTesting: [])
+
+        XCTAssertEqual(Array(arguments[2...6]), [
+            "-scheme", "App",
+            "-derivedDataPath", directory.standardizedFileURL.appendingPathComponent(".derived-data").path,
+            "COMPILER_INDEX_STORE_ENABLE=NO",
+        ])
+        XCTAssertTrue(arguments.contains("SWIFT_ENABLE_EXPLICIT_MODULES=NO"))
+    }
+
+    func test_xcodebuildArguments_keepTheDerivedDataAsked() {
+        let service = RenderService(configuration: RenderConfiguration(
+            scheme: "App", outputDirectory: directory, xcodebuildArguments: ["-derivedDataPath", "/dd"], usesOwnDerivedData: true
+        ))
+
+        let arguments = service.xcodebuildArguments(onlyTesting: [])
+
+        XCTAssertEqual(arguments.filter { $0 == "-derivedDataPath" }.count, 1)
+        XCTAssertFalse(arguments.contains("COMPILER_INDEX_STORE_ENABLE=NO"))
+    }
+
     func test_xcodebuildArguments_withProject() {
         let service = RenderService(configuration: RenderConfiguration(scheme: "App", project: "App.xcodeproj", outputDirectory: directory))
 
@@ -161,7 +185,7 @@ final class RenderServiceTests: XCTestCase {
             return 0
         }
         let service = RenderService(
-            configuration: RenderConfiguration(scheme: "App", testTarget: "AppTests", outputDirectory: directory),
+            configuration: RenderConfiguration(scheme: "App", testTarget: "AppTests", outputDirectory: directory, launchesTestsDirectly: false),
             runner: runner,
             makeRunID: { "run-1" }
         )
@@ -313,14 +337,28 @@ final class RenderServiceTests: XCTestCase {
     }
 }
 
-private struct FakeRunner: ProcessRunning, @unchecked Sendable {
-    let body: ([String], [String: String]) throws -> Int32
+struct FakeRunner: ProcessRunning, @unchecked Sendable {
+    let body: ([String], [String: String], URL) throws -> Int32
+    let captureBody: ([String]) -> (status: Int32, output: String)
 
     init(_ body: @escaping ([String], [String: String]) throws -> Int32) {
-        self.body = body
+        self.body = { arguments, environment, _ in try body(arguments, environment) }
+        captureBody = { _ in (1, "") }
+    }
+
+    init(
+        run: @escaping ([String], [String: String], URL) throws -> Int32,
+        capture: @escaping ([String]) -> (status: Int32, output: String)
+    ) {
+        body = run
+        captureBody = capture
     }
 
     func run(executable: String, arguments: [String], environment: [String: String], logFile: URL) throws -> Int32 {
-        try body(arguments, environment)
+        try body(arguments, environment, logFile)
+    }
+
+    func capture(executable: String, arguments: [String]) throws -> (status: Int32, output: String) {
+        captureBody([executable] + arguments)
     }
 }

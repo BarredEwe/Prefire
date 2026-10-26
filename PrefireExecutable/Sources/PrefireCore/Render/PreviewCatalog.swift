@@ -47,7 +47,7 @@ public enum PreviewCatalog {
         var files: Set<Path> = []
         for path in sources {
             if path.isDirectory {
-                files.formUnion(try path.recursiveChildren().filter { $0.extension == "swift" })
+                files.formUnion(swiftFiles(in: path))
             } else if path.extension == "swift" {
                 files.insert(path)
             }
@@ -81,6 +81,31 @@ public enum PreviewCatalog {
 
     /// - Parameter providers: Names of the `PrefireProvider` types of the sources. When `nil`, a type
     ///   is one when it conforms to `PrefireProvider` itself.
+    /// Folders of build products and dependencies, which hold no previews of the project but can
+    /// hold thousands of Swift files, like the derived data of `prefire render`.
+    static let skippedFolders: Set<String> = ["DerivedData", "Pods", "Carthage", "node_modules"]
+
+    /// Swift files in `directory`, outside of hidden folders and `skippedFolders`.
+    static func swiftFiles(in directory: Path) -> [Path] {
+        guard let enumerator = FileManager.default.enumerator(
+            at: directory.url,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else { return [] }
+
+        var files: [Path] = []
+        for case let url as URL in enumerator {
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+                if skippedFolders.contains(url.lastPathComponent) {
+                    enumerator.skipDescendants()
+                }
+            } else if url.pathExtension == "swift" {
+                files.append(Path(url.path))
+            }
+        }
+        return files
+    }
+
     static func entries(
         in content: String,
         file: Path,
