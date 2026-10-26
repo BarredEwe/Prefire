@@ -9,13 +9,13 @@
     "source": "github",
     "id": "529987661"
   },
-  "version": "6.4.0",
+  "version": "6.5.0",
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/BarredEwe/Prefire/releases/download/6.4.0/prefire-mcp-6.4.0.mcpb",
-      "version": "6.4.0",
-      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "identifier": "https://github.com/BarredEwe/Prefire/releases/download/6.5.0/prefire-mcp-6.5.0.mcpb",
+      "version": "6.5.0",
+      "fileSha256": "1398d64eb8a04e99b5256094a0cf744ecfe1f703b92af5496311ab28d3325b5a",
       "transport": {
         "type": "stdio"
       }
