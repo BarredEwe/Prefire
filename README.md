@@ -1,13 +1,10 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="Documentation/Images/hero-dark.svg">
-    <img alt="Prefire: turn #Preview into snapshot tests, a Playbook and AI-ready renders" src="Documentation/Images/hero-light.svg" width="100%">
-  </picture>
+  <a href="https://prefire.ru"><img alt="Prefire: your previews are already tests. Snapshot tests, a Playbook and renders your AI agent can see, all from #Preview" src="Documentation/Images/hero.webp" width="100%"></a>
 </p>
 
 <p align="center">
 <a href="https://github.com/BarredEwe/Prefire/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/BarredEwe/Prefire.svg"/></a>
-<a href="https://github.com/BarredEwe/Prefire/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/BarredEwe/Prefire?style=flat&logo=github&color=ff7a1a"/></a>
+<a href="https://github.com/BarredEwe/Prefire/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/BarredEwe/Prefire?style=flat&logo=github&color=ff6a35"/></a>
 <a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20tvOS-green.svg"/></a>
 <a href="https://developer.apple.com/swift"><img alt="Swift6" src="https://img.shields.io/badge/language-Swift_6-green.svg"/></a>
 <a href="https://swift.org/package-manager"><img alt="Swift Package Manager" src="https://img.shields.io/badge/SwiftPM-compatible-yellowgreen.svg"/></a>
@@ -20,28 +17,29 @@
   <a href="#-usage"><b>Usage</b></a> ·
   <a href="#-let-ai-agents-see-swiftui"><b>AI agents</b></a> ·
   <a href="#-configuration-prefireyml"><b>Configuration</b></a> ·
-  <a href="Documentation"><b>Docs</b></a>
+  <a href="Documentation"><b>Docs</b></a> ·
+  <a href="https://prefire.ru"><b>Website</b></a>
 </p>
 
 ## 🔥 What is Prefire?
 
-**Prefire** turns the `#Preview` blocks you already write into tests, a catalog and images, with no extra code.
+Your previews are already tests. **Prefire** turns the `#Preview` blocks you write anyway into snapshot tests, a Playbook catalog and images your AI agent can see. You don't write a line of test code.
 
 <table>
   <tr>
     <td width="33%" valign="top">
       <h3>📸 Snapshot tests</h3>
-      Every preview becomes a snapshot test, on the devices you pick. Catch visual regressions before users do.
+      Every preview becomes a snapshot test on the devices you pick. A changed padding fails the build, not the release.
       <br><br><a href="#snapshot-tests">How it works →</a>
     </td>
     <td width="33%" valign="top">
       <h3>📚 Playbook</h3>
-      An interactive catalog of your components and user stories, with states and render times. Living documentation.
+      A catalog of every component and user story inside your app, with their states and render times.
       <br><br><a href="#playbook-demo-view">See Playbook →</a>
     </td>
     <td width="33%" valign="top">
-      <h3>🤖 AI-ready renders</h3>
-      Claude Code, Cursor and Codex render your previews through an MCP server, on any iPhone or iPad, light or dark.
+      <h3>🤖 Renders for AI agents</h3>
+      Claude Code, Cursor and Codex render your previews through an MCP server and see the UI they just changed.
       <br><br><a href="#-let-ai-agents-see-swiftui">Set up →</a>
     </td>
   </tr>
@@ -63,12 +61,12 @@
 - 🧠 **Fast Caching** — fingerprint-based AST and body caching avoids redundant work
 - ✍️ **Stencil Templates** — customize output with [your own templates](Documentation/Templates.md)
 
-### Why Prefire? 
+### Why Prefire?
 
-- 🔥 **Save Time** - Generate tests and documentation automatically
-- 🔥 **Stay Consistent** - Keep previews and tests always in sync
-- 🔥 **Improve Quality** - Catch visual regressions before users do
-- 🔥 **Boost Collaboration** - Share living documentation with your team
+- 🔥 **No second set of UI states.** Tests come from the previews you already keep up to date.
+- 🔥 **Regressions fail CI.** Snapshots are compared on every run, on every device you list.
+- 🔥 **Designers and QA see every state.** Playbook shows components and user stories on a device.
+- 🔥 **Agents check their own UI work.** They render the previews they changed before calling a task done.
 
 <br clear="all">
 
@@ -290,6 +288,8 @@ Run `prefire tests --help` or `prefire playbook --help` for more options.
 Prefire renders previews in its snapshot tests, built anew and on the devices you choose, so it can
 show them to an AI agent as images, which Xcode Previews can't do reliably outside Xcode.
 
+<img src="Documentation/Images/ai-agents.webp" alt="An agent calls render_previews for three previews of the Trip screen and gets dark mode PNGs back" width="100%">
+
 ```bash
 # Render previews to PNG + JSON
 prefire render "Sign in" --device "iPhone 16 Pro" --color-scheme dark
@@ -362,6 +362,8 @@ Swift, AppKit + SwiftUI, 29 MB. Free; only skins are paid.
 ## 🤝 Contributing
 
 We welcome contributions! Development setup, tests and the internal architecture are described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Logo, colors and templates for talks and posts about Prefire are in the [brand kit](https://prefire.ru/brand/).
 
 ## ⭐ Star history
 
