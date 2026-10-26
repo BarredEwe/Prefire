@@ -12,6 +12,7 @@
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
 		9735EE3C289C5CF300309267 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9735EE2A289C5CF300309267 /* Assets.xcassets */; };
 		9735EE49289C5F3A00309267 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE48289C5F3A00309267 /* TestView.swift */; };
+		A1B2C3D4E5F6071829304051 /* TripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304050 /* TripView.swift */; };
 		9777F17528D0F4200072827B /* CicrleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9777F17428D0F4200072827B /* CicrleImage.swift */; };
 		9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9779D5F328A3F13F0083DBD3 /* SnapshotTesting */; };
 		978DDB192C775F5300F45D45 /* UIKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 978DDB182C775F5300F45D45 /* UIKitView.swift */; };
@@ -37,6 +38,7 @@
 		9735EE2A289C5CF300309267 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9735EE2F289C5CF300309267 /* PrefireExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrefireExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9735EE48289C5F3A00309267 /* TestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071829304050 /* TripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripView.swift; sourceTree = "<group>"; };
 		9777F17428D0F4200072827B /* CicrleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CicrleImage.swift; sourceTree = "<group>"; };
 		9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PrefireExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		978DDB182C775F5300F45D45 /* UIKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitView.swift; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 			children = (
 				97B1477928EA3CF60014DEC5 /* PrefireView.swift */,
 				9735EE48289C5F3A00309267 /* TestView.swift */,
+				A1B2C3D4E5F6071829304050 /* TripView.swift */,
 				9777F17428D0F4200072827B /* CicrleImage.swift */,
 				97B1477728EA335A0014DEC5 /* AuthView.swift */,
 				978DDB182C775F5300F45D45 /* UIKitView.swift */,
@@ -249,6 +252,7 @@
 				97B1477A28EA3CF60014DEC5 /* PrefireView.swift in Sources */,
 				97BA130128A1AAE800CA8F36 /* MainMenu.swift in Sources */,
 				9735EE49289C5F3A00309267 /* TestView.swift in Sources */,
+				A1B2C3D4E5F6071829304051 /* TripView.swift in Sources */,
 				97B1477828EA335A0014DEC5 /* AuthView.swift in Sources */,
 				978DDB192C775F5300F45D45 /* UIKitView.swift in Sources */,
 				9777F17528D0F4200072827B /* CicrleImage.swift in Sources */,
