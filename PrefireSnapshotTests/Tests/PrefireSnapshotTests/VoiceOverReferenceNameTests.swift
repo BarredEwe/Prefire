@@ -6,18 +6,7 @@ import XCTest
 
 @MainActor
 final class VoiceOverReferenceNameTests: XCTestCase {
-    private var directory: URL!
-
-    override func setUp() async throws {
-        try await super.setUp()
-        directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: snapshots, withIntermediateDirectories: true)
-    }
-
-    override func tearDown() async throws {
-        try? FileManager.default.removeItem(at: directory)
-        try await super.tearDown()
-    }
+    private let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
     func testImageWithoutReferencesIsRecordedUnderTheNewName() throws {
         XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.voiceover.image")
@@ -75,13 +64,19 @@ final class VoiceOverReferenceNameTests: XCTestCase {
         directory.appendingPathComponent("__Snapshots__").appendingPathComponent("PreviewTests")
     }
 
+    /// A capture named `Card`, with an empty directory of references that is removed after the test.
     private func capture() throws -> PrefireSnapshotCapture {
+        try FileManager.default.createDirectory(at: snapshots, withIntermediateDirectories: true)
+        let directory = directory
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
         let session = PrefireSnapshotSession()
         let snapshot = PrefireSnapshot({ Text("Card") }, name: "Card", isScreen: true, device: session.device)
         return try session.capture(snapshot)
     }
 
     private func record(_ names: String...) throws {
+        try FileManager.default.createDirectory(at: snapshots, withIntermediateDirectories: true)
         for name in names {
             try Data().write(to: snapshots.appendingPathComponent(name))
         }
