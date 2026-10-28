@@ -138,7 +138,7 @@ class ConfigDecoderTests: XCTestCase {
             ("[]", nil),
             ("", nil),
             ("transcript", nil),
-            ("image, transcript", ["image"]),
+            ("image, transcript", ["image"])
         ]
 
         for (value, expected) in cases {
@@ -153,7 +153,8 @@ class ConfigDecoderTests: XCTestCase {
             XCTAssertEqual(config.tests.voiceOverSnapshots, expected, value)
         }
 
-        XCTAssertNil(ConfigDecoder().decode(from: "test_configuration:\n  - target: App", env: env).tests.voiceOverSnapshots)
+        let withoutKey = ConfigDecoder().decode(from: "test_configuration:\n  - target: App", env: env)
+        XCTAssertNil(withoutKey.tests.voiceOverSnapshots)
     }
 
     func test_renderConfiguration() {

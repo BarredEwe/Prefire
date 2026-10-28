@@ -140,7 +140,8 @@ import SnapshotTesting
         #if canImport(AccessibilitySnapshotParser) && (os(iOS) || os(tvOS))
         do {
             let transcript = try capture.readVoiceOver(timeout: session.waitDefaults.timeout) { view in
-                let elements: [[VoiceOverTranscript.Element]] = AccessibilityHierarchyParser().parseAccessibilityHierarchy(
+                let parser = AccessibilityHierarchyParser()
+                let elements: [[VoiceOverTranscript.Element]] = parser.parseAccessibilityHierarchy(
                     in: view,
                     makeElement: { element, traversalIndex, source -> [VoiceOverTranscript.Element] in
                         [VoiceOverTranscript.Element(
@@ -149,8 +150,12 @@ import SnapshotTesting
                             spokenDescription: element.description,
                             hint: element.hint,
                             customActions: element.customActions,
-                            customContent: element.customContent.map { .init(label: $0.label, value: $0.value, isImportant: $0.isImportant) },
-                            customRotors: element.customRotors.map { .init(name: $0.name, resultCount: $0.resultMarkers.count) },
+                            customContent: element.customContent.map {
+                                .init(label: $0.label, value: $0.value, isImportant: $0.isImportant)
+                            },
+                            customRotors: element.customRotors.map {
+                                .init(name: $0.name, resultCount: $0.resultMarkers.count)
+                            },
                             language: element.accessibilityLanguage
                         )]
                     },

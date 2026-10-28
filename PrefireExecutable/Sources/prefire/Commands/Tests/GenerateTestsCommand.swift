@@ -150,7 +150,8 @@ enum GenerateTestsCommand {
             Keys.snapshotWaitForIdle: options.snapshotWaitForIdle?.description as? NSString,
             Keys.snapshotWaitTimeout: options.snapshotWaitTimeout?.description as? NSString,
             Keys.fullPageSnapshots: options.fullPageSnapshots ? "true" as NSString : nil,
-            Keys.voiceOverSnapshots: options.voiceOverSnapshots.map { $0.isEmpty ? "none" : $0.joined(separator: "|") } as? NSString,
+            Keys.voiceOverSnapshots: options.voiceOverSnapshots
+                .map { $0.isEmpty ? "none" : $0.joined(separator: "|") } as? NSString
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

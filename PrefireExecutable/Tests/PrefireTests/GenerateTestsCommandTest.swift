@@ -130,7 +130,7 @@ class GenerateTestsCommandTests: XCTestCase {
             let expectedArguments = [
                 "mainTarget": "\(options.target ?? "")" as NSString,
                 "file": file,
-                "voiceOverSnapshots": argument as NSString,
+                "voiceOverSnapshots": argument as NSString
             ] as [String: NSObject]
 
             let arguments = await GenerateTestsCommand.makeArguments(for: options)

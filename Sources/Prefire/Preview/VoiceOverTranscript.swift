@@ -88,8 +88,9 @@ public enum VoiceOverTranscript {
 
         // A view that is an element and holds other elements too is a node above its own phrase.
         let holders = Set(paths.flatMap { $0 }.map(ObjectIdentifier.init))
-        for index in elements.indices where elements[index].source is UIView && holders.contains(ObjectIdentifier(elements[index].source)) {
-            paths[index].append(elements[index].source)
+        for (index, element) in elements.enumerated()
+        where element.source is UIView && holders.contains(ObjectIdentifier(element.source)) {
+            paths[index].append(element.source)
         }
 
         var lines: [String] = []
@@ -185,7 +186,8 @@ public enum VoiceOverTranscript {
 
     /// `appTypeName(of:)` of a type named like `String(reflecting:)` names it.
     static func appTypeName(_ reflected: String) -> String? {
-        let name = reflected.replacingOccurrences(of: #"\((unknown context|extension in) [^)]*\)\."#, with: "", options: .regularExpression)
+        let context = #"\((unknown context|extension in) [^)]*\)\."#
+        let name = reflected.replacingOccurrences(of: context, with: "", options: .regularExpression)
 
         let hostingPrefix = "SwiftUI._UIHostingView<"
         if name.hasPrefix(hostingPrefix), name.hasSuffix(">") {
@@ -201,7 +203,9 @@ public enum VoiceOverTranscript {
         return typeName
     }
 
-    private static let systemModules: Set<String> = ["Swift", "SwiftUI", "SwiftUICore", "UIKit", "Foundation", "Prefire"]
+    private static let systemModules: Set<String> = [
+        "Swift", "SwiftUI", "SwiftUICore", "UIKit", "Foundation", "Prefire"
+    ]
 
     /// Description, important custom content and hint, as VoiceOver reads them one after another.
     private static func phrase(of element: Element) -> String {
@@ -229,7 +233,7 @@ public enum VoiceOverTranscript {
         let traits = element.source.accessibilityTraits
         let traitNames = [
             traits.contains(.allowsDirectInteraction) ? "direct interaction" : nil,
-            traits.contains(.updatesFrequently) ? "updates frequently" : nil,
+            traits.contains(.updatesFrequently) ? "updates frequently" : nil
         ].compactMap { $0 }
         if !traitNames.isEmpty {
             lines.append("traits: " + traitNames.joined(separator: ", "))
@@ -249,4 +253,55 @@ public enum VoiceOverTranscript {
         String(repeating: "  ", count: depth)
     }
 }
+
+#if canImport(XCTest)
+extension PrefireSnapshotCapture {
+    /// What `read` makes of `accessibilityController()` hosted in a window, once it stops changing.
+    ///
+    /// Renders the preview anew like `accessibilityController()`, waits `delay`, then reads it every
+    /// `SnapshotWaiter.pollInterval` (50 ms) until two reads in a row agree, since SwiftUI may build its
+    /// accessibility tree a few passes of the run loop after the first layout.
+    ///
+    /// - Parameters:
+    ///   - timeout: How long to wait for two reads to agree after `delay`. The generated tests pass
+    ///              `snapshot_wait_timeout`.
+    ///   - read: Reads the hosted view, for example parses its accessibility hierarchy.
+    /// - Throws: `SnapshotWaitTimeout` when the reads kept changing for `timeout`, rather than
+    ///           returning one of them, which would be recorded as a partial reference.
+    @MainActor
+    public func readVoiceOver<Value: Equatable>(
+        timeout: TimeInterval = SnapshotWaitDefaults().timeout,
+        _ read: (UIView) -> Value
+    ) throws(SnapshotWaitTimeout) -> Value {
+        let controller = accessibilityController()
+        let window = UIWindow(frame: controller.view.frame)
+        window.rootViewController = controller
+        window.isHidden = false
+        defer {
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+
+        controller.view.layoutIfNeeded()
+        SnapshotWaiter.spinRunLoop(for: delay)
+
+        let deadline = SnapshotWaiter.now + max(timeout, 0)
+        var last = read(controller.view)
+        while SnapshotWaiter.now < deadline {
+            SnapshotWaiter.spinRunLoop(for: SnapshotWaiter.pollInterval)
+            controller.view.layoutIfNeeded()
+
+            let current = read(controller.view)
+            if current == last {
+                return current
+            }
+            last = current
+        }
+        throw SnapshotWaitTimeout(message: """
+        Prefire: what VoiceOver reads in "\(name)" kept changing for \(String(format: "%g", timeout))s. \
+        Raise `snapshot_wait_timeout`, or check that the preview stops changing.
+        """)
+    }
+}
+#endif
 #endif

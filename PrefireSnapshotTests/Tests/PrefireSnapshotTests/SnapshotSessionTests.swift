@@ -134,7 +134,8 @@ final class SnapshotSessionTests: XCTestCase {
 
     func testVoiceOverIsReadInAWindowOnceTwoReadsAgree() throws {
         let session = PrefireSnapshotSession()
-        let capture = try session.capture(PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device))
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
         var reads = 0
 
         let value = try capture.readVoiceOver { view in
@@ -149,7 +150,8 @@ final class SnapshotSessionTests: XCTestCase {
 
     func testVoiceOverReadThatNeverSettlesFails() throws {
         let session = PrefireSnapshotSession()
-        let capture = try session.capture(PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device))
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
         var reads = 0
 
         XCTAssertThrowsError(try capture.readVoiceOver(timeout: 0.2) { _ in

@@ -28,7 +28,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
                 spokenDescription: "Notifications. Button.",
                 customContent: [.init(label: "", value: "3 unread", isImportant: true)]
             ),
-            .init(traversalIndex: 1, source: language, spokenDescription: "Language. Button.", hint: "Opens the list of languages."),
+            .init(traversalIndex: 1, source: language, spokenDescription: "Language. Button.", hint: "Opens a list.")
         ])
 
         XCTAssertEqual(text, """
@@ -38,7 +38,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
               SettingsRow
                 - Notifications. Button. 3 unread
               SettingsRow
-                - Language. Button. Opens the list of languages.
+                - Language. Button. Opens a list.
           -
         """)
     }
@@ -50,7 +50,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
 
         let text = VoiceOverTranscript.text(of: [
             .init(traversalIndex: 0, source: row, spokenDescription: "Privacy. Button."),
-            .init(traversalIndex: 1, source: badge, spokenDescription: "New"),
+            .init(traversalIndex: 1, source: badge, spokenDescription: "New")
         ])
 
         XCTAssertEqual(text, """
@@ -92,7 +92,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
                 language: "en"
             ),
             .init(traversalIndex: 1, source: element, spokenDescription: "Close. Button."),
-            .init(traversalIndex: 2, source: tab, spokenDescription: "Home. Tab. 1 of 2."),
+            .init(traversalIndex: 2, source: tab, spokenDescription: "Home. Tab. 1 of 2.")
         ])
 
         XCTAssertEqual(text, """
@@ -158,7 +158,9 @@ final class VoiceOverTranscriptTests: XCTestCase {
             return object
         }
         let children = (object.accessibilityElements as? [NSObject])
-            ?? (0..<max(object.accessibilityElementCount(), 0)).compactMap { object.accessibilityElement(at: $0) as? NSObject }
+            ?? (0..<max(object.accessibilityElementCount(), 0)).compactMap {
+                object.accessibilityElement(at: $0) as? NSObject
+            }
         let subviews = (object as? UIView)?.subviews ?? []
         for child in children + subviews {
             if let element = firstElement(in: child) {

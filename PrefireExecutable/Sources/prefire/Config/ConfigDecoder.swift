@@ -83,43 +83,57 @@ final class ConfigDecoder {
         case .snapshotWaitForIdle:
             config.tests.snapshotWaitForIdle = getValue(from: components.last, env: env) == "true"
         case .snapshotWaitTimeout:
-            let value = getValue(from: components.last, env: env)
-
-            if let timeout = value.flatMap(Double.init), timeout.isFinite, timeout > 0 {
-                config.tests.snapshotWaitTimeout = timeout
-            } else {
-                Logger.warning("⚠️ `snapshot_wait_timeout` must be a positive number of seconds, ignoring '\(value ?? "")'")
-            }
+            config.tests.snapshotWaitTimeout = snapshotWaitTimeout(from: components, env: env)
+                ?? config.tests.snapshotWaitTimeout
         case .fullPageSnapshots:
             config.tests.fullPageSnapshots = getValue(from: components.last, env: env) == "true"
         case .voiceOverSnapshots:
-            // A list, `[image, text]` on one line, a single strategy, or `none`.
-            let values = (getValues(from: components, lines: lines, env: env)
-                ?? getValue(from: components.last, env: env)?
-                    .trimmingCharacters(in: CharacterSet(charactersIn: "[] "))
-                    .components(separatedBy: ",")
-                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                ?? []).filter { !$0.isEmpty }
-
-            guard !values.contains("none") else {
-                config.tests.voiceOverSnapshots = []
-                return
-            }
-
-            let strategies = values.filter { value in
-                guard TestsConfig.voiceOverSnapshotStrategies.contains(value) else {
-                    Logger.warning("⚠️ Unknown `voiceover_snapshots` strategy '\(value)', expected one of: \(TestsConfig.voiceOverSnapshotStrategies.joined(separator: ", ")), none")
-                    return false
-                }
-                return true
-            }
-
-            // Only `none` turns the snapshots off: a typo keeps the image snapshots of the default.
-            if strategies.isEmpty, !values.isEmpty {
-                Logger.warning("⚠️ `voiceover_snapshots` names no known strategy, using the default: image")
-            }
-            config.tests.voiceOverSnapshots = strategies.isEmpty ? nil : strategies
+            config.tests.voiceOverSnapshots = voiceOverSnapshots(from: components, lines: lines, env: env)
         }
+    }
+
+    /// Strategies of `voiceover_snapshots`: a list, `[image, text]` on one line, a single strategy, or
+    /// `none`, which turns the snapshots off. `nil`, the default, when it names no known strategy, so a
+    /// typo keeps the image snapshots.
+    /// `snapshot_wait_timeout`, or `nil` with a warning when it is not a positive number of seconds.
+    private func snapshotWaitTimeout(from components: [String], env: [String: String]) -> Double? {
+        let value = getValue(from: components.last, env: env)
+
+        guard let timeout = value.flatMap(Double.init), timeout.isFinite, timeout > 0 else {
+            Logger.warning("⚠️ `snapshot_wait_timeout` must be a positive number of seconds, ignoring '\(value ?? "")'")
+            return nil
+        }
+        return timeout
+    }
+
+    private func voiceOverSnapshots(
+        from components: [String],
+        lines: ArraySlice<String>,
+        env: [String: String]
+    ) -> [String]? {
+        let values = (getValues(from: components, lines: lines, env: env)
+            ?? getValue(from: components.last, env: env)?
+                .trimmingCharacters(in: CharacterSet(charactersIn: "[] "))
+                .components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+            ?? []).filter { !$0.isEmpty }
+
+        guard !values.contains("none") else { return [] }
+
+        let known = TestsConfig.voiceOverSnapshotStrategies
+        let strategies = values.filter { value in
+            guard known.contains(value) else {
+                let expected = (known + ["none"]).joined(separator: ", ")
+                Logger.warning("⚠️ Unknown `voiceover_snapshots` strategy '\(value)', expected one of: \(expected)")
+                return false
+            }
+            return true
+        }
+
+        if strategies.isEmpty, !values.isEmpty {
+            Logger.warning("⚠️ `voiceover_snapshots` names no known strategy, using the default: image")
+        }
+        return strategies.isEmpty ? nil : strategies
     }
 
     private func handlePlaybookConfig(config: inout Config, components: [String], lines: ArraySlice<String>, env: [String: String]) {
