@@ -9,6 +9,9 @@ test_configuration:
       - UIKit
       - Foundation
   - use_grouped_snapshots: false
+  - voiceover_snapshots:
+      - image
+      - text
 
 playbook_configuration:
   - imports:
