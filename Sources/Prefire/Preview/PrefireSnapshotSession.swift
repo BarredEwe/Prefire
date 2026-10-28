@@ -436,6 +436,53 @@ public struct PrefireSnapshotCapture {
         }
         return controller
     }
+
+    /// What `read` makes of `accessibilityController()` hosted in a window, once it stops changing.
+    ///
+    /// Renders the preview anew like `accessibilityController()`, waits `delay`, then reads it every
+    /// `SnapshotWaiter.pollInterval` (50 ms) until two reads in a row agree, since SwiftUI may build its
+    /// accessibility tree a few passes of the run loop after the first layout.
+    ///
+    /// - Parameters:
+    ///   - timeout: How long to wait for two reads to agree after `delay`. The generated tests pass
+    ///              `snapshot_wait_timeout`.
+    ///   - read: Reads the hosted view, for example parses its accessibility hierarchy.
+    /// - Throws: `SnapshotWaitTimeout` when the reads kept changing for `timeout`, rather than
+    ///           returning one of them, which would be recorded as a partial reference.
+    @MainActor
+    public func readVoiceOver<Value: Equatable>(
+        timeout: TimeInterval = SnapshotWaitDefaults().timeout,
+        _ read: (UIView) -> Value
+    ) throws(SnapshotWaitTimeout) -> Value {
+        let controller = accessibilityController()
+        let window = UIWindow(frame: controller.view.frame)
+        window.rootViewController = controller
+        window.isHidden = false
+        defer {
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+
+        controller.view.layoutIfNeeded()
+        SnapshotWaiter.spinRunLoop(for: delay)
+
+        let deadline = SnapshotWaiter.now + max(timeout, 0)
+        var last = read(controller.view)
+        while SnapshotWaiter.now < deadline {
+            SnapshotWaiter.spinRunLoop(for: SnapshotWaiter.pollInterval)
+            controller.view.layoutIfNeeded()
+
+            let current = read(controller.view)
+            if current == last {
+                return current
+            }
+            last = current
+        }
+        throw SnapshotWaitTimeout(message: """
+        Prefire: what VoiceOver reads in "\(name)" kept changing for \(String(format: "%g", timeout))s. \
+        Raise `snapshot_wait_timeout`, or check that the preview stops changing.
+        """)
+    }
     #endif
 }
 #endif

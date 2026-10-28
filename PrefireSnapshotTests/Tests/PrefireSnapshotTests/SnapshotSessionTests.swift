@@ -132,6 +132,35 @@ final class SnapshotSessionTests: XCTestCase {
         XCTAssertEqual(capture.accessibilityController().view.frame.height, height)
     }
 
+    func testVoiceOverIsReadInAWindowOnceTwoReadsAgree() throws {
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device))
+        var reads = 0
+
+        let value = try capture.readVoiceOver { view in
+            XCTAssertNotNil(view.window)
+            reads += 1
+            return min(reads, 3)
+        }
+
+        XCTAssertEqual(value, 3)
+        XCTAssertEqual(reads, 4)
+    }
+
+    func testVoiceOverReadThatNeverSettlesFails() throws {
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device))
+        var reads = 0
+
+        XCTAssertThrowsError(try capture.readVoiceOver(timeout: 0.2) { _ in
+            reads += 1
+            return reads
+        }) { error in
+            XCTAssertTrue("\(error)".contains("snapshot_wait_timeout"), "\(error)")
+        }
+        XCTAssertGreaterThan(reads, 1)
+    }
+
     // MARK: Private
 
     private func assertDevice(_ device: DeviceConfig?, matches preset: ViewImageConfig, _ name: String, line: UInt = #line) {

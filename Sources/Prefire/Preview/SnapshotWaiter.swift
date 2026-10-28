@@ -102,10 +102,18 @@ enum SnapshotWaiter {
         }
     }
 
-    // MARK: - Private functions
-
     /// Monotonic, unlike `Date`, so a clock change during a test does not move the deadlines.
-    private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+    static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    static func spinRunLoop(for interval: TimeInterval) {
+        let deadline = now + interval
+
+        while now < deadline {
+            RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: deadline - now))
+        }
+    }
+
+    // MARK: - Private functions
 
     /// Checks `condition`, spinning the main run loop between attempts so the preview keeps rendering.
     private static func poll(timeout: TimeInterval, until condition: () -> Bool) -> Bool {
@@ -116,14 +124,6 @@ enum SnapshotWaiter {
             guard now < deadline else { return false }
 
             spinRunLoop(for: pollInterval)
-        }
-    }
-
-    private static func spinRunLoop(for interval: TimeInterval) {
-        let deadline = now + interval
-
-        while now < deadline {
-            RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: deadline - now))
         }
     }
 
