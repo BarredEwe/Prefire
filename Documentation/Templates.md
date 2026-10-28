@@ -61,7 +61,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 | `argument.simulatorOSVersion`            | `String` (or absent)   | tests  | Major iOS version from `required_os:`.                                                                   |
 | `argument.snapshotDevices`               | `String` (or absent)   | tests  | Snapshot device names joined by `\|`. Iterate by applying `\|split:"\|"`. See §4.                        |
 | `argument.drawHierarchyInKeyWindowDefaultEnabled` | `String` `"true"`/`"false"` (or absent) | tests | Value of `draw_hierarchy_in_key_window_default_enabled:` as a string. |
-| `argument.fullPageSnapshots` | `String` `"true"` (or absent) | tests | Present when `full_page_snapshots: true`. The default template passes it as `PrefireSnapshotSession(fullPage: true)`, which measures screen previews with `prefireSnapshot.fullPageDevice(delay:)` and uses the result for both the image and the `.accessibility` snapshot. |
+| `argument.fullPageSnapshots` | `String` `"true"` (or absent) | tests | Present when `full_page_snapshots: true`. The default template passes it as `PrefireSnapshotSession(fullPage: true)`, which measures screen previews with `prefireSnapshot.fullPageDevice(delay:)` and uses the result for both the image and the VoiceOver image snapshot. |
 | `argument.voiceOverSnapshots` | `String` (or absent) | tests | Strategies of `voiceover_snapshots:` joined by `\|`, like `image\|text`, or `none` when the list is empty. Absent without the key, which the default template treats as `image`. Test a strategy with `{% if "text" in argument.voiceOverSnapshots %}`, in parentheses next to `or` or `and`, which bind tighter than `in`. |
 | `argument.previewsMacrosDict`            | `[[String: Any]]`      | both   | Array of `#Preview` macro models. See §3.3.                                                              |
 
@@ -170,6 +170,7 @@ library, in `PrefireSnapshotSession`, so a custom template can reuse it instead 
 | `session.capture(_:)` | Renders the snapshot, waits for it when it asks for it, and returns a `PrefireSnapshotCapture`: its `comparison` says which image to compare (`.image`, iOS/tvOS) or how to snapshot `capture.view` (`.view`). Throws `SnapshotWaitTimeout` when the wait runs out. |
 | `capture.accessibilityController()` | The preview hosted on the screen, as `AccessibilitySnapshot` snapshots it. |
 | `capture.readVoiceOver(timeout:_:)` | Hosts `accessibilityController()` in a window and returns what the closure reads from its view once two reads in a row agree. Throws `SnapshotWaitTimeout` when they keep changing for `timeout`. The `text` strategy parses the hierarchy with it, with `session.waitDefaults.timeout`. |
+| `capture.voiceOverImageTestName(file:)`, `capture.voiceOverTextTestName` | Test names of the `image` and `text` references, `<test>-voiceover-image.N.png` and `<test>-voiceover-text.N.txt`. The image name falls back to the deprecated `<test>-accessibility.N.png` while a test has only references of that name. |
 | `VoiceOverTranscript.text(of:)` | The tree of the `text` strategy, made of the elements an accessibility parser found, each with the object that provides it. |
 | `DeviceConfig.named(_:)` | Canvas of a device name, matching SnapshotTesting's `ViewImageConfig` presets. `DeviceConfig.supportedNames` lists the names. |
 

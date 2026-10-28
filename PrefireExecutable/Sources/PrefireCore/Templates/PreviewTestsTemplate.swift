@@ -132,7 +132,7 @@ import SnapshotTesting
             of: capture.accessibilityController(),
             as: .wait(for: capture.delay, on: .accessibilityImage(showActivationPoints: .always)),
             {{ reference }}
-            testName: capture.name + ".accessibility"
+            testName: capture.voiceOverImageTestName(file: {% if argument.file %}file{% else %}#filePath{% endif %})
         )
         #endif
         {% endif %}
@@ -167,7 +167,7 @@ import SnapshotTesting
                 of: transcript,
                 as: .lines,
                 {{ reference }}
-                testName: capture.name + ".voiceover"
+                testName: capture.voiceOverTextTestName
             )
         } catch {
             XCTFail("\(error)")

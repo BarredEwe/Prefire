@@ -323,6 +323,58 @@ extension PrefireSnapshotCapture {
         Raise `snapshot_wait_timeout`, or check that the preview stops changing.
         """)
     }
+
+    /// Test name of the text reference, `<test>-voiceover-text.N.txt`.
+    public var voiceOverTextTestName: String { name + ".voiceover.text" }
+
+    /// Test name of the image reference, `<test>-voiceover-image.N.png`, or the old `.accessibility`
+    /// one while only references of the old name are recorded for this capture.
+    ///
+    /// - Parameter file: The file SnapshotTesting puts the references next to: the `file` the
+    ///                   assertion is given, `#filePath` of the call by default.
+    public func voiceOverImageTestName(file: StaticString) -> String {
+        voiceOverImageTestName(filePath: "\(file)")
+    }
+
+    func voiceOverImageTestName(filePath: String) -> String {
+        let testName = name + ".voiceover.image"
+        let directory = snapshotDirectory(of: filePath)
+        if !hasReferences(named: testName, in: directory), hasLegacyImageReferences(in: directory) {
+            return legacyImageTestName
+        }
+        return testName
+    }
+
+    /// Compatibility with the old reference name, `<test>-accessibility.N.png`, which the image had
+    /// before `voiceover_snapshots`. Remove in Prefire 7.0.
+    private var legacyImageTestName: String { name + ".accessibility" }
+
+    /// Whether references of the old image name are recorded. Remove in Prefire 7.0.
+    private func hasLegacyImageReferences(in directory: URL) -> Bool {
+        hasReferences(named: legacyImageTestName, in: directory)
+    }
+
+    /// `__Snapshots__/<file name>` next to `file`, where SnapshotTesting records the references.
+    private func snapshotDirectory(of filePath: String) -> URL {
+        let fileURL = URL(fileURLWithPath: filePath, isDirectory: false)
+        return fileURL.deletingLastPathComponent()
+            .appendingPathComponent("__Snapshots__")
+            .appendingPathComponent(fileURL.deletingPathExtension().lastPathComponent)
+    }
+
+    /// Whether a PNG reference of `testName` is recorded, under any number.
+    private func hasReferences(named testName: String, in directory: URL) -> Bool {
+        let prefix = snapshotFileName(of: testName) + "."
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
+        return files.contains { $0.hasPrefix(prefix) && $0.hasSuffix(".png") }
+    }
+}
+
+/// `testName` the way SnapshotTesting puts it in a file name.
+func snapshotFileName(of testName: String) -> String {
+    testName
+        .replacingOccurrences(of: "\\W+", with: "-", options: .regularExpression)
+        .replacingOccurrences(of: "^-|-$", with: "", options: .regularExpression)
 }
 #endif
 #endif

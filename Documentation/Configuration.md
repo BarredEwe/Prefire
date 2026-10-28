@@ -86,7 +86,7 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 - The extra layout hosts the preview once more, so `onAppear`, `.task` and `@StateObject` run one more time. A preview whose content differs between appearances can be measured differently from the image.
 - With `.snapshot(delay:)`, the delay is waited once to measure and once more to take the image, so the test takes twice as long.
 - A preview that is waited on with `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is measured once it settled, in the window it is captured in, so content it loads while waiting counts and it is hosted only once.
-- The `.accessibility` image from `AccessibilitySnapshot` uses the same height.
+- The VoiceOver image from `AccessibilitySnapshot` uses the same height.
 - The image is at most 16,384 px tall, which is about 5,461 pt at 3x.
 - Previews using `.sizeThatFitsLayout` or a fixed layout are not affected.
 
@@ -104,12 +104,14 @@ test_configuration:
 
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
-| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
-| `text` | The `AccessibilitySnapshotParser` product of the same package, 0.13 or later | `<test>-voiceover.1.txt`, next to the images: what VoiceOver reads |
+| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-voiceover-image.1.png`: the preview with its elements and activation points marked |
+| `text` | The `AccessibilitySnapshotParser` product of the same package, 0.13 or later | `<test>-voiceover-text.1.txt`, next to the images: what VoiceOver reads |
 
 Both can be listed, on separate lines or as `[image, text]`, and `none` turns them off. Without the key, or when it names no known strategy, Prefire snapshots `image`, as before the key existed. Unknown strategies are skipped with a warning.
 
-An image changes whenever the layout does, which makes it hard to review. The text reference changes only when what VoiceOver reads changes. Both strategies show what VoiceOver sees, which is why the key is named after VoiceOver rather than accessibility, which also covers Dynamic Type, contrast or Voice Control. The image keeps its `-accessibility` file name, so references recorded before the key existed stay valid.
+An image changes whenever the layout does, which makes it hard to review. The text reference changes only when what VoiceOver reads changes. Both strategies show what VoiceOver sees, which is why the key is named after VoiceOver rather than accessibility, which also covers Dynamic Type, contrast or Voice Control. Each strategy numbers its references on its own, so the text keeps its file name whether `image` is on or not.
+
+> **Deprecated:** before `voiceover_snapshots`, the image was recorded as `<test>-accessibility.N.png`. While a test has only references of that name, Prefire still compares with them and records nothing new, so tests keep passing after the update. This will be removed in Prefire 7.0. To migrate, rename `-accessibility.` to `-voiceover-image.` in the names of the files in `__Snapshots__`.
 
 The text reference is a tree. The elements are its leaves, in VoiceOver order, under the views of your app that hold them:
 
