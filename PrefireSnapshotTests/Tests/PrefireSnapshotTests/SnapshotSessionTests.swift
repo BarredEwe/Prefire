@@ -148,6 +148,22 @@ final class SnapshotSessionTests: XCTestCase {
         XCTAssertEqual(reads, 4)
     }
 
+    func testVoiceOverIsFirstReadAPassOfTheRunLoopAfterTheLayoutAndMayBeEmpty() throws {
+        let session = PrefireSnapshotSession()
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
+        let start = ProcessInfo.processInfo.systemUptime
+        var firstRead: TimeInterval?
+
+        let value = try capture.readVoiceOver { _ in
+            firstRead = firstRead ?? ProcessInfo.processInfo.systemUptime
+            return ""
+        }
+
+        XCTAssertEqual(value, "")
+        XCTAssertGreaterThanOrEqual((firstRead ?? start) - start, 0.05)
+    }
+
     func testVoiceOverReadThatNeverSettlesFails() throws {
         let session = PrefireSnapshotSession()
         let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)

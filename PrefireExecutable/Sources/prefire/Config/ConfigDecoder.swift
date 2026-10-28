@@ -92,9 +92,6 @@ final class ConfigDecoder {
         }
     }
 
-    /// Strategies of `voiceover_snapshots`: a list, `[image, text]` on one line, a single strategy, or
-    /// `none`, which turns the snapshots off. `nil`, the default, when it names no known strategy, so a
-    /// typo keeps the image snapshots.
     /// `snapshot_wait_timeout`, or `nil` with a warning when it is not a positive number of seconds.
     private func snapshotWaitTimeout(from components: [String], env: [String: String]) -> Double? {
         let value = getValue(from: components.last, env: env)
@@ -106,6 +103,9 @@ final class ConfigDecoder {
         return timeout
     }
 
+    /// Strategies of `voiceover_snapshots`: a list, `[image, text]` on one line, a single strategy, or
+    /// `none`, which turns the snapshots off. `nil`, the default, when it names no known strategy, so a
+    /// typo keeps the image snapshots.
     private func voiceOverSnapshots(
         from components: [String],
         lines: ArraySlice<String>,
@@ -118,7 +118,12 @@ final class ConfigDecoder {
                 .map { $0.trimmingCharacters(in: .whitespaces) }
             ?? []).filter { !$0.isEmpty }
 
-        guard !values.contains("none") else { return [] }
+        guard !values.contains("none") else {
+            if values.count > 1 {
+                Logger.warning("⚠️ `voiceover_snapshots` lists `none` with other strategies, so all of them are off")
+            }
+            return []
+        }
 
         let known = TestsConfig.voiceOverSnapshotStrategies
         let strategies = values.filter { value in

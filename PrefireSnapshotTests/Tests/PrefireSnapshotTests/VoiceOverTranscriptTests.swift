@@ -117,6 +117,15 @@ final class VoiceOverTranscriptTests: XCTestCase {
         XCTAssertEqual(VoiceOverTranscript.appTypeName("SwiftUI._UIHostingView<App.ProfileView>"), "ProfileView")
         XCTAssertEqual(VoiceOverTranscript.appTypeName("App.Profile_View"), "Profile_View")
         XCTAssertEqual(VoiceOverTranscript.appTypeName("ThirdParty.Badge"), "Badge")
+        XCTAssertEqual(
+            VoiceOverTranscript.appTypeName(
+                "SwiftUI._UIHostingView<SwiftUI.ModifiedContent<SwiftUI.ModifiedContent<App.ProfileCard, "
+                    + "SwiftUI._PaddingLayout>, SwiftUI._BackgroundModifier<SwiftUI.Color>>>"
+            ),
+            "ProfileCard"
+        )
+        let modifiedText = "SwiftUI._UIHostingView<SwiftUI.ModifiedContent<SwiftUI.Text, App.Style>>"
+        XCTAssertNil(VoiceOverTranscript.appTypeName(modifiedText))
         XCTAssertNil(VoiceOverTranscript.appTypeName("SwiftUI._UIHostingView<SwiftUI.AnyView>"))
         XCTAssertNil(VoiceOverTranscript.appTypeName("SwiftUI.PlatformViewHost<App.ProfileView>"))
         XCTAssertNil(VoiceOverTranscript.appTypeName("UILabel"))

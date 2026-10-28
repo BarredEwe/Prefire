@@ -74,7 +74,7 @@ render_configuration:
 | `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
-| `voiceover_snapshots` | How previews are snapshotted for VoiceOver: a list of `image` and `text`, or `none`. iOS only, as AccessibilitySnapshot does not support tvOS. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
+| `voiceover_snapshots` | How previews are snapshotted for VoiceOver: a list of `image` and `text`, or `none`. iOS: AccessibilitySnapshot does not support tvOS, where the generated tests skip both strategies. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
 
 ---
 
@@ -125,7 +125,7 @@ SettingsView
 ```
 
 - A leaf is `- ` and what VoiceOver reads: the description (label, value and traits), important custom content and the hint. An element VoiceOver reads nothing for is a bare `-`.
-- A view is a node when its type comes from a module other than Swift, SwiftUI, SwiftUICore, UIKit, Foundation and Prefire, so views of third-party packages are nodes too. Objective-C classes have no module and are never nodes, and neither are types whose names start with `_`. A node is named after its type, without the module and generic parameters, and a hosting view is named after the SwiftUI view it hosts. Views of SwiftUI are not views of UIKit, so a screen made only of SwiftUI lists its elements without nodes, like the sign-in screen of the [Example](../Example) project.
+- A view is a node when its type comes from a module other than Swift, SwiftUI, SwiftUICore, UIKit, Foundation and Prefire, so views of third-party packages are nodes too. Objective-C classes have no module and are never nodes, and neither are types whose names start with `_`. A node is named after its type, without the module and generic parameters, and a hosting view is named after the SwiftUI view it hosts, without its modifiers: one hosting `ProfileCard().padding()` is `ProfileCard`. Views of SwiftUI are not views of UIKit, so a screen made only of SwiftUI lists its elements without nodes, like the sign-in screen of the [Example](../Example) project.
 - Containers VoiceOver announces are nodes in brackets: `[list]`, `[table]`, `[tab bar]` and `[group: <label>]` for a group with a label. A view with `accessibilityViewIsModal` is a node marked ` (modal)`, even when it is a system view.
 - A view that is an element and holds other elements is a node above its own phrase.
 - A node shared with the element before is written once. Two views of the same type are two nodes.

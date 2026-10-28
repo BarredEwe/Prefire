@@ -189,9 +189,9 @@ public enum VoiceOverTranscript {
         let context = #"\((unknown context|extension in) [^)]*\)\."#
         let name = reflected.replacingOccurrences(of: context, with: "", options: .regularExpression)
 
-        let hostingPrefix = "SwiftUI._UIHostingView<"
-        if name.hasPrefix(hostingPrefix), name.hasSuffix(">") {
-            return appTypeName(String(name.dropFirst(hostingPrefix.count).dropLast()))
+        // A hosting view is named after the view it hosts, and a modified view after the view.
+        for wrapper in ["SwiftUI._UIHostingView<", "SwiftUI.ModifiedContent<"] where name.hasPrefix(wrapper) {
+            return firstGenericArgument(of: name, after: wrapper).flatMap(appTypeName)
         }
 
         let withoutGenerics = name.prefix { $0 != "<" }
@@ -201,6 +201,25 @@ public enum VoiceOverTranscript {
         let typeName = String(withoutGenerics[withoutGenerics.index(after: dot)...])
         guard !systemModules.contains(String(module)), !typeName.isEmpty, !typeName.hasPrefix("_") else { return nil }
         return typeName
+    }
+
+    /// `Content` of `Wrapper<Content, Modifier>`, given the `Wrapper<` that `name` starts with.
+    private static func firstGenericArgument(of name: String, after prefix: String) -> String? {
+        var depth = 0
+        let arguments = name.dropFirst(prefix.count)
+        for index in arguments.indices {
+            switch arguments[index] {
+            case "<":
+                depth += 1
+            case ">" where depth == 0, "," where depth == 0:
+                return String(arguments[..<index]).trimmingCharacters(in: .whitespaces)
+            case ">":
+                depth -= 1
+            default:
+                break
+            }
+        }
+        return nil
     }
 
     private static let systemModules: Set<String> = [
@@ -283,7 +302,9 @@ extension PrefireSnapshotCapture {
         }
 
         controller.view.layoutIfNeeded()
-        SnapshotWaiter.spinRunLoop(for: delay)
+        // SwiftUI builds its accessibility elements on a later pass of the run loop than the layout.
+        SnapshotWaiter.spinRunLoop(for: max(delay, SnapshotWaiter.pollInterval))
+        controller.view.layoutIfNeeded()
 
         let deadline = SnapshotWaiter.now + max(timeout, 0)
         var last = read(controller.view)
