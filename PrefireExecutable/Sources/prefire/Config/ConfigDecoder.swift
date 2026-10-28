@@ -92,6 +92,33 @@ final class ConfigDecoder {
             }
         case .fullPageSnapshots:
             config.tests.fullPageSnapshots = getValue(from: components.last, env: env) == "true"
+        case .voiceOverSnapshots:
+            // A list, `[image, text]` on one line, a single strategy, or `none`.
+            let values = (getValues(from: components, lines: lines, env: env)
+                ?? getValue(from: components.last, env: env)?
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "[] "))
+                    .components(separatedBy: ",")
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                ?? []).filter { !$0.isEmpty }
+
+            guard !values.contains("none") else {
+                config.tests.voiceOverSnapshots = []
+                return
+            }
+
+            let strategies = values.filter { value in
+                guard TestsConfig.voiceOverSnapshotStrategies.contains(value) else {
+                    Logger.warning("⚠️ Unknown `voiceover_snapshots` strategy '\(value)', expected one of: \(TestsConfig.voiceOverSnapshotStrategies.joined(separator: ", ")), none")
+                    return false
+                }
+                return true
+            }
+
+            // Only `none` turns the snapshots off: a typo keeps the image snapshots of the default.
+            if strategies.isEmpty, !values.isEmpty {
+                Logger.warning("⚠️ `voiceover_snapshots` names no known strategy, using the default: image")
+            }
+            config.tests.voiceOverSnapshots = strategies.isEmpty ? nil : strategies
         }
     }
 

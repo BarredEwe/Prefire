@@ -16,9 +16,16 @@ import {{ import }}
 @testable import {{ import }}
 {% endfor %}
 import SnapshotTesting
+{% if not argument.voiceOverSnapshots or ("image" in argument.voiceOverSnapshots) %}
 #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
     import AccessibilitySnapshot
 #endif
+{% endif %}
+{% if "text" in argument.voiceOverSnapshots %}
+#if canImport(AccessibilitySnapshotParser) && (os(iOS) || os(tvOS))
+    import AccessibilitySnapshotParser
+#endif
+{% endif %}
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
     private let session = PrefireSnapshotSession(
@@ -119,6 +126,7 @@ import SnapshotTesting
         let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
 {% set reference %}record: record,{% if argument.file %} file: file,{% endif %}{% endset %}
 
+        {% if not argument.voiceOverSnapshots or ("image" in argument.voiceOverSnapshots) %}
         #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
         SnapshotTesting.assertSnapshot(
             of: capture.accessibilityController(),
@@ -127,6 +135,40 @@ import SnapshotTesting
             testName: capture.name + ".accessibility"
         )
         #endif
+        {% endif %}
+        {% if "text" in argument.voiceOverSnapshots %}
+        #if canImport(AccessibilitySnapshotParser) && (os(iOS) || os(tvOS))
+        do {
+            let transcript = try capture.readVoiceOver(timeout: session.waitDefaults.timeout) { view in
+                let elements: [[VoiceOverTranscript.Element]] = AccessibilityHierarchyParser().parseAccessibilityHierarchy(
+                    in: view,
+                    makeElement: { element, traversalIndex, source -> [VoiceOverTranscript.Element] in
+                        [VoiceOverTranscript.Element(
+                            traversalIndex: traversalIndex,
+                            source: source,
+                            spokenDescription: element.description,
+                            hint: element.hint,
+                            customActions: element.customActions,
+                            customContent: element.customContent.map { .init(label: $0.label, value: $0.value, isImportant: $0.isImportant) },
+                            customRotors: element.customRotors.map { .init(name: $0.name, resultCount: $0.resultMarkers.count) },
+                            language: element.accessibilityLanguage
+                        )]
+                    },
+                    makeContainer: { _, children, _ -> [VoiceOverTranscript.Element] in Array(children.joined()) }
+                )
+                return VoiceOverTranscript.text(of: Array(elements.joined()))
+            }
+            SnapshotTesting.assertSnapshot(
+                of: transcript,
+                as: .lines,
+                {{ reference }}
+                testName: capture.name + ".voiceover"
+            )
+        } catch {
+            XCTFail("\(error)")
+        }
+        #endif
+        {% endif %}
 
         switch capture.comparison {
         #if os(macOS)

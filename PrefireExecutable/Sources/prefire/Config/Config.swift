@@ -31,6 +31,11 @@ struct TestsConfig {
     var snapshotWaitForIdle: Bool?
     var snapshotWaitTimeout: Double?
     var fullPageSnapshots: Bool?
+    /// How previews are snapshotted for VoiceOver, out of `voiceOverSnapshotStrategies`.
+    /// `nil` keeps the default, `["image"]`; empty, from `none`, turns them off.
+    var voiceOverSnapshots: [String]?
+
+    static let voiceOverSnapshotStrategies = ["image", "text"]
 
     enum CodingKeys: String, CodingKey {
         case target = "target"
@@ -50,6 +55,7 @@ struct TestsConfig {
         case snapshotWaitForIdle = "snapshot_wait_for_idle"
         case snapshotWaitTimeout = "snapshot_wait_timeout"
         case fullPageSnapshots = "full_page_snapshots"
+        case voiceOverSnapshots = "voiceover_snapshots"
     }
 }
 

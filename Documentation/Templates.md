@@ -62,6 +62,7 @@ These keys are produced by `GenerateTestsCommand` and `GeneratePlaybookCommand` 
 | `argument.snapshotDevices`               | `String` (or absent)   | tests  | Snapshot device names joined by `\|`. Iterate by applying `\|split:"\|"`. See §4.                        |
 | `argument.drawHierarchyInKeyWindowDefaultEnabled` | `String` `"true"`/`"false"` (or absent) | tests | Value of `draw_hierarchy_in_key_window_default_enabled:` as a string. |
 | `argument.fullPageSnapshots` | `String` `"true"` (or absent) | tests | Present when `full_page_snapshots: true`. The default template passes it as `PrefireSnapshotSession(fullPage: true)`, which measures screen previews with `prefireSnapshot.fullPageDevice(delay:)` and uses the result for both the image and the `.accessibility` snapshot. |
+| `argument.voiceOverSnapshots` | `String` (or absent) | tests | Strategies of `voiceover_snapshots:` joined by `\|`, like `image\|text`, or `none` when the list is empty. Absent without the key, which the default template treats as `image`. Test a strategy with `{% if "text" in argument.voiceOverSnapshots %}`, in parentheses next to `or` or `and`, which bind tighter than `in`. |
 | `argument.previewsMacrosDict`            | `[[String: Any]]`      | both   | Array of `#Preview` macro models. See §3.3.                                                              |
 
 `NSNull` values (i.e. when a config key is missing) should be guarded with `{% if argument.foo %}` — Stencil treats both `nil` and `NSNull` as falsy.
@@ -167,6 +168,9 @@ library, in `PrefireSnapshotSession`, so a custom template can reuse it instead 
 | `session.variants(of:)` | The snapshot once per `snapshot_devices` entry, named after the device, or the snapshot itself. |
 | `session.failures(of:verify:)` | Captures every variant of a snapshot and returns why they failed: what `verify` returned, or the message of a wait that timed out. |
 | `session.capture(_:)` | Renders the snapshot, waits for it when it asks for it, and returns a `PrefireSnapshotCapture`: its `comparison` says which image to compare (`.image`, iOS/tvOS) or how to snapshot `capture.view` (`.view`). Throws `SnapshotWaitTimeout` when the wait runs out. |
+| `capture.accessibilityController()` | The preview hosted on the screen, as `AccessibilitySnapshot` snapshots it. |
+| `capture.readVoiceOver(timeout:_:)` | Hosts `accessibilityController()` in a window and returns what the closure reads from its view once two reads in a row agree. Throws `SnapshotWaitTimeout` when they keep changing for `timeout`. The `text` strategy parses the hierarchy with it, with `session.waitDefaults.timeout`. |
+| `VoiceOverTranscript.text(of:)` | The tree of the `text` strategy, made of the elements an accessibility parser found, each with the object that provides it. |
 | `DeviceConfig.named(_:)` | Canvas of a device name, matching SnapshotTesting's `ViewImageConfig` presets. `DeviceConfig.supportedNames` lists the names. |
 
 Key blocks worth studying:

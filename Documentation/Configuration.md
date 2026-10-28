@@ -18,6 +18,9 @@ test_configuration:
   snapshot_wait_for_idle: true
   snapshot_wait_timeout: 2.0
   full_page_snapshots: false
+  voiceover_snapshots:
+    - image
+    - text
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -71,6 +74,7 @@ render_configuration:
 | `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
+| `voiceover_snapshots` | How previews are snapshotted for VoiceOver: a list of `image` and `text`, or `none`. iOS only, as AccessibilitySnapshot does not support tvOS. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
 
 ---
 
@@ -85,6 +89,51 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 - The `.accessibility` image from `AccessibilitySnapshot` uses the same height.
 - The image is at most 16,384 px tall, which is about 5,461 pt at 3x.
 - Previews using `.sizeThatFitsLayout` or a fixed layout are not affected.
+
+---
+
+### VoiceOver snapshots
+
+Every preview also gets snapshots of what VoiceOver sees when the test target can import their library. `voiceover_snapshots` picks which:
+
+```yaml
+test_configuration:
+  voiceover_snapshots:
+    - text
+```
+
+| Strategy | Test target needs | Reference |
+| --- | --- | --- |
+| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
+| `text` | The `AccessibilitySnapshotParser` product of the same package, 0.13 or later | `<test>-voiceover.1.txt`, next to the images: what VoiceOver reads |
+
+Both can be listed, on separate lines or as `[image, text]`, and `none` turns them off. Without the key, or when it names no known strategy, Prefire snapshots `image`, as before the key existed. Unknown strategies are skipped with a warning.
+
+An image changes whenever the layout does, which makes it hard to review. The text reference changes only when what VoiceOver reads changes. Both strategies show what VoiceOver sees, which is why the key is named after VoiceOver rather than accessibility, which also covers Dynamic Type, contrast or Voice Control. The image keeps its `-accessibility` file name, so references recorded before the key existed stay valid.
+
+The text reference is a tree. The elements are its leaves, in VoiceOver order, under the views of your app that hold them:
+
+```text
+SettingsView
+  [list]
+    SettingsRow
+      - Notifications. Switch Button. On.
+    SettingsRow
+      - Language. Button. English.
+        actions: Reset
+  - Sign out. Button. Double tap to sign out.
+```
+
+- A leaf is `- ` and what VoiceOver reads: the description (label, value and traits), important custom content and the hint. An element VoiceOver reads nothing for is a bare `-`.
+- A view is a node when its type comes from a module other than Swift, SwiftUI, SwiftUICore, UIKit, Foundation and Prefire, so views of third-party packages are nodes too. Objective-C classes have no module and are never nodes, and neither are types whose names start with `_`. A node is named after its type, without the module and generic parameters, and a hosting view is named after the SwiftUI view it hosts. Views of SwiftUI are not views of UIKit, so a screen made only of SwiftUI lists its elements without nodes, like the sign-in screen of the [Example](../Example) project.
+- Containers VoiceOver announces are nodes in brackets: `[list]`, `[table]`, `[tab bar]` and `[group: <label>]` for a group with a label. A view with `accessibilityViewIsModal` is a node marked ` (modal)`, even when it is a system view.
+- A view that is an element and holds other elements is a node above its own phrase.
+- A node shared with the element before is written once. Two views of the same type are two nodes.
+- What VoiceOver tells on request follows a leaf, only when there is any: `actions:`, `custom content:` that is not important, `rotor "<name>": <count of results>`, `traits: direct interaction, updates frequently` and `language:`.
+- Frames, identifiers and the numbers of the elements are left out, so the reference does not change with the layout.
+- The preview is hosted in a window of its own and read every 50 ms until two reads in a row agree, for up to `snapshot_wait_timeout` after its `delay`. When the reads keep changing, the test fails instead of recording a partial reference. Like the image, it is rendered anew, so it does not see the state a wait with `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` reached.
+- `AccessibilitySnapshot` brings the parser along. To use `text` alone, the `AccessibilitySnapshotParser` product is enough.
+- The parser sees the content of a SwiftUI `ScrollView` only when the tests run in a host application ([cashapp/AccessibilitySnapshot#245](https://github.com/cashapp/AccessibilitySnapshot/issues/245)). In a test target without one, the text reference of a scrolling screen lacks its content.
 
 ---
 

@@ -120,4 +120,22 @@ class GenerateTestsCommandTests: XCTestCase {
 
         XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
     }
+
+    func test_makeArguments_voiceOverSnapshots() async {
+        let file = options.testTargetPath.flatMap({ $0 + "PreviewTests.generated.swift"})!.string as NSString
+
+        for (strategies, argument) in [(["image", "text"], "image|text"), ([], "none")] {
+            options.voiceOverSnapshots = strategies
+
+            let expectedArguments = [
+                "mainTarget": "\(options.target ?? "")" as NSString,
+                "file": file,
+                "voiceOverSnapshots": argument as NSString,
+            ] as [String: NSObject]
+
+            let arguments = await GenerateTestsCommand.makeArguments(for: options)
+
+            XCTAssertEqual(YAMLParser().string(from: arguments), YAMLParser().string(from: expectedArguments))
+        }
+    }
 }
