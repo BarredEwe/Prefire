@@ -127,6 +127,10 @@ final class VoiceOverTranscriptTests: XCTestCase {
     /// Elements of SwiftUI are not views: their path goes up `accessibilityContainer` to the hosting
     /// view, which is named after the view it hosts.
     func testElementsOfAHostedSwiftUIViewAreUnderItsHostingView() throws {
+        // SwiftUI builds its accessibility elements only while accessibility is on. In the generated
+        // tests AccessibilitySnapshotParser turns it on when it loads; this target does not link it.
+        try enableAccessibilityAutomation()
+
         let profile = ProfileContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
         let controller = UIHostingController(rootView: ProfileCard())
         controller.view.frame = profile.bounds
@@ -136,12 +140,17 @@ final class VoiceOverTranscriptTests: XCTestCase {
         window.isHidden = false
         defer { window.isHidden = true }
         profile.layoutIfNeeded()
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.2))
 
-        let element = try XCTUnwrap(firstElement(in: controller.view))
-        XCTAssertFalse(element is UIView)
+        var element: NSObject?
+        let deadline = Date(timeIntervalSinceNow: 2)
+        while element == nil, Date() < deadline {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
+            element = firstElement(in: controller.view)
+        }
+        let hosted = try XCTUnwrap(element)
+        XCTAssertFalse(hosted is UIView)
 
-        let text = VoiceOverTranscript.text(of: [.init(traversalIndex: 0, source: element, spokenDescription: "Ada")])
+        let text = VoiceOverTranscript.text(of: [.init(traversalIndex: 0, source: hosted, spokenDescription: "Ada")])
 
         XCTAssertEqual(text, """
         ProfileContainer
@@ -151,6 +160,17 @@ final class VoiceOverTranscriptTests: XCTestCase {
     }
 
     // MARK: Private
+
+    /// Turns on accessibility automation for the rest of the tests, as AccessibilitySnapshotParser does.
+    private func enableAccessibilityAutomation() throws {
+        var path = "/usr/lib/libAccessibility.dylib"
+        if let simulatorRoot = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] {
+            path = simulatorRoot + path
+        }
+        let handle = try XCTUnwrap(dlopen(path, RTLD_LOCAL), "Could not load \(path)")
+        let symbol = try XCTUnwrap(dlsym(handle, "_AXSSetAutomationEnabled"))
+        unsafeBitCast(symbol, to: (@convention(c) (Int32) -> Void).self)(1)
+    }
 
     /// First accessibility element under `object`, found the way VoiceOver walks the containers.
     private func firstElement(in object: NSObject) -> NSObject? {
