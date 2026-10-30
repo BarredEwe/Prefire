@@ -156,22 +156,21 @@ The built-in templates are the most useful starting point — copy them, change 
 - **Tests template** — `EmbeddedTemplates.previewTests` in [`PrefireExecutable/Sources/PrefireCore/Templates/PreviewTestsTemplate.swift`](../PrefireExecutable/Sources/PrefireCore/Templates/PreviewTestsTemplate.swift)
 - **Playbook template** — `EmbeddedTemplates.previewModels` in [`PrefireExecutable/Sources/PrefireCore/Templates/PreviewModelsTemplates.swift`](../PrefireExecutable/Sources/PrefireCore/Templates/PreviewModelsTemplates.swift)
 
-The tests template only declares the tests and hands them to SnapshotTesting. Everything else lives in the Prefire
-library, in `PrefireSnapshotSession`, so a custom template can reuse it instead of copying it:
+The tests template declares tests and compares results with SnapshotTesting. Custom templates can reuse
+`PrefireSnapshotSession` from `Prefire` and import the test-only `PrefireVoiceOver` product for text captures:
 
 | API | What it does |
 | --- | --- |
 | `PrefireSnapshotSession(simulatorDevice:osVersion:devices:drawHierarchyInKeyWindow:fullPage:waitDefaults:)` | Holds the `test_configuration` values. Every argument has a default. |
-| `session.prepareEnvironment()` | Stops the tests on a simulator other than `simulator_device` / `required_os` (kept in `session.environment`, a `PrefireSnapshotEnvironment`) and turns animations off. Call it from `setUp`. |
+| `session.prepareEnvironment()` | Stops the tests on a simulator other than `simulator_device` / `required_os` (kept in `session.environment`, a `PrefireSnapshotEnvironment`) and turns animations off. Call it at the start of each main-actor test, before creating previews or evaluating preview arguments. |
 | `session.device` | Canvas of previews that do not name a device: iPhone X on iOS, Apple TV on tvOS, the size that fits on macOS. |
 | `session.snapshot(of:)` | `PrefireSnapshot` of a `PreviewProvider` preview, on the device of its `.previewDevice(_:)`. |
 | `session.variants(of:)` | The snapshot once per `snapshot_devices` entry, named after the device, or the snapshot itself. |
 | `session.failures(of:verify:)` | Captures every variant of a snapshot and returns why they failed: what `verify` returned, or the message of a wait that timed out. |
 | `session.capture(_:)` | Renders the snapshot, waits for it when it asks for it, and returns a `PrefireSnapshotCapture`: its `comparison` says which image to compare (`.image`, iOS/tvOS) or how to snapshot `capture.view` (`.view`). Throws `SnapshotWaitTimeout` when the wait runs out. |
 | `capture.accessibilityController()` | The preview hosted on the screen, as `AccessibilitySnapshot` snapshots it. |
-| `capture.readVoiceOver(timeout:_:)` | Hosts `accessibilityController()` in a window and returns what the closure reads from its view once two reads in a row agree. Throws `SnapshotWaitTimeout` when they keep changing for `timeout`. The `text` strategy parses the hierarchy with it, with `session.waitDefaults.timeout`. |
-| `capture.voiceOverImageTestName(file:)`, `capture.voiceOverTextTestName` | Test names of the `image` and `text` references, `<test>-voiceover-image.N.png` and `<test>-voiceover-text.N.txt`. The image name falls back to the deprecated `<test>-accessibility.N.png` while a test has only references of that name. |
-| `VoiceOverTranscript.text(of:)` | The tree of the `text` strategy, made of the elements an accessibility parser found, each with the object that provides it. |
+| `capture.voiceOverTranscript(timeout:)` | From `PrefireVoiceOver`: enables automation, hosts and parses the preview, and returns stable VoiceOver text. Throws on initialization failure or when reads keep changing for `timeout`. The default template passes `session.waitDefaults.timeout` and compares with `.lines`. |
+| `capture.name` | The image assertion uses `capture.name + ".accessibility"`, preserving `<test>-accessibility.N.png`. Text uses `capture.name + ".voiceover.text"`, producing `<test>-voiceover-text.N.txt` with an independent counter. |
 | `DeviceConfig.named(_:)` | Canvas of a device name, matching SnapshotTesting's `ViewImageConfig` presets. `DeviceConfig.supportedNames` lists the names. |
 
 Key blocks worth studying:
