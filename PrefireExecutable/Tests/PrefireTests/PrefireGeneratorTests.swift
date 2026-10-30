@@ -111,6 +111,10 @@ final class PrefireGeneratorTests: XCTestCase {
         let result = try output.read(.utf8)
 
         XCTAssertTrue(result.contains("for (previewArgumentIndex, previewArgument) in ([\"- A\", \"- B\"]).enumerated()"))
+        XCTAssertTrue(result.contains(
+            "session.prepareEnvironment()\n\n        for (previewArgumentIndex, previewArgument)"
+        ))
+        XCTAssertEqual(result.components(separatedBy: "session.prepareEnvironment()").count - 1, 1)
         XCTAssertTrue(result.contains("let suffix = previewArgument"))
         XCTAssertTrue(result.contains("name: \"TextView-\\(previewArgumentIndex + 1)-\\(String(describing: previewArgument))\""))
         XCTAssertTrue(result.contains("Text(\"1 \\(suffix)\")"))
@@ -182,7 +186,10 @@ final class PrefireGeneratorTests: XCTestCase {
         )
 
         let result = try output.read(.utf8)
-        XCTAssertTrue(result.contains("assertSnapshots(of: Panel_Previews._allPreviews)"))
+        XCTAssertTrue(result.contains(
+            "session.prepareEnvironment()\n\n        assertSnapshots(of: Panel_Previews._allPreviews)"
+        ))
+        XCTAssertEqual(result.components(separatedBy: "session.prepareEnvironment()").count - 1, 1)
         XCTAssertFalse(result.contains("TeamProvider._allPreviews"))
     }
 

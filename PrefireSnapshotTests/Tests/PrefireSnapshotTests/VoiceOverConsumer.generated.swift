@@ -14,12 +14,6 @@ import SnapshotTesting
         waitDefaults: SnapshotWaitDefaults()
     )
 
-    @MainActor override func setUp() async throws {
-        try await super.setUp()
-
-        session.prepareEnvironment()
-    }
-
     // MARK: - PreviewProvider
 
 

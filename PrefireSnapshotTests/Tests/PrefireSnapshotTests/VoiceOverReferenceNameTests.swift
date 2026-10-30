@@ -11,10 +11,14 @@ final class VoiceOverReferenceNameTests: XCTestCase {
     /// SnapshotTesting numbers references per test name, so the text keeps its number with or without
     /// an image before it.
     func testTextIsNumberedTheSameWithAndWithoutTheImage() throws {
+        let session = PrefireSnapshotSession()
+        session.prepareEnvironment()
         let capture = try capture()
 
         verify(capture.name + ".voiceover.text")
+        session.prepareEnvironment()
         verify(capture.name + ".accessibility")
+        session.prepareEnvironment()
         verify(capture.name + ".voiceover.text")
 
         let files = try FileManager.default.contentsOfDirectory(atPath: snapshots.path).sorted()

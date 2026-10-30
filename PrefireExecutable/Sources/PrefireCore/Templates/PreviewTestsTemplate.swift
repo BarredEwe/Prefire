@@ -52,16 +52,12 @@ import SnapshotTesting
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
     {% endif %}
 
-    @MainActor override func setUp() async throws {
-        try await super.setUp()
-
-        session.prepareEnvironment()
-    }
-
     // MARK: - PreviewProvider
 
     {% for type in types.types where type.kind != "protocol" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", ""|replace:".", "_" }}() {
+        session.prepareEnvironment()
+
         assertSnapshots(of: {{ type.name }}._allPreviews)
     }
     {%- if not forloop.last %}
@@ -84,6 +80,8 @@ import SnapshotTesting
     fixedLayoutSize: {{ macroModel.fixedLayoutSize }}{% endif %}
 )){% endset %}
     func test_{{ macroModel.componentTestName }}_Preview() {
+        session.prepareEnvironment()
+
         {% if macroModel.hasArguments %}
         for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
             let {{ macroModel.argumentPattern }} = previewArgument

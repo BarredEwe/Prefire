@@ -41,6 +41,8 @@ final class VoiceOverTemplateTests: XCTestCase {
             XCTAssertEqual(result.contains("import PrefireVoiceOver\n"), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains(voiceOverAssertion), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains("capture.voiceOverTranscript(timeout:"), voiceOver, strategies ?? "default")
+            XCTAssertFalse(result.contains("super.setUp"))
+            XCTAssertTrue(result.contains("session.prepareEnvironment()"))
             XCTAssertFalse(result.contains("parseAccessibilityHierarchy"))
             XCTAssertFalse(result.contains("voiceOverImageTestName"))
             if image {
