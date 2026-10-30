@@ -22,11 +22,11 @@
 - Selected: Selected. Image.
 - Checked in
 - Seat 14A, window
-- Rolling Suitcase, Filled. Image.
+- suitcase.rolling.fill. Image.
 - Bag drop closes
 - 08:40, desks 21–24
 - Walk. Image.
 - Security
 - About 15 min wait
-- Wallet Pass Card, Filled. Image.
+- wallet.pass.fill. Image.
 - Add to Apple Wallet

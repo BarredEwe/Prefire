@@ -104,8 +104,8 @@ final class ConfigDecoder {
     }
 
     /// Strategies of `voiceover_snapshots`: a list, `[image, text]` on one line, a single strategy, or
-    /// `none`, which turns the snapshots off. `nil`, the default, when it names no known strategy, so a
-    /// typo keeps the image snapshots.
+    /// `none`. `none`, `[]` and no value turn the snapshots off. `nil`, the default, when it names no
+    /// known strategy, so a typo keeps the image snapshots.
     private func voiceOverSnapshots(
         from components: [String],
         lines: ArraySlice<String>,

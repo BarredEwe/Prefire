@@ -121,6 +121,12 @@ final class VoiceOverTranscriptTests: XCTestCase {
         XCTAssertNil(VoiceOverTranscript.appTypeName(of: MKMapView()))
         XCTAssertNil(VoiceOverTranscript.appTypeName(of: WKWebView()))
         XCTAssertEqual(VoiceOverTranscript.appTypeName(of: SettingsView()), "SettingsView")
+        XCTAssertNil(VoiceOverTranscript.appTypeName(of: UIHostingController(rootView: Text("Ada")).view))
+    }
+
+    /// Generic classes are instantiated at run time, so they have no loaded image of their own.
+    func testGenericAppViewsAreAppNodes() {
+        XCTAssertEqual(VoiceOverTranscript.appTypeName(of: CardContainer<Int>()), "CardContainer")
     }
 
     /// SwiftUI structures do not become UIKit nodes; their real UIKit ancestors still count.
@@ -282,6 +288,7 @@ private final class SettingsView: UIView {}
 private final class SettingsList: UIView {}
 private final class SettingsRow: UIView {}
 private final class ProfileContainer: UIView {}
+private final class CardContainer<Content>: UIView {}
 
 private struct RenderProbe: UIViewRepresentable {
     let make: () -> UILabel
