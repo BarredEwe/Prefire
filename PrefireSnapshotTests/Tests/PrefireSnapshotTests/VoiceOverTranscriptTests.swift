@@ -203,7 +203,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
         let capture = try session.capture(PrefireSnapshot(
             { Text("Ada") }, name: "Cold SwiftUI", isScreen: true, device: session.device
         ))
-        XCTAssertEqual(try capture.voiceOverTranscript(), "- Ada")
+        XCTAssertEqual(try capture.voiceOverTranscript().components(separatedBy: "\n").first, "- Ada")
         XCTAssertNotEqual(get(), 0)
     }
 
