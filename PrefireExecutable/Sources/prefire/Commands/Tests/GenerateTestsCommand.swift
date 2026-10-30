@@ -27,6 +27,7 @@ struct GeneratedTestsOptions {
     var snapshotWaitForIdle: Bool?
     var snapshotWaitTimeout: Double?
     var fullPageSnapshots: Bool
+    var voiceOverSnapshots: [String]?
 
     init(
         target: String?,
@@ -67,6 +68,7 @@ struct GeneratedTestsOptions {
         snapshotWaitForIdle = config?.tests.snapshotWaitForIdle
         snapshotWaitTimeout = config?.tests.snapshotWaitTimeout
         fullPageSnapshots = config?.tests.fullPageSnapshots ?? false
+        voiceOverSnapshots = config?.tests.voiceOverSnapshots
     }
 }
 
@@ -91,6 +93,7 @@ enum GenerateTestsCommand {
         static let snapshotWaitForIdle = "snapshotWaitForIdle"
         static let snapshotWaitTimeout = "snapshotWaitTimeout"
         static let fullPageSnapshots = "fullPageSnapshots"
+        static let voiceOverSnapshots = "voiceOverSnapshots"
     }
 
     static func run(_ options: GeneratedTestsOptions) async throws {
@@ -131,6 +134,7 @@ enum GenerateTestsCommand {
                 ➜ Wait for idle by default: \(options.snapshotWaitForIdle?.description ?? "nil")
                 ➜ Wait timeout: \(options.snapshotWaitTimeout?.description ?? "nil")
                 ➜ Full page snapshots: \(options.fullPageSnapshots)
+                ➜ VoiceOver snapshots: \(options.voiceOverSnapshots?.joined(separator: ", ") ?? "default")
             """
         )
 
@@ -146,6 +150,8 @@ enum GenerateTestsCommand {
             Keys.snapshotWaitForIdle: options.snapshotWaitForIdle?.description as? NSString,
             Keys.snapshotWaitTimeout: options.snapshotWaitTimeout?.description as? NSString,
             Keys.fullPageSnapshots: options.fullPageSnapshots ? "true" as NSString : nil,
+            Keys.voiceOverSnapshots: options.voiceOverSnapshots
+                .map { $0.isEmpty ? "none" : $0.joined(separator: "|") } as? NSString
         ].filter({ $0.value != nil }) as? [String: NSObject] ?? [:]
     }
 }

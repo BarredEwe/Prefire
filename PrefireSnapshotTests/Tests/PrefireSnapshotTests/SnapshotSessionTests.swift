@@ -1,5 +1,6 @@
 #if os(iOS)
 import Prefire
+@testable import PrefireVoiceOver
 import SnapshotTesting
 import SwiftUI
 import UIKit
@@ -130,6 +131,107 @@ final class SnapshotSessionTests: XCTestCase {
         }
         XCTAssertGreaterThan(height, session.device.size?.height ?? 0)
         XCTAssertEqual(capture.accessibilityController().view.frame.height, height)
+    }
+
+    func testVoiceOverIsReadInAWindowOnceTwoReadsAgree() throws {
+        let session = PrefireSnapshotSession()
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
+        var reads = 0
+
+        let value = try capture.readVoiceOver { view in
+            XCTAssertNotNil(view.window)
+            reads += 1
+            return min(reads, 3)
+        }
+
+        XCTAssertEqual(value, 3)
+        XCTAssertEqual(reads, 4)
+    }
+
+    func testVoiceOverIsFirstReadAPassOfTheRunLoopAfterTheLayoutAndMayBeEmpty() throws {
+        let session = PrefireSnapshotSession()
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
+        let start = ProcessInfo.processInfo.systemUptime
+        var firstRead: TimeInterval?
+
+        let value = try capture.readVoiceOver { _ in
+            firstRead = firstRead ?? ProcessInfo.processInfo.systemUptime
+            return ""
+        }
+
+        XCTAssertEqual(value, "")
+        XCTAssertGreaterThanOrEqual((firstRead ?? start) - start, 0.05)
+    }
+
+    func testAccessibilityImageUsesTheSettledTranscriptHost() throws {
+        let session = PrefireSnapshotSession()
+        let snapshot = PrefireSnapshot(
+            { Text("Prefire").snapshot(delay: 0.1) }, name: "Shared", isScreen: true, device: session.device
+        )
+        let capture = try session.capture(snapshot)
+        var readView: UIView?
+        var reads = 0
+        var images = 0
+        weak var window: UIWindow?
+        let start = ProcessInfo.processInfo.systemUptime
+
+        let value = try capture.readVoiceOver(accessibilityImage: { controller in
+            XCTAssertTrue(controller.view === readView)
+            XCTAssertEqual(reads, 2)
+            XCTAssertGreaterThanOrEqual(ProcessInfo.processInfo.systemUptime - start, 0.1)
+            window = controller.view.window
+            images += 1
+        }, { view in
+            readView = view
+            reads += 1
+            return "Settled"
+        })
+
+        XCTAssertEqual(value, "Settled")
+        XCTAssertEqual(images, 1)
+        XCTAssertNotEqual(window?.isHidden, false)
+        XCTAssertNil(window?.rootViewController)
+    }
+
+    func testSharedHostIsCleanedUpWhenTheImageThrows() throws {
+        enum ImageError: Error { case failed }
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot(
+            { Text("Prefire") }, name: "Throw", isScreen: true, device: session.device
+        ))
+        weak var window: UIWindow?
+
+        XCTAssertThrowsError(try capture.voiceOverTranscript { controller in
+            window = controller.view.window
+            throw ImageError.failed
+        }) { error in
+            XCTAssertTrue(error is ImageError)
+        }
+        XCTAssertNotEqual(window?.isHidden, false)
+        XCTAssertNil(window?.rootViewController)
+    }
+
+    func testVoiceOverReadThatNeverSettlesFails() throws {
+        let session = PrefireSnapshotSession()
+        let snapshot = PrefireSnapshot({ Text("Prefire") }, name: "Text", isScreen: true, device: session.device)
+        let capture = try session.capture(snapshot)
+        var reads = 0
+        weak var window: UIWindow?
+
+        XCTAssertThrowsError(try capture.readVoiceOver(timeout: 0.2, accessibilityImage: { _ in
+            XCTFail("Do not snapshot a host whose transcript never settled")
+        }, { view in
+            window = view.window
+            reads += 1
+            return reads
+        })) { error in
+            XCTAssertTrue("\(error)".contains("snapshot_wait_timeout"), "\(error)")
+        }
+        XCTAssertGreaterThan(reads, 1)
+        XCTAssertNotEqual(window?.isHidden, false)
+        XCTAssertNil(window?.rootViewController)
     }
 
     // MARK: Private

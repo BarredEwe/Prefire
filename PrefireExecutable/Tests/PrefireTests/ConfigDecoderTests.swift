@@ -24,6 +24,9 @@ class ConfigDecoderTests: XCTestCase {
           - snapshot_wait_for_idle: true
           - snapshot_wait_timeout: 2.5
           - full_page_snapshots: true
+          - voiceover_snapshots:
+              - image
+              - text
         playbook_configuration:
           - template_file_path: CustomModels.stencil
           - imports:
@@ -83,6 +86,7 @@ class ConfigDecoderTests: XCTestCase {
         XCTAssertEqual(config.tests.snapshotWaitForIdle, true)
         XCTAssertEqual(config.tests.snapshotWaitTimeout, 2.5)
         XCTAssertEqual(config.tests.fullPageSnapshots, true)
+        XCTAssertEqual(config.tests.voiceOverSnapshots, ["image", "text"])
         XCTAssertEqual(config.playbook.imports, ["UIKit", "Foundation"])
         XCTAssertEqual(config.playbook.testableImports, ["SwiftUI"])
         XCTAssertEqual(config.playbook.template, "CustomModels.stencil")
@@ -123,6 +127,34 @@ class ConfigDecoderTests: XCTestCase {
 
             XCTAssertNil(config.tests.snapshotWaitTimeout, value)
         }
+    }
+
+    func test_voiceOverSnapshots() {
+        let cases: [(value: String, expected: [String]?)] = [
+            ("text", ["text"]),
+            ("[image, text]", ["image", "text"]),
+            ("none", []),
+            ("\n      - none", []),
+            ("[]", []),
+            ("", []),
+            ("transcript", nil),
+            ("image, transcript", ["image"])
+        ]
+
+        for (value, expected) in cases {
+            let config = ConfigDecoder().decode(
+                from: """
+                test_configuration:
+                  - voiceover_snapshots: \(value)
+                """,
+                env: env
+            )
+
+            XCTAssertEqual(config.tests.voiceOverSnapshots, expected, value)
+        }
+
+        let withoutKey = ConfigDecoder().decode(from: "test_configuration:\n  - target: App", env: env)
+        XCTAssertNil(withoutKey.tests.voiceOverSnapshots)
     }
 
     func test_renderConfiguration() {

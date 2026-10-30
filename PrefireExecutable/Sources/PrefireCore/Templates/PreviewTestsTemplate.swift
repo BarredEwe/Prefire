@@ -16,9 +16,17 @@ import {{ import }}
 @testable import {{ import }}
 {% endfor %}
 import SnapshotTesting
+{% set voiceOverStrategies argument.voiceOverSnapshots|split:"|" %}
+{% if not argument.voiceOverSnapshots or ("image" in voiceOverStrategies) %}
 #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
     import AccessibilitySnapshot
 #endif
+{% endif %}
+{% if "text" in voiceOverStrategies %}
+#if os(iOS)
+    import PrefireVoiceOver
+#endif
+{% endif %}
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
     private let session = PrefireSnapshotSession(
@@ -44,16 +52,12 @@ import SnapshotTesting
     private var file: StaticString { .init(stringLiteral: "{{ argument.file }}") }
     {% endif %}
 
-    @MainActor override func setUp() async throws {
-        try await super.setUp()
-
-        session.prepareEnvironment()
-    }
-
     // MARK: - PreviewProvider
 
     {% for type in types.types where type.kind != "protocol" and (type.implements.PrefireProvider or type.based.PrefireProvider or type|annotated:"PrefireProvider") %}
     func test_{{ type.name|lowerFirstLetter|replace:"_Previews", ""|replace:".", "_" }}() {
+        session.prepareEnvironment()
+
         assertSnapshots(of: {{ type.name }}._allPreviews)
     }
     {%- if not forloop.last %}
@@ -76,6 +80,8 @@ import SnapshotTesting
     fixedLayoutSize: {{ macroModel.fixedLayoutSize }}{% endif %}
 )){% endset %}
     func test_{{ macroModel.componentTestName }}_Preview() {
+        session.prepareEnvironment()
+
         {% if macroModel.hasArguments %}
         for (previewArgumentIndex, previewArgument) in ({{ macroModel.arguments }}).enumerated() {
             let {{ macroModel.argumentPattern }} = previewArgument
@@ -117,9 +123,10 @@ import SnapshotTesting
 
     private func verify(_ capture: PrefireSnapshotCapture) -> String? {
         let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
-{% set reference %}record: record,{% if argument.file %} file: file,{% endif %}{% endset %}
+{% set reference %}record: record,{% if argument.file %} file: self.file,{% endif %}{% endset %}
 
-        #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
+        {% if not argument.voiceOverSnapshots or ("image" in voiceOverStrategies) %}
+        #if canImport(AccessibilitySnapshot) && ({% if "text" in voiceOverStrategies %}os(tvOS){% else %}os(iOS) || os(tvOS){% endif %})
         SnapshotTesting.assertSnapshot(
             of: capture.accessibilityController(),
             as: .wait(for: capture.delay, on: .accessibilityImage(showActivationPoints: .always)),
@@ -127,6 +134,33 @@ import SnapshotTesting
             testName: capture.name + ".accessibility"
         )
         #endif
+        {% endif %}
+        {% if "text" in voiceOverStrategies %}
+        #if os(iOS)
+        do {
+            let transcript = try capture.voiceOverTranscript(timeout: session.waitDefaults.timeout){% if "image" in voiceOverStrategies %} { controller in
+                #if canImport(AccessibilitySnapshot)
+                SnapshotTesting.assertSnapshot(
+                    of: controller,
+                    as: .accessibilityImage(showActivationPoints: .always),
+                    {{ reference }}
+                    testName: capture.name + ".accessibility"
+                )
+                #endif
+            }{% endif %}
+            if let failure = verifySnapshot(
+                of: transcript,
+                as: .lines,
+                {{ reference }}
+                testName: capture.name + ".voiceover.text"
+            ) {
+                return failure
+            }
+        } catch {
+            return "\(error)"
+        }
+        #endif
+        {% endif %}
 
         switch capture.comparison {
         #if os(macOS)

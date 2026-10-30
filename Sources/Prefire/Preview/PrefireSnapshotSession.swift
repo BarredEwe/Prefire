@@ -95,7 +95,7 @@ public struct PrefireSnapshotSession {
         self.render = render
     }
 
-    /// Prepares `environment` for the tests. Call it from `setUp`.
+    /// Prepares `environment` for a test, before its preview is created.
     ///
     /// Rendering for `prefire render` runs on any simulator, so it only turns animations off.
     @MainActor

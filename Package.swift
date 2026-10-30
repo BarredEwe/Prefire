@@ -7,6 +7,7 @@ let package = Package(
     name: "Prefire",
     platforms: [.iOS(.v14), .macOS(.v13), .watchOS(.v7)],
     products: [
+        .library(name: "PrefireVoiceOver", targets: ["PrefireVoiceOver"]),
         .library(
             name: "Prefire",
             targets: ["Prefire"]
@@ -24,7 +25,21 @@ let package = Package(
             targets: ["PrefireCLI"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/cashapp/AccessibilitySnapshot.git", from: "0.13.0"),
+    ],
     targets: [
+        .target(
+            name: "PrefireVoiceOver",
+            dependencies: [
+                "Prefire",
+                .product(
+                    name: "AccessibilitySnapshotParser",
+                    package: "AccessibilitySnapshot",
+                    condition: .when(platforms: [.iOS])
+                ),
+            ]
+        ),
         .target(
             name: "Prefire",
             dependencies: []

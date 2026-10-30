@@ -18,6 +18,9 @@ test_configuration:
   snapshot_wait_for_idle: true
   snapshot_wait_timeout: 2.0
   full_page_snapshots: false
+  voiceover_snapshots:
+    - image
+    - text
   sources:
     - ${PROJECT_DIR}/Sources/
   snapshot_devices:
@@ -71,6 +74,7 @@ render_configuration:
 | `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
+| `voiceover_snapshots` | How previews are snapshotted for VoiceOver: a list of `image` and `text`, or `none`. iOS: AccessibilitySnapshot does not support tvOS, where the generated tests skip both strategies. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
 
 ---
 
@@ -82,9 +86,54 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 - The extra layout hosts the preview once more, so `onAppear`, `.task` and `@StateObject` run one more time. A preview whose content differs between appearances can be measured differently from the image.
 - With `.snapshot(delay:)`, the delay is waited once to measure and once more to take the image, so the test takes twice as long.
 - A preview that is waited on with `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` is measured once it settled, in the window it is captured in, so content it loads while waiting counts and it is hosted only once.
-- The `.accessibility` image from `AccessibilitySnapshot` uses the same height.
+- The VoiceOver image from `AccessibilitySnapshot` uses the same height.
 - The image is at most 16,384 px tall, which is about 5,461 pt at 3x.
 - Previews using `.sizeThatFitsLayout` or a fixed layout are not affected.
+
+---
+
+### VoiceOver snapshots
+
+Add `PrefireVoiceOver` to your **test target**, then enable text in `.prefire.yml`:
+
+```swift
+.product(name: "PrefireVoiceOver", package: "Prefire"),
+```
+
+```yaml
+test_configuration:
+  voiceover_snapshots:
+    - text
+```
+
+| Strategy | Test target needs | Reference |
+| --- | --- | --- |
+| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
+| `text` | The `PrefireVoiceOver` product of Prefire | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
+
+Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` dependency is a compile error rather than a silently skipped assertion.
+
+`PrefireVoiceOver` owns the parser, formatter and hosting/waiting pipeline. It depends on `AccessibilitySnapshotParser` from 0.13.0. The app's `Prefire` product does not depend on this module, and the module does not link SnapshotTesting. The package-level AccessibilitySnapshot dependency and its transitive package requirements still participate in resolution, including for consumers that select only `Prefire`; incompatible version pins can therefore conflict. The manifest remains tools 6.0. [SwiftPM traits](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0450-swiftpm-package-traits.md) require tools 6.1, and the original implementation does not exclude disabled dependencies from resolution.
+
+A pure SwiftUI screen generally produces a flat list. SwiftUI structures such as `SettingsRow` are not UIKit views and do not become tree nodes. The text includes real UIKit ancestors and accessibility containers when the parser exposes them. The [UIKit settings example](../Example/Shared/Examples/UIKitView.swift) and its [integration assertion](../Example/PrefireExampleTests/PrefireExampleTests.swift) show this format:
+
+```text
+SettingsScreen
+  [group: Settings]
+    - Notifications: On
+    - Language: English
+```
+
+- A leaf starts with `- ` followed by the description (label, value and traits), important custom content and hint. An element with nothing to read is a bare `-`.
+- Swift-defined UIKit app views are named without their module or generic parameters. System classes are excluded by their loaded image path under `/System/Library/`, including simulator runtime paths. SwiftUI hosting classes do not imply a hierarchy of SwiftUI structures.
+- Announced containers are `[list]`, `[table]`, `[tab bar]` and `[group: <label>]`. Modal views include ` (modal)`. Shared ancestors are written once, and a view that is both an element and an ancestor appears above its own phrase.
+- Additional lines describe actions, non-important custom content, rotor result counts, direct interaction, frequent updates and language. Frames, identifiers and traversal numbers are omitted. The language line appears only when the element speaks a language other than the current system language — some runtimes autofill the system language into every element and others leave it empty, and the transcript must not depend on that.
+- The library explicitly enables accessibility automation before hosting, then reads every 50 ms until two reads agree, up to `snapshot_wait_timeout` after `delay`. Empty and redacted previews may legitimately produce empty text. Changing text throws a timeout through the usual preview failure path.
+- Accessibility captures render anew and honor `delay`; they do not reuse the state reached by `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)`. With both strategies, text and the accessibility image share one hosting controller and spend `delay` once, separate from the normal image. Text is read before the image strategy adds its overlays, with at least two reads about 50 ms apart after the initial layout pass. Full-page measurement may add its own render as described above.
+- Text follows the existing project/device semantics. Each configured device gets its own reference even when today's transcripts match, since adaptive content and accessibility order can differ between devices.
+- The parser sees SwiftUI `ScrollView` content only in tests with a host application ([cashapp/AccessibilitySnapshot#245](https://github.com/cashapp/AccessibilitySnapshot/issues/245)). Without one, a scrolling screen's text can lack its content.
+
+The existing `Trip` references demonstrate accessibility problems, not a recommended spoken interface: flight field labels and values are read separately, and decorative symbols announce phrases such as “Selected: Selected. Image.” Keep these diffs visible when improving the example's accessibility; they are not an endorsement of that behavior.
 
 ---
 

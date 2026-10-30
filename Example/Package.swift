@@ -34,6 +34,7 @@ let package = Package(
             name: "PrefireExampleTests",
             dependencies: [
                 "PrefireExample",
+                .product(name: "PrefireVoiceOver", package: "Prefire"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ],
             path: "PrefireExampleTests",

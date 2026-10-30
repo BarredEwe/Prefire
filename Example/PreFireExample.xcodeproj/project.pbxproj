@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A19900000000000000000001 /* PrefireVoiceOver in Frameworks */ = {isa = PBXBuildFile; productRef = A19900000000000000000002 /* PrefireVoiceOver */; };
 		6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */ = {isa = PBXBuildFile; productRef = 6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */; };
 		97078E162AF7F2A50041AFB7 /* PrefireExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97078E152AF7F2A50041AFB7 /* PrefireExampleTests.swift */; };
 		9735EE38289C5CF300309267 /* PrefireExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9735EE28289C5CF200309267 /* PrefireExampleApp.swift */; };
@@ -63,6 +64,7 @@
 			files = (
 				9779D5F428A3F13F0083DBD3 /* SnapshotTesting in Frameworks */,
 				6EBCE0172D124ABF009ACE0B /* AccessibilitySnapshot in Frameworks */,
+				A19900000000000000000001 /* PrefireVoiceOver in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +180,7 @@
 			packageProductDependencies = (
 				9779D5F328A3F13F0083DBD3 /* SnapshotTesting */,
 				6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */,
+				A19900000000000000000002 /* PrefireVoiceOver */,
 			);
 			productName = SnapshotAppSwiftUITests;
 			productReference = 9779D5E628A3ECBA0083DBD3 /* PrefireExampleTests.xctest */;
@@ -587,6 +590,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A19900000000000000000002 /* PrefireVoiceOver */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PrefireVoiceOver;
+		};
 		6EBCE0162D124ABF009ACE0B /* AccessibilitySnapshot */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6EBCE0152D124ABF009ACE0B /* XCRemoteSwiftPackageReference "AccessibilitySnapshot" */;
