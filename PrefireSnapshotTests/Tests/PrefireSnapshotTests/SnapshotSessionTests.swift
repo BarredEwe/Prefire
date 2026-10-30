@@ -203,10 +203,10 @@ final class SnapshotSessionTests: XCTestCase {
         ))
         weak var window: UIWindow?
 
-        XCTAssertThrowsError(try capture.voiceOverTranscript { controller in
+        XCTAssertThrowsError(try capture.voiceOverTranscript(accessibilityImage: { controller in
             window = controller.view.window
             throw ImageError.failed
-        }) { error in
+        })) { error in
             XCTAssertTrue(error is ImageError)
         }
         XCTAssertNotEqual(window?.isHidden, false)

@@ -17,7 +17,8 @@ let package = Package(
             name: "Prefire",
             path: "../"
         ),
-        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.15.4")
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.15.4"),
+        .package(url: "https://github.com/cashapp/AccessibilitySnapshot.git", from: "0.13.0")
     ],
     targets: [
         .target(
@@ -35,6 +36,7 @@ let package = Package(
             dependencies: [
                 "PrefireExample",
                 .product(name: "PrefireVoiceOver", package: "Prefire"),
+                .product(name: "AccessibilitySnapshotParser", package: "AccessibilitySnapshot"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ],
             path: "PrefireExampleTests",

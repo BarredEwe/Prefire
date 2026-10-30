@@ -94,10 +94,11 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 
 ### VoiceOver snapshots
 
-Add `PrefireVoiceOver` to your **test target**, then enable text in `.prefire.yml`:
+Add `PrefireVoiceOver` and the parser of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) 0.13 or later to your **test target**, then enable text in `.prefire.yml`:
 
 ```swift
 .product(name: "PrefireVoiceOver", package: "Prefire"),
+.product(name: "AccessibilitySnapshotParser", package: "AccessibilitySnapshot"),
 ```
 
 ```yaml
@@ -109,11 +110,11 @@ test_configuration:
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
 | `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
-| `text` | The `PrefireVoiceOver` product of Prefire | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
+| `text` | The `PrefireVoiceOver` product of Prefire, and `AccessibilitySnapshotParser` (or `AccessibilitySnapshot`, which brings it along) | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
 
-Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` dependency is a compile error rather than a silently skipped assertion.
+Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` or `AccessibilitySnapshotParser` dependency is a compile error rather than a silently skipped assertion.
 
-`PrefireVoiceOver` owns the parser, formatter and hosting/waiting pipeline. It depends on `AccessibilitySnapshotParser` from 0.13.0. The app's `Prefire` product does not depend on this module, and the module does not link SnapshotTesting. The package-level AccessibilitySnapshot dependency and its transitive package requirements still participate in resolution, including for consumers that select only `Prefire`; incompatible version pins can therefore conflict. The manifest remains tools 6.0. [SwiftPM traits](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0450-swiftpm-package-traits.md) require tools 6.1, and the original implementation does not exclude disabled dependencies from resolution.
+`PrefireVoiceOver` owns the formatter and the hosting and waiting pipeline, and has no dependencies besides `Prefire`. The generated tests parse the hosted view with `AccessibilityHierarchyParser` and hand the elements to it, so AccessibilitySnapshot stays a dependency of your test target only, at the version you pin. The app's `Prefire` product does not depend on `PrefireVoiceOver`.
 
 A pure SwiftUI screen generally produces a flat list. SwiftUI structures such as `SettingsRow` are not UIKit views and do not become tree nodes. The text includes real UIKit ancestors and accessibility containers when the parser exposes them. The [UIKit settings example](../Example/Shared/Examples/UIKitView.swift) and its [integration assertion](../Example/PrefireExampleTests/PrefireExampleTests.swift) show this format:
 

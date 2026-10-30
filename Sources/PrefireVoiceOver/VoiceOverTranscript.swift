@@ -3,22 +3,22 @@ import ObjectiveC
 import UIKit
 
 /// Formats parsed elements in VoiceOver order, under UIKit views and announced containers.
-enum VoiceOverTranscript {
+public enum VoiceOverTranscript {
     /// An element VoiceOver focuses.
-    struct Element {
+    public struct Element {
         /// Position in VoiceOver order.
-        var traversalIndex: Int
+        public var traversalIndex: Int
         /// The object that provides the element: a view, a `UIAccessibilityElement` or a node of SwiftUI.
-        var source: NSObject
+        public var source: NSObject
         /// Label, value and traits, as VoiceOver reads them.
-        var spokenDescription: String
-        var hint: String?
-        var customActions: [String]
-        var customContent: [CustomContent]
-        var customRotors: [CustomRotor]
-        var language: String?
+        public var spokenDescription: String
+        public var hint: String?
+        public var customActions: [String]
+        public var customContent: [CustomContent]
+        public var customRotors: [CustomRotor]
+        public var language: String?
 
-        init(
+        public init(
             traversalIndex: Int,
             source: NSObject,
             spokenDescription: String,
@@ -40,24 +40,24 @@ enum VoiceOverTranscript {
     }
 
     /// Content VoiceOver reads with the element when it is important, and on request otherwise.
-    struct CustomContent {
-        var label: String
-        var value: String
-        var isImportant: Bool
+    public struct CustomContent {
+        public var label: String
+        public var value: String
+        public var isImportant: Bool
 
-        init(label: String, value: String, isImportant: Bool = false) {
+        public init(label: String, value: String, isImportant: Bool = false) {
             self.label = label
             self.value = value
             self.isImportant = isImportant
         }
     }
 
-    struct CustomRotor {
-        var name: String
+    public struct CustomRotor {
+        public var name: String
         /// How many results the rotor has.
-        var resultCount: Int
+        public var resultCount: Int
 
-        init(name: String, resultCount: Int) {
+        public init(name: String, resultCount: Int) {
             self.name = name
             self.resultCount = resultCount
         }

@@ -25,20 +25,10 @@ let package = Package(
             targets: ["PrefireCLI"]
         ),
     ],
-    dependencies: [
-        .package(url: "https://github.com/cashapp/AccessibilitySnapshot.git", from: "0.13.0"),
-    ],
     targets: [
         .target(
             name: "PrefireVoiceOver",
-            dependencies: [
-                "Prefire",
-                .product(
-                    name: "AccessibilitySnapshotParser",
-                    package: "AccessibilitySnapshot",
-                    condition: .when(platforms: [.iOS])
-                ),
-            ]
+            dependencies: ["Prefire"]
         ),
         .target(
             name: "Prefire",

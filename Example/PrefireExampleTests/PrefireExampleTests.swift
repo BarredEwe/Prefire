@@ -7,6 +7,7 @@ private let tests = _TestFile.self
 
 private struct _TestFile { }
 
+import AccessibilitySnapshotParser
 import PrefireVoiceOver
 import SwiftUI
 import XCTest
@@ -22,7 +23,17 @@ final class UIKitVoiceOverTests: XCTestCase {
             isScreen: true,
             device: session.device
         ))
-        XCTAssertEqual(try capture.voiceOverTranscript(), """
+        let transcript = try capture.voiceOverTranscript { view in
+            let elements: [[VoiceOverTranscript.Element]] = AccessibilityHierarchyParser().parseAccessibilityHierarchy(
+                in: view,
+                makeElement: { element, traversalIndex, source in
+                    [.init(traversalIndex: traversalIndex, source: source, spokenDescription: element.description)]
+                },
+                makeContainer: { _, children, _ in Array(children.joined()) }
+            )
+            return Array(elements.joined())
+        }
+        XCTAssertEqual(transcript, """
         SettingsScreen
           [group: Settings]
             - Notifications: On

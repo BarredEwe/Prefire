@@ -22,11 +22,12 @@ final class VoiceOverTemplateTests: XCTestCase {
             XCTAssertEqual(result.contains("import AccessibilitySnapshot\n"), image, strategies ?? "default")
             XCTAssertEqual(result.contains(imageAssertion), image, strategies ?? "default")
             XCTAssertEqual(result.contains("import PrefireVoiceOver\n"), voiceOver, strategies ?? "default")
+            XCTAssertEqual(result.contains("import AccessibilitySnapshotParser\n"), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains(voiceOverAssertion), voiceOver, strategies ?? "default")
-            XCTAssertEqual(result.contains("capture.voiceOverTranscript(timeout:"), voiceOver, strategies ?? "default")
+            XCTAssertEqual(result.contains("capture.voiceOverTranscript(elements: Self.voiceOverElements, timeout:"), voiceOver, strategies ?? "default")
             XCTAssertFalse(result.contains("super.setUp"))
             XCTAssertTrue(result.contains("session.prepareEnvironment()"))
-            XCTAssertFalse(result.contains("parseAccessibilityHierarchy"))
+            XCTAssertEqual(result.contains("AccessibilityHierarchyParser().parseAccessibilityHierarchy("), voiceOver, strategies ?? "default")
             XCTAssertFalse(result.contains("voiceOverImageTestName"))
             XCTAssertTrue(result.contains("record: record, file: self.file,"))
             XCTAssertFalse(result.contains("record: record, file: file,"))
@@ -35,7 +36,7 @@ final class VoiceOverTemplateTests: XCTestCase {
             }
             if image, voiceOver {
                 XCTAssertTrue(result.contains(
-                    "capture.voiceOverTranscript(timeout: session.waitDefaults.timeout) { controller in"
+                    "capture.voiceOverTranscript(elements: Self.voiceOverElements, timeout: session.waitDefaults.timeout) { controller in"
                 ))
                 XCTAssertTrue(result.contains("of: controller,"))
                 XCTAssertTrue(result.contains("as: .accessibilityImage(showActivationPoints: .always),"))

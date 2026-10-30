@@ -24,6 +24,7 @@ import SnapshotTesting
 {% endif %}
 {% if "text" in voiceOverStrategies %}
 #if os(iOS)
+    import AccessibilitySnapshotParser
     import PrefireVoiceOver
 #endif
 {% endif %}
@@ -138,7 +139,7 @@ import SnapshotTesting
         {% if "text" in voiceOverStrategies %}
         #if os(iOS)
         do {
-            let transcript = try capture.voiceOverTranscript(timeout: session.waitDefaults.timeout){% if "image" in voiceOverStrategies %} { controller in
+            let transcript = try capture.voiceOverTranscript(elements: Self.voiceOverElements, timeout: session.waitDefaults.timeout){% if "image" in voiceOverStrategies %} { controller in
                 #if canImport(AccessibilitySnapshot)
                 SnapshotTesting.assertSnapshot(
                     of: controller,
@@ -201,6 +202,35 @@ import SnapshotTesting
         #endif
         }
     }
+    {% if "text" in voiceOverStrategies %}
+
+    #if os(iOS)
+    /// What VoiceOver focuses in `view`, as AccessibilitySnapshot's parser finds it.
+    private static func voiceOverElements(in view: UIView) -> [VoiceOverTranscript.Element] {
+        let elements: [[VoiceOverTranscript.Element]] = AccessibilityHierarchyParser().parseAccessibilityHierarchy(
+            in: view,
+            makeElement: { element, traversalIndex, source in
+                [VoiceOverTranscript.Element(
+                    traversalIndex: traversalIndex,
+                    source: source,
+                    spokenDescription: element.description,
+                    hint: element.hint,
+                    customActions: element.customActions,
+                    customContent: element.customContent.map {
+                        .init(label: $0.label, value: $0.value, isImportant: $0.isImportant)
+                    },
+                    customRotors: element.customRotors.map {
+                        .init(name: $0.name, resultCount: $0.resultMarkers.count)
+                    },
+                    language: element.accessibilityLanguage
+                )]
+            },
+            makeContainer: { _, children, _ in Array(children.joined()) }
+        )
+        return Array(elements.joined())
+    }
+    #endif
+    {% endif %}
 }
 """#
 }
