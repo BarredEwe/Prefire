@@ -125,6 +125,8 @@ final class ConfigDecoder {
             return []
         }
 
+        if values.isEmpty { return [] }
+
         let known = TestsConfig.voiceOverSnapshotStrategies
         let strategies = values.filter { value in
             guard known.contains(value) else {

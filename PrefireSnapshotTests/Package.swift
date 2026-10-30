@@ -6,7 +6,7 @@ import PackageDescription
 /// Tests of the Prefire library on the iOS Simulator: rendering previews, and comparing them with what
 /// SnapshotTesting renders.
 ///
-/// A package of its own, so SnapshotTesting stays out of the dependencies of the Prefire library.
+/// A package of its own, so the SnapshotTesting product stays out of the Prefire app target.
 /// Run it with `make test-ios`.
 let package = Package(
     name: "PrefireSnapshotTests",
@@ -20,6 +20,7 @@ let package = Package(
             name: "PrefireSnapshotTests",
             dependencies: [
                 .product(name: "Prefire", package: "Prefire"),
+                .product(name: "PrefireVoiceOver", package: "Prefire"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ]
         ),

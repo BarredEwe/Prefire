@@ -8,46 +8,18 @@ import XCTest
 final class VoiceOverReferenceNameTests: XCTestCase {
     private let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
-    func testImageWithoutReferencesIsRecordedUnderTheNewName() throws {
-        XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.voiceover.image")
-    }
-
-    func testImageWithOnlyNewReferencesKeepsTheNewName() throws {
-        try record("Card-voiceover-image.1.png")
-
-        XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.voiceover.image")
-    }
-
-    func testImageWithOnlyOldReferencesIsComparedWithThem() throws {
-        try record("Card-accessibility.1.png", "Card-accessibility.2.png")
-
-        XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.accessibility")
-    }
-
-    func testImageWithBothNamesTakesTheNewOne() throws {
-        try record("Card-accessibility.1.png", "Card-voiceover-image.1.png")
-
-        XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.voiceover.image")
-    }
-
-    func testOldReferencesOfAnotherPreviewDoNotCount() throws {
-        try record("CardList-accessibility.1.png")
-
-        XCTAssertEqual(try capture().voiceOverImageTestName(filePath: file), "Card.voiceover.image")
-    }
-
     /// SnapshotTesting numbers references per test name, so the text keeps its number with or without
     /// an image before it.
     func testTextIsNumberedTheSameWithAndWithoutTheImage() throws {
         let capture = try capture()
 
-        verify(capture.voiceOverTextTestName)
-        verify(capture.voiceOverImageTestName(filePath: file))
-        verify(capture.voiceOverTextTestName)
+        verify(capture.name + ".voiceover.text")
+        verify(capture.name + ".accessibility")
+        verify(capture.name + ".voiceover.text")
 
         let files = try FileManager.default.contentsOfDirectory(atPath: snapshots.path).sorted()
         XCTAssertEqual(files, [
-            "Card-voiceover-image.1.txt",
+            "Card-accessibility.1.txt",
             "Card-voiceover-text.1.txt",
             "Card-voiceover-text.2.txt"
         ])
@@ -73,13 +45,6 @@ final class VoiceOverReferenceNameTests: XCTestCase {
         let session = PrefireSnapshotSession()
         let snapshot = PrefireSnapshot({ Text("Card") }, name: "Card", isScreen: true, device: session.device)
         return try session.capture(snapshot)
-    }
-
-    private func record(_ names: String...) throws {
-        try FileManager.default.createDirectory(at: snapshots, withIntermediateDirectories: true)
-        for name in names {
-            try Data().write(to: snapshots.appendingPathComponent(name))
-        }
     }
 
     private func verify(_ testName: String) {

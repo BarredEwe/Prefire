@@ -92,7 +92,9 @@ the longest timeout applies.
 
 The preview is hosted once, waited on and captured in the same window, so state it reached in
 `.onAppear` or `.task` is kept. Accessibility snapshots are the exception: they render the
-preview anew and only honor `delay`.
+preview anew and only honor `delay`. With both VoiceOver strategies enabled, this means three
+renders: the regular image, the accessibility image and the text. Text additionally waits for two
+matching reads, at least about 100 ms. See [VoiceOver snapshots](Configuration.md#voiceover-snapshots).
 
 Waiting runs the main run loop in place, so snapshots that wait have to be taken from a
 synchronous test method, as the generated tests do. From `async` code `.task` never runs, and

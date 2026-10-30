@@ -94,7 +94,11 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 
 ### VoiceOver snapshots
 
-Every preview also gets snapshots of what VoiceOver sees when the test target can import their library. `voiceover_snapshots` picks which:
+Add `PrefireVoiceOver` to your **test target**, then enable text in `.prefire.yml`:
+
+```swift
+.product(name: "PrefireVoiceOver", package: "Prefire"),
+```
 
 ```yaml
 test_configuration:
@@ -104,38 +108,32 @@ test_configuration:
 
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
-| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-voiceover-image.1.png`: the preview with its elements and activation points marked |
-| `text` | The `AccessibilitySnapshotParser` product of the same package, 0.13 or later | `<test>-voiceover-text.1.txt`, next to the images: what VoiceOver reads |
+| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
+| `text` | The `PrefireVoiceOver` product of Prefire | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
 
-Both can be listed, on separate lines or as `[image, text]`, and `none` turns them off. Without the key, or when it names no known strategy, Prefire snapshots `image`, as before the key existed. Unknown strategies are skipped with a warning.
+Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` dependency is a compile error rather than a silently skipped assertion.
 
-An image changes whenever the layout does, which makes it hard to review. The text reference changes only when what VoiceOver reads changes. Both strategies show what VoiceOver sees, which is why the key is named after VoiceOver rather than accessibility, which also covers Dynamic Type, contrast or Voice Control. Each strategy numbers its references on its own, so the text keeps its file name whether `image` is on or not.
+`PrefireVoiceOver` owns the parser, formatter and hosting/waiting pipeline. It depends on `AccessibilitySnapshotParser` from 0.13.0. The app's `Prefire` product does not depend on this module, and the module does not link SnapshotTesting. The package-level AccessibilitySnapshot dependency and its transitive package requirements still participate in resolution, including for consumers that select only `Prefire`; incompatible version pins can therefore conflict. The manifest remains tools 6.0. [SwiftPM traits](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0450-swiftpm-package-traits.md) require tools 6.1, and the original implementation does not exclude disabled dependencies from resolution.
 
-> **Deprecated:** before `voiceover_snapshots`, the image was recorded as `<test>-accessibility.N.png`. While a test has only references of that name, Prefire still compares with them and records nothing new, so tests keep passing after the update. This will be removed in Prefire 7.0. To migrate, rename `-accessibility.` to `-voiceover-image.` in the names of the files in `__Snapshots__`.
-
-The text reference is a tree. The elements are its leaves, in VoiceOver order, under the views of your app that hold them:
+A pure SwiftUI screen generally produces a flat list. SwiftUI structures such as `SettingsRow` are not UIKit views and do not become tree nodes. The text includes real UIKit ancestors and accessibility containers when the parser exposes them. The [UIKit settings example](../Example/Shared/Examples/UIKitView.swift) and its [integration assertion](../Example/PrefireExampleTests/PrefireExampleTests.swift) show this format:
 
 ```text
-SettingsView
-  [list]
-    SettingsRow
-      - Notifications. Switch Button. On.
-    SettingsRow
-      - Language. Button. English.
-        actions: Reset
-  - Sign out. Button. Double tap to sign out.
+SettingsScreen
+  [group: Settings]
+    - Notifications: On
+    - Language: English
 ```
 
-- A leaf is `- ` and what VoiceOver reads: the description (label, value and traits), important custom content and the hint. An element VoiceOver reads nothing for is a bare `-`.
-- A view is a node when its type comes from a module other than Swift, SwiftUI, SwiftUICore, UIKit, Foundation and Prefire, so views of third-party packages are nodes too. Objective-C classes have no module and are never nodes, and neither are types whose names start with `_`. A node is named after its type, without the module and generic parameters, and a hosting view is named after the SwiftUI view it hosts, without its modifiers: one hosting `ProfileCard().padding()` is `ProfileCard`. Views of SwiftUI are not views of UIKit, so a screen made only of SwiftUI lists its elements without nodes, like the sign-in screen of the [Example](../Example) project.
-- Containers VoiceOver announces are nodes in brackets: `[list]`, `[table]`, `[tab bar]` and `[group: <label>]` for a group with a label. A view with `accessibilityViewIsModal` is a node marked ` (modal)`, even when it is a system view.
-- A view that is an element and holds other elements is a node above its own phrase.
-- A node shared with the element before is written once. Two views of the same type are two nodes.
-- What VoiceOver tells on request follows a leaf, only when there is any: `actions:`, `custom content:` that is not important, `rotor "<name>": <count of results>`, `traits: direct interaction, updates frequently` and `language:`.
-- Frames, identifiers and the numbers of the elements are left out, so the reference does not change with the layout.
-- The preview is hosted in a window of its own and read every 50 ms until two reads in a row agree, for up to `snapshot_wait_timeout` after its `delay`. When the reads keep changing, the test fails instead of recording a partial reference. Like the image, it is rendered anew, so it does not see the state a wait with `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)` reached.
-- `AccessibilitySnapshot` brings the parser along. To use `text` alone, the `AccessibilitySnapshotParser` product is enough.
-- The parser sees the content of a SwiftUI `ScrollView` only when the tests run in a host application ([cashapp/AccessibilitySnapshot#245](https://github.com/cashapp/AccessibilitySnapshot/issues/245)). In a test target without one, the text reference of a scrolling screen lacks its content.
+- A leaf starts with `- ` followed by the description (label, value and traits), important custom content and hint. An element with nothing to read is a bare `-`.
+- Swift-defined UIKit app views are named without their module or generic parameters. System classes are excluded by their loaded image path under `/System/Library/`, including simulator runtime paths. SwiftUI hosting classes do not imply a hierarchy of SwiftUI structures.
+- Announced containers are `[list]`, `[table]`, `[tab bar]` and `[group: <label>]`. Modal views include ` (modal)`. Shared ancestors are written once, and a view that is both an element and an ancestor appears above its own phrase.
+- Additional lines describe actions, non-important custom content, rotor result counts, direct interaction, frequent updates and language. Frames, identifiers and traversal numbers are omitted.
+- The library explicitly enables accessibility automation before hosting, then reads every 50 ms until two reads agree, up to `snapshot_wait_timeout` after `delay`. Empty and redacted previews may legitimately produce empty text. Changing text throws a timeout through the usual preview failure path.
+- Accessibility captures render anew and honor `delay`; they do not reuse the state reached by `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)`. With both strategies, the preview is rendered three times: the normal image, the accessibility image and the text. Each accessibility render spends `delay`; text also needs at least two reads, about 100 ms in total. Full-page measurement may add its own render as described above.
+- Text follows the existing project/device semantics. Each configured device gets its own reference even when today's transcripts match, since adaptive content and accessibility order can differ between devices.
+- The parser sees SwiftUI `ScrollView` content only in tests with a host application ([cashapp/AccessibilitySnapshot#245](https://github.com/cashapp/AccessibilitySnapshot/issues/245)). Without one, a scrolling screen's text can lack its content.
+
+The existing `Trip` references demonstrate accessibility problems, not a recommended spoken interface: flight field labels and values are read separately, and decorative symbols announce phrases such as “Selected: Selected. Image.” Keep these diffs visible when improving the example's accessibility; they are not an endorsement of that behavior.
 
 ---
 

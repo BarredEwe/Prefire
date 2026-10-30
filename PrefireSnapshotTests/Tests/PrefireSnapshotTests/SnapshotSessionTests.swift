@@ -1,5 +1,6 @@
 #if os(iOS)
 import Prefire
+@testable import PrefireVoiceOver
 import SnapshotTesting
 import SwiftUI
 import UIKit

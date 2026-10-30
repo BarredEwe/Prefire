@@ -1,7 +1,10 @@
 #if os(iOS)
-@testable import Prefire
+import MapKit
+import Prefire
+@testable import PrefireVoiceOver
 import SwiftUI
 import UIKit
+import WebKit
 import XCTest
 
 @MainActor
@@ -110,35 +113,22 @@ final class VoiceOverTranscriptTests: XCTestCase {
         """)
     }
 
-    func testNodesAreTheTypesOfTheApp() {
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("App.ProfileView"), "ProfileView")
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("App.Wrapper<App.ProfileView>"), "Wrapper")
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("App.(unknown context at $10a0c).ProfileView"), "ProfileView")
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("SwiftUI._UIHostingView<App.ProfileView>"), "ProfileView")
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("App.Profile_View"), "Profile_View")
-        XCTAssertEqual(VoiceOverTranscript.appTypeName("ThirdParty.Badge"), "Badge")
-        XCTAssertEqual(
-            VoiceOverTranscript.appTypeName(
-                "SwiftUI._UIHostingView<SwiftUI.ModifiedContent<SwiftUI.ModifiedContent<App.ProfileCard, "
-                    + "SwiftUI._PaddingLayout>, SwiftUI._BackgroundModifier<SwiftUI.Color>>>"
-            ),
-            "ProfileCard"
-        )
-        let modifiedText = "SwiftUI._UIHostingView<SwiftUI.ModifiedContent<SwiftUI.Text, App.Style>>"
-        XCTAssertNil(VoiceOverTranscript.appTypeName(modifiedText))
-        XCTAssertNil(VoiceOverTranscript.appTypeName("SwiftUI._UIHostingView<SwiftUI.AnyView>"))
-        XCTAssertNil(VoiceOverTranscript.appTypeName("SwiftUI.PlatformViewHost<App.ProfileView>"))
-        XCTAssertNil(VoiceOverTranscript.appTypeName("UILabel"))
-        XCTAssertNil(VoiceOverTranscript.appTypeName("Prefire.SnapshotCanvasWindow"))
-        XCTAssertNil(VoiceOverTranscript.appTypeName("App._ProfileView"))
+    func testSystemFrameworkViewsAreNotAppNodes() {
+        XCTAssertNil(VoiceOverTranscript.appTypeName(of: UIView()))
+        XCTAssertNil(VoiceOverTranscript.appTypeName(of: UILabel()))
+        XCTAssertNil(VoiceOverTranscript.appTypeName(of: MKMapView()))
+        XCTAssertNil(VoiceOverTranscript.appTypeName(of: WKWebView()))
+        XCTAssertEqual(VoiceOverTranscript.appTypeName(of: SettingsView()), "SettingsView")
     }
 
-    /// Elements of SwiftUI are not views: their path goes up `accessibilityContainer` to the hosting
-    /// view, which is named after the view it hosts.
+    /// SwiftUI structures do not become UIKit nodes; their real UIKit ancestors still count.
     func testElementsOfAHostedSwiftUIViewAreUnderItsHostingView() throws {
-        // SwiftUI builds its accessibility elements only while accessibility is on. In the generated
-        // tests AccessibilitySnapshotParser turns it on when it loads; this target does not link it.
-        try enableAccessibilityAutomation()
+        // Exercise library initialization rather than relying on parser +load or test order.
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot(
+            { Text("Warm up") }, name: "Warm up", isScreen: true, device: session.device
+        ))
+        _ = try capture.voiceOverTranscript()
 
         let profile = ProfileContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
         let controller = UIHostingController(rootView: ProfileCard())
@@ -163,23 +153,72 @@ final class VoiceOverTranscriptTests: XCTestCase {
 
         XCTAssertEqual(text, """
         ProfileContainer
-          ProfileCard
-            - Ada
+          - Ada
         """)
     }
 
-    // MARK: Private
-
-    /// Turns on accessibility automation for the rest of the tests, as AccessibilitySnapshotParser does.
-    private func enableAccessibilityAutomation() throws {
-        var path = "/usr/lib/libAccessibility.dylib"
-        if let simulatorRoot = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] {
-            path = simulatorRoot + path
-        }
-        let handle = try XCTUnwrap(dlopen(path, RTLD_LOCAL), "Could not load \(path)")
-        let symbol = try XCTUnwrap(dlsym(handle, "_AXSSetAutomationEnabled"))
-        unsafeBitCast(symbol, to: (@convention(c) (Int32) -> Void).self)(1)
+    func testUIKitParserPipelineKeepsRealAppNodes() throws {
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot(
+            {
+                let settings = SettingsView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
+                let list = UIView(frame: settings.bounds)
+                list.accessibilityContainerType = .semanticGroup
+                list.accessibilityLabel = "Settings"
+                let label = UILabel(frame: CGRect(x: 20, y: 20, width: 280, height: 40))
+                label.isAccessibilityElement = true
+                label.text = "Notifications"
+                label.accessibilityLabel = "Notifications"
+                label.accessibilityValue = "On"
+                list.addSubview(label)
+                list.accessibilityElements = [label]
+                settings.addSubview(list)
+                return ViewRepresentable(view: settings).frame(width: 320, height: 200)
+            },
+            name: "UIKit settings",
+            isScreen: true,
+            device: session.device
+        ))
+        XCTAssertEqual(try capture.voiceOverTranscript(), """
+        SettingsView
+          [group: Settings]
+            - Notifications: On
+        """)
     }
+
+    func testColdSwiftUIReadEnablesAutomationBeforeHosting() throws {
+        let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
+        let handle = try XCTUnwrap(dlopen(root + "/usr/lib/libAccessibility.dylib", RTLD_LOCAL))
+        defer { dlclose(handle) }
+        let getSymbol = try XCTUnwrap(dlsym(handle, "_AXSAutomationEnabled"))
+        let get = unsafeBitCast(getSymbol, to: (@convention(c) () -> Int32).self)
+        let setSymbol = try XCTUnwrap(dlsym(handle, "_AXSSetAutomationEnabled"))
+        let set = unsafeBitCast(setSymbol, to: (@convention(c) (Int32) -> Void).self)
+        let previous = get()
+        set(0)
+        defer { set(previous) }
+        XCTAssertEqual(get(), 0)
+
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot(
+            { Text("Ada") }, name: "Cold SwiftUI", isScreen: true, device: session.device
+        ))
+        XCTAssertEqual(try capture.voiceOverTranscript(), "- Ada")
+        XCTAssertNotEqual(get(), 0)
+    }
+
+    func testLegallyEmptyPreviewCanBeRead() throws {
+        let session = PrefireSnapshotSession()
+        let capture = try session.capture(PrefireSnapshot(
+            { Text("Private").accessibilityHidden(true) },
+            name: "Hidden",
+            isScreen: true,
+            device: session.device
+        ))
+        XCTAssertEqual(try capture.voiceOverTranscript(), "")
+    }
+
+    // MARK: Private
 
     /// First accessibility element under `object`, found the way VoiceOver walks the containers.
     private func firstElement(in object: NSObject) -> NSObject? {
@@ -187,7 +226,7 @@ final class VoiceOverTranscriptTests: XCTestCase {
             return object
         }
         let children = (object.accessibilityElements as? [NSObject])
-            ?? (0..<max(object.accessibilityElementCount(), 0)).compactMap {
+            ?? (0 ..< max(object.accessibilityElementCount(), 0)).compactMap {
                 object.accessibilityElement(at: $0) as? NSObject
             }
         let subviews = (object as? UIView)?.subviews ?? []

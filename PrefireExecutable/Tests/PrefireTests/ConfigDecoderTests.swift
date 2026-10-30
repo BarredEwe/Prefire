@@ -135,8 +135,8 @@ class ConfigDecoderTests: XCTestCase {
             ("[image, text]", ["image", "text"]),
             ("none", []),
             ("\n      - none", []),
-            ("[]", nil),
-            ("", nil),
+            ("[]", []),
+            ("", []),
             ("transcript", nil),
             ("image, transcript", ["image"])
         ]

@@ -1,7 +1,7 @@
 import Foundation
+import PathKit
 @testable import PrefireCore
 import XCTest
-import PathKit
 
 final class VoiceOverTemplateTests: XCTestCase {
     func testTemplateAppliesVoiceOverSnapshotStrategies() async throws {
@@ -13,11 +13,15 @@ final class VoiceOverTemplateTests: XCTestCase {
             ("image", (true, false)),
             ("text", (false, true)),
             ("image|text", (true, true)),
-            ("none", (false, false))
+            ("none", (false, false)),
+            ("notimage|nottext", (false, false))
         ]
 
         for (index, (strategies, (image, voiceOver))) in cases.enumerated() {
-            let output = Path("/tmp/VoiceOverStrategiesPreviewTests\(index).generated.swift")
+            let root = Path(#filePath).parent().parent().parent().parent()
+            let temporary = root + "Tasks/temp/VoiceOverStrategies\(index)"
+            defer { try? temporary.delete() }
+            let output = temporary + "PreviewTests.generated.swift"
 
             try await PrefireGenerator.generate(
                 version: "1.0.0",
@@ -26,7 +30,7 @@ final class VoiceOverTemplateTests: XCTestCase {
                 arguments: strategies.map { ["voiceOverSnapshots": $0 as NSString] } ?? [:],
                 inlineTemplate: EmbeddedTemplates.previewTests,
                 defaultEnabled: true,
-                cacheDir: Path("/tmp/cache_voiceover_strategies_preview\(index)/"),
+                cacheDir: temporary + "cache",
                 useGroupedSnapshots: true
             )
 
@@ -34,9 +38,33 @@ final class VoiceOverTemplateTests: XCTestCase {
 
             XCTAssertEqual(result.contains("import AccessibilitySnapshot\n"), image, strategies ?? "default")
             XCTAssertEqual(result.contains(imageAssertion), image, strategies ?? "default")
-            XCTAssertEqual(result.contains("import AccessibilitySnapshotParser\n"), voiceOver, strategies ?? "default")
+            XCTAssertEqual(result.contains("import PrefireVoiceOver\n"), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains(voiceOverAssertion), voiceOver, strategies ?? "default")
-            XCTAssertEqual(result.contains("VoiceOverTranscript.text(of:"), voiceOver, strategies ?? "default")
+            XCTAssertEqual(result.contains("capture.voiceOverTranscript(timeout:"), voiceOver, strategies ?? "default")
+            XCTAssertFalse(result.contains("parseAccessibilityHierarchy"))
+            XCTAssertFalse(result.contains("voiceOverImageTestName"))
+            if image {
+                XCTAssertTrue(result.contains("testName: capture.name + \".accessibility\""))
+            }
         }
+    }
+
+    func testGeneratedTextConsumerMatchesTheCompiledFixture() async throws {
+        let root = Path(#filePath).parent().parent().parent().parent()
+        let temporary = root + "Tasks/temp/VoiceOverConsumer"
+        defer { try? temporary.delete() }
+        let output = temporary + "PreviewTests.generated.swift"
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [Path(fixtureVoiceOverConsumerSource)],
+            output: output,
+            arguments: ["voiceOverSnapshots": "text" as NSString],
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: temporary + "cache",
+            useGroupedSnapshots: true
+        )
+        let compiled = root + "PrefireSnapshotTests/Tests/PrefireSnapshotTests/VoiceOverConsumer.generated.swift"
+        XCTAssertEqual(try output.read(.utf8), try compiled.read(.utf8))
     }
 }
