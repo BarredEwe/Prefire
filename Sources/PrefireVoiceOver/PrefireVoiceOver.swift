@@ -7,8 +7,12 @@ import UIKit
 extension PrefireSnapshotCapture {
     /// Renders and reads a preview after enabling accessibility automation and waiting for stable text.
     /// Legal empty or redacted previews return an empty transcript. Changing text throws on timeout.
-    public func voiceOverTranscript(timeout: TimeInterval = SnapshotWaitDefaults().timeout) throws -> String {
-        try readVoiceOver(timeout: timeout) { view in
+    /// `accessibilityImage` can snapshot the same host after reading, without another render or delay.
+    public func voiceOverTranscript(
+        timeout: TimeInterval = SnapshotWaitDefaults().timeout,
+        accessibilityImage: ((UIViewController) throws -> Void)? = nil
+    ) throws -> String {
+        try readVoiceOver(timeout: timeout, accessibilityImage: accessibilityImage) { view in
             let parser = AccessibilityHierarchyParser()
             let elements: [[VoiceOverTranscript.Element]] = parser.parseAccessibilityHierarchy(
                 in: view,
@@ -36,6 +40,7 @@ extension PrefireSnapshotCapture {
 
     func readVoiceOver<Value: Equatable>(
         timeout: TimeInterval = SnapshotWaitDefaults().timeout,
+        accessibilityImage: ((UIViewController) throws -> Void)? = nil,
         _ read: (UIView) -> Value
     ) throws -> Value {
         try enableVoiceOverAutomation()
@@ -61,6 +66,8 @@ extension PrefireSnapshotCapture {
 
             let current = read(controller.view)
             if current == last {
+                // AccessibilitySnapshot reparents the view to add overlays; read text before that.
+                try accessibilityImage?(controller)
                 return current
             }
             last = current

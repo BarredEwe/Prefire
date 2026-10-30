@@ -126,7 +126,7 @@ import SnapshotTesting
 {% set reference %}record: record,{% if argument.file %} file: file,{% endif %}{% endset %}
 
         {% if not argument.voiceOverSnapshots or ("image" in voiceOverStrategies) %}
-        #if canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS))
+        #if canImport(AccessibilitySnapshot) && ({% if "text" in voiceOverStrategies %}os(tvOS){% else %}os(iOS) || os(tvOS){% endif %})
         SnapshotTesting.assertSnapshot(
             of: capture.accessibilityController(),
             as: .wait(for: capture.delay, on: .accessibilityImage(showActivationPoints: .always)),
@@ -138,7 +138,16 @@ import SnapshotTesting
         {% if "text" in voiceOverStrategies %}
         #if os(iOS)
         do {
-            let transcript = try capture.voiceOverTranscript(timeout: session.waitDefaults.timeout)
+            let transcript = try capture.voiceOverTranscript(timeout: session.waitDefaults.timeout){% if "image" in voiceOverStrategies %} { controller in
+                #if canImport(AccessibilitySnapshot)
+                SnapshotTesting.assertSnapshot(
+                    of: controller,
+                    as: .accessibilityImage(showActivationPoints: .always),
+                    {{ reference }}
+                    testName: capture.name + ".accessibility"
+                )
+                #endif
+            }{% endif %}
             if let failure = verifySnapshot(
                 of: transcript,
                 as: .lines,

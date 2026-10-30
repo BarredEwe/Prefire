@@ -1,7 +1,9 @@
 #if os(iOS)
+import AccessibilitySnapshot
 import MapKit
 import Prefire
 @testable import PrefireVoiceOver
+import SnapshotTesting
 import SwiftUI
 import UIKit
 import WebKit
@@ -207,6 +209,43 @@ final class VoiceOverTranscriptTests: XCTestCase {
         XCTAssertNotEqual(get(), 0)
     }
 
+    func testImageAndTextShareOneSwiftUIRenderBeforeOverlays() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let session = PrefireSnapshotSession()
+        var renders = 0
+        var label: UILabel?
+        let capture = try session.capture(PrefireSnapshot({
+            RenderProbe {
+                renders += 1
+                let view = UILabel()
+                view.isAccessibilityElement = true
+                view.text = "Render \(renders)"
+                view.accessibilityLabel = view.text
+                label = view
+                return view
+            }.frame(width: 200, height: 40)
+        }, name: "Shared", isScreen: false, device: session.device))
+        let before = renders
+
+        let transcript = try capture.voiceOverTranscript { controller in
+            XCTAssertEqual(renders, before + 1)
+            label?.text = "Image changed the view"
+            label?.accessibilityLabel = label?.text
+            _ = verifySnapshot(
+                of: controller,
+                as: .accessibilityImage(showActivationPoints: .always, shouldRunInHostApplication: false),
+                record: .all,
+                snapshotDirectory: directory.path,
+                testName: "Shared.accessibility"
+            )
+        }
+
+        XCTAssertEqual(transcript.components(separatedBy: "\n").first, "- Render \(before + 1)")
+        XCTAssertEqual(renders, before + 1)
+        XCTAssertNotNil(UIImage(contentsOfFile: directory.appendingPathComponent("Shared-accessibility.1.png").path))
+    }
+
     func testLegallyEmptyPreviewCanBeRead() throws {
         let session = PrefireSnapshotSession()
         let capture = try session.capture(PrefireSnapshot(
@@ -243,6 +282,16 @@ private final class SettingsView: UIView {}
 private final class SettingsList: UIView {}
 private final class SettingsRow: UIView {}
 private final class ProfileContainer: UIView {}
+
+private struct RenderProbe: UIViewRepresentable {
+    let make: () -> UILabel
+
+    func makeUIView(context _: Context) -> UILabel {
+        make()
+    }
+
+    func updateUIView(_: UILabel, context _: Context) {}
+}
 
 private struct ProfileCard: View {
     var body: some View {

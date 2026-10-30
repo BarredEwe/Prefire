@@ -17,6 +17,26 @@ import SnapshotTesting
     // MARK: - PreviewProvider
 
 
+    // MARK: - Macros
+
+    func test_VoiceOverCI_Preview() {
+        session.prepareEnvironment()
+
+        assertSnapshots(for: PrefireSnapshot(
+            {
+                Color.white
+                        .frame(width: 8, height: 8)
+                        .accessibilityElement()
+                        .accessibilityLabel("Generated VoiceOver")
+                        .accessibilityIdentifier("voiceover-ci")
+            },
+            name: "VoiceOver CI",
+            isScreen: false,
+            device: session.device,
+            fixedLayoutSize: CGSize(width: 8, height: 8)
+        ))
+    }
+
     // MARK: - SnapshotTesting
 
     private func assertSnapshots(of previews: [_Preview], testName: String = #function, filePath: StaticString = #filePath, line: UInt = #line) {

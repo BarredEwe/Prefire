@@ -48,6 +48,13 @@ final class VoiceOverTemplateTests: XCTestCase {
             if image {
                 XCTAssertTrue(result.contains("testName: capture.name + \".accessibility\""))
             }
+            if image, voiceOver {
+                XCTAssertTrue(result.contains(
+                    "capture.voiceOverTranscript(timeout: session.waitDefaults.timeout) { controller in"
+                ))
+                XCTAssertTrue(result.contains("of: controller,"))
+                XCTAssertTrue(result.contains("as: .accessibilityImage(showActivationPoints: .always),"))
+            }
         }
     }
 

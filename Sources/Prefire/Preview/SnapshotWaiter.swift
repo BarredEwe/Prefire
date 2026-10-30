@@ -103,9 +103,9 @@ enum SnapshotWaiter {
     }
 
     /// Monotonic, unlike `Date`, so a clock change during a test does not move the deadlines.
-    static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+    private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
-    static func spinRunLoop(for interval: TimeInterval) {
+    private static func spinRunLoop(for interval: TimeInterval) {
         let deadline = now + interval
 
         while now < deadline {
