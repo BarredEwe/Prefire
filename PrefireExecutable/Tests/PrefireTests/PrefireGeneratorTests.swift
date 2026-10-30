@@ -641,7 +641,7 @@ final class PrefireGeneratorTests: XCTestCase {
         """))
         XCTAssertTrue(result.contains("private var file: StaticString { .init(stringLiteral: \"/Tests/PreviewTests.generated.swift\") }"))
         // Every comparison stores its reference next to the configured file.
-        XCTAssertEqual(result.components(separatedBy: "record: record, file: file,\n").count - 1, 4)
+        XCTAssertEqual(result.components(separatedBy: "record: record, file: self.file,\n").count - 1, 4)
     }
 
     func testTemplateAppliesWaitTimeoutAlone() async throws {

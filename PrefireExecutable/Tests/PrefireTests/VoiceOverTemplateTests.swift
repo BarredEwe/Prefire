@@ -22,12 +22,16 @@ final class VoiceOverTemplateTests: XCTestCase {
             let temporary = root + "Tasks/temp/VoiceOverStrategies\(index)"
             defer { try? temporary.delete() }
             let output = temporary + "PreviewTests.generated.swift"
+            var arguments: [String: NSObject] = ["file": "VoiceOverFixture.swift" as NSString]
+            if let strategies {
+                arguments["voiceOverSnapshots"] = strategies as NSString
+            }
 
             try await PrefireGenerator.generate(
                 version: "1.0.0",
                 sources: [file],
                 output: output,
-                arguments: strategies.map { ["voiceOverSnapshots": $0 as NSString] } ?? [:],
+                arguments: arguments,
                 inlineTemplate: EmbeddedTemplates.previewTests,
                 defaultEnabled: true,
                 cacheDir: temporary + "cache",
@@ -45,6 +49,8 @@ final class VoiceOverTemplateTests: XCTestCase {
             XCTAssertTrue(result.contains("session.prepareEnvironment()"))
             XCTAssertFalse(result.contains("parseAccessibilityHierarchy"))
             XCTAssertFalse(result.contains("voiceOverImageTestName"))
+            XCTAssertTrue(result.contains("record: record, file: self.file,"))
+            XCTAssertFalse(result.contains("record: record, file: file,"))
             if image {
                 XCTAssertTrue(result.contains("testName: capture.name + \".accessibility\""))
             }

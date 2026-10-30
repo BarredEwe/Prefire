@@ -123,7 +123,7 @@ import SnapshotTesting
 
     private func verify(_ capture: PrefireSnapshotCapture) -> String? {
         let record: SnapshotTestingConfiguration.Record? = capture.record ? .all : nil
-{% set reference %}record: record,{% if argument.file %} file: file,{% endif %}{% endset %}
+{% set reference %}record: record,{% if argument.file %} file: self.file,{% endif %}{% endset %}
 
         {% if not argument.voiceOverSnapshots or ("image" in voiceOverStrategies) %}
         #if canImport(AccessibilitySnapshot) && ({% if "text" in voiceOverStrategies %}os(tvOS){% else %}os(iOS) || os(tvOS){% endif %})
