@@ -207,10 +207,20 @@ enum VoiceOverTranscript {
             lines.append("traits: " + traitNames.joined(separator: ", "))
         }
 
-        if let language = element.language, !language.isEmpty {
+        if let language = element.language, !language.isEmpty, !isAmbientLanguage(language) {
             lines.append("language: " + language)
         }
         return lines
+    }
+
+    /// Some SDK runtimes autofill the ambient UI language into every element (iOS 18 attaches
+    /// "en-Latn-US" on an en-US system) and others leave it empty; the language detail is
+    /// reserved for elements that actually speak something else.
+    private static func isAmbientLanguage(_ language: String) -> Bool {
+        let element = Locale(identifier: language)
+        let ambient = Locale.current
+        guard let ambientCode = ambient.languageCode else { return false }
+        return element.languageCode == ambientCode && element.regionCode == ambient.regionCode
     }
 
     private static func contentDescription(_ content: CustomContent) -> String {

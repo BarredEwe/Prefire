@@ -304,4 +304,38 @@ private extension UIView {
         views.forEach(addSubview)
     }
 }
+
+@MainActor
+final class VoiceOverTranscriptLanguageTests: XCTestCase {
+    /// Some SDK runtimes autofill the ambient UI language into every element (iOS 18 attaches
+    /// "en-Latn-US" on an en-US system) while others leave it empty; the transcript must not
+    /// depend on that, so the ambient language is omitted from the details.
+    func testAmbientElementLanguageIsOmitted() {
+        let ambient = Locale.current
+        let spoken = [ambient.languageCode, ambient.regionCode]
+            .compactMap { $0 }
+            .joined(separator: "-")
+
+        let text = VoiceOverTranscript.text(of: [
+            .init(traversalIndex: 0, source: UILabel(), spokenDescription: "Home", language: spoken)
+        ])
+
+        XCTAssertEqual(text, """
+        - Home
+        """)
+    }
+
+    func testElementLanguageDifferentFromTheAmbientOneIsKept() {
+        let foreign = Locale.current.languageCode == "ja" ? "en-NZ" : "ja-JP"
+
+        let text = VoiceOverTranscript.text(of: [
+            .init(traversalIndex: 0, source: UILabel(), spokenDescription: "Home", language: foreign)
+        ])
+
+        XCTAssertEqual(text, """
+        - Home
+          language: \(foreign)
+        """)
+    }
+}
 #endif
