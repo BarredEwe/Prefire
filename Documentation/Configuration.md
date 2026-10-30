@@ -94,10 +94,11 @@ With `full_page_snapshots: true`, a screen preview is laid out once more before 
 
 ### VoiceOver snapshots
 
-Add `PrefireVoiceOver` to your **test target**, then enable text in `.prefire.yml`:
+Add `PrefireVoiceOver` and the parser of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) 0.13 or later to your **test target**, then enable text in `.prefire.yml`:
 
 ```swift
 .product(name: "PrefireVoiceOver", package: "Prefire"),
+.product(name: "AccessibilitySnapshotParser", package: "AccessibilitySnapshot"),
 ```
 
 ```yaml
@@ -109,11 +110,11 @@ test_configuration:
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
 | `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
-| `text` | The `PrefireVoiceOver` product of Prefire | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
+| `text` | The `PrefireVoiceOver` product of Prefire, and `AccessibilitySnapshotParser` (or `AccessibilitySnapshot`, which brings it along) | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
 
-Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` dependency is a compile error rather than a silently skipped assertion.
+Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. Text is generated on iOS only; a missing `PrefireVoiceOver` or `AccessibilitySnapshotParser` dependency is a compile error rather than a silently skipped assertion.
 
-`PrefireVoiceOver` owns the parser, formatter and hosting/waiting pipeline. It depends on `AccessibilitySnapshotParser` from 0.13.0. The app's `Prefire` product does not depend on this module, and the module does not link SnapshotTesting. The package-level AccessibilitySnapshot dependency and its transitive package requirements still participate in resolution, including for consumers that select only `Prefire`; incompatible version pins can therefore conflict. The manifest remains tools 6.0. [SwiftPM traits](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0450-swiftpm-package-traits.md) require tools 6.1, and the original implementation does not exclude disabled dependencies from resolution.
+`PrefireVoiceOver` owns the formatter and the hosting and waiting pipeline, and has no dependencies besides `Prefire`. The generated tests parse the hosted view with `AccessibilityHierarchyParser` and hand the elements to it, so AccessibilitySnapshot stays a dependency of your test target only, at the version you pin. The app's `Prefire` product does not depend on `PrefireVoiceOver`.
 
 A pure SwiftUI screen generally produces a flat list. SwiftUI structures such as `SettingsRow` are not UIKit views and do not become tree nodes. The text includes real UIKit ancestors and accessibility containers when the parser exposes them. The [UIKit settings example](../Example/Shared/Examples/UIKitView.swift) and its [integration assertion](../Example/PrefireExampleTests/PrefireExampleTests.swift) show this format:
 
@@ -127,7 +128,7 @@ SettingsScreen
 - A leaf starts with `- ` followed by the description (label, value and traits), important custom content and hint. An element with nothing to read is a bare `-`.
 - Swift-defined UIKit app views are named without their module or generic parameters. System classes are excluded by their loaded image path under `/System/Library/`, including simulator runtime paths. SwiftUI hosting classes do not imply a hierarchy of SwiftUI structures.
 - Announced containers are `[list]`, `[table]`, `[tab bar]` and `[group: <label>]`. Modal views include ` (modal)`. Shared ancestors are written once, and a view that is both an element and an ancestor appears above its own phrase.
-- Additional lines describe actions, non-important custom content, rotor result counts, direct interaction, frequent updates and language. Frames, identifiers and traversal numbers are omitted. The language line appears only when the element speaks a language other than the current system language — some runtimes autofill the system language into every element and others leave it empty, and the transcript must not depend on that.
+- Additional lines describe actions, non-important custom content, rotor result counts, direct interaction, frequent updates and language. Frames, identifiers and traversal numbers are omitted. The language line appears only when the element speaks a language other than the simulator's current language: some runtimes autofill that language into every element and others leave it empty, and the transcript must not depend on that. Like the images, the references then depend on the simulator's language, so record and compare them on the same one.
 - The library explicitly enables accessibility automation before hosting, then reads every 50 ms until two reads agree, up to `snapshot_wait_timeout` after `delay`. Empty and redacted previews may legitimately produce empty text. Changing text throws a timeout through the usual preview failure path.
 - Accessibility captures render anew and honor `delay`; they do not reuse the state reached by `.snapshot(waitForIdle:)` or `.snapshot(waitUntil:)`. With both strategies, text and the accessibility image share one hosting controller and spend `delay` once, separate from the normal image. Text is read before the image strategy adds its overlays, with at least two reads about 50 ms apart after the initial layout pass. Full-page measurement may add its own render as described above.
 - Text follows the existing project/device semantics. Each configured device gets its own reference even when today's transcripts match, since adaptive content and accessibility order can differ between devices.

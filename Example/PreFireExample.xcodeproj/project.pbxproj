@@ -576,7 +576,7 @@
 			repositoryURL = "https://github.com/cashapp/AccessibilitySnapshot.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.0;
+				minimumVersion = 0.13.0;
 			};
 		};
 		9779D5F228A3F13F0083DBD3 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {

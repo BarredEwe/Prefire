@@ -1,5 +1,4 @@
 #if os(iOS) && canImport(XCTest)
-import AccessibilitySnapshotParser
 import Prefire
 import UIKit
 
@@ -8,33 +7,17 @@ extension PrefireSnapshotCapture {
     /// Renders and reads a preview after enabling accessibility automation and waiting for stable text.
     /// Legal empty or redacted previews return an empty transcript. Changing text throws on timeout.
     /// `accessibilityImage` can snapshot the same host after reading, without another render or delay.
+    ///
+    /// - Parameter elements: What VoiceOver focuses in the hosted view, in any order. The generated
+    ///   tests parse it with `AccessibilityHierarchyParser` of AccessibilitySnapshot, so this module
+    ///   does not depend on that package.
     public func voiceOverTranscript(
+        elements: (UIView) -> [VoiceOverTranscript.Element],
         timeout: TimeInterval = SnapshotWaitDefaults().timeout,
         accessibilityImage: ((UIViewController) throws -> Void)? = nil
     ) throws -> String {
         try readVoiceOver(timeout: timeout, accessibilityImage: accessibilityImage) { view in
-            let parser = AccessibilityHierarchyParser()
-            let elements: [[VoiceOverTranscript.Element]] = parser.parseAccessibilityHierarchy(
-                in: view,
-                makeElement: { element, traversalIndex, source in
-                    [VoiceOverTranscript.Element(
-                        traversalIndex: traversalIndex,
-                        source: source,
-                        spokenDescription: element.description,
-                        hint: element.hint,
-                        customActions: element.customActions,
-                        customContent: element.customContent.map {
-                            .init(label: $0.label, value: $0.value, isImportant: $0.isImportant)
-                        },
-                        customRotors: element.customRotors.map {
-                            .init(name: $0.name, resultCount: $0.resultMarkers.count)
-                        },
-                        language: element.accessibilityLanguage
-                    )]
-                },
-                makeContainer: { _, children, _ in Array(children.joined()) }
-            )
-            return VoiceOverTranscript.text(of: Array(elements.joined()))
+            VoiceOverTranscript.text(of: elements(view))
         }
     }
 

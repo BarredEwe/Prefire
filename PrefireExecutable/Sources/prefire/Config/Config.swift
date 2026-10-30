@@ -32,7 +32,7 @@ struct TestsConfig {
     var snapshotWaitTimeout: Double?
     var fullPageSnapshots: Bool?
     /// How previews are snapshotted for VoiceOver, out of `voiceOverSnapshotStrategies`.
-    /// `nil` keeps the default, `["image"]`; empty, from `none`, turns them off.
+    /// `nil` keeps the default, `["image"]`; empty, from `none`, `[]` or no value, turns them off.
     var voiceOverSnapshots: [String]?
 
     static let voiceOverSnapshotStrategies = ["image", "text"]

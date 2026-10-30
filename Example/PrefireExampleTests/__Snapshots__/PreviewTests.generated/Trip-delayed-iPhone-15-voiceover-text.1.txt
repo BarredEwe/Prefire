@@ -19,17 +19,17 @@
 - B12
 - 14A
 - 09:50
-- Clock With An Exclamation Mark Badge, Filled. Image.
+- clock.badge.exclamationmark.fill. Image.
 - New departure 10:25
 - Boarding moved to 09:50. We'll let you know if the gate changes.
 - Selected: Selected. Image.
 - Checked in
 - Seat 14A, window
-- Rolling Suitcase, Filled. Image.
+- suitcase.rolling.fill. Image.
 - Bag drop closes
 - 08:40, desks 21–24
 - Walk. Image.
 - Security
 - About 15 min wait
-- Wallet Pass Card, Filled. Image.
+- wallet.pass.fill. Image.
 - Add to Apple Wallet
