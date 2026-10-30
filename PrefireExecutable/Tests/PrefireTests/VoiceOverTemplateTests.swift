@@ -5,7 +5,6 @@ import XCTest
 
 final class VoiceOverTemplateTests: XCTestCase {
     func testTemplateAppliesVoiceOverSnapshotStrategies() async throws {
-        let file = Path(fixtureTestPreviewSource)
         let imageAssertion = ".accessibilityImage(showActivationPoints: .always)"
         let voiceOverAssertion = "as: .lines,"
         let cases: [(strategies: String?, expected: (image: Bool, voiceOver: Bool))] = [
@@ -18,27 +17,7 @@ final class VoiceOverTemplateTests: XCTestCase {
         ]
 
         for (index, (strategies, (image, voiceOver))) in cases.enumerated() {
-            let root = Path(#filePath).parent().parent().parent().parent()
-            let temporary = root + "Tasks/temp/VoiceOverStrategies\(index)"
-            defer { try? temporary.delete() }
-            let output = temporary + "PreviewTests.generated.swift"
-            var arguments: [String: NSObject] = ["file": "VoiceOverFixture.swift" as NSString]
-            if let strategies {
-                arguments["voiceOverSnapshots"] = strategies as NSString
-            }
-
-            try await PrefireGenerator.generate(
-                version: "1.0.0",
-                sources: [file],
-                output: output,
-                arguments: arguments,
-                inlineTemplate: EmbeddedTemplates.previewTests,
-                defaultEnabled: true,
-                cacheDir: temporary + "cache",
-                useGroupedSnapshots: true
-            )
-
-            let result = try output.read(.utf8)
+            let result = try await generateStrategyOutput(strategies, index: index)
 
             XCTAssertEqual(result.contains("import AccessibilitySnapshot\n"), image, strategies ?? "default")
             XCTAssertEqual(result.contains(imageAssertion), image, strategies ?? "default")
@@ -62,6 +41,32 @@ final class VoiceOverTemplateTests: XCTestCase {
                 XCTAssertTrue(result.contains("as: .accessibilityImage(showActivationPoints: .always),"))
             }
         }
+    }
+
+    /// A configured reference file is part of every strategy case: it exercises the
+    /// escaping image callback's explicit `self.file` forwarding.
+    private func generateStrategyOutput(_ strategies: String?, index: Int) async throws -> String {
+        let root = Path(#filePath).parent().parent().parent().parent()
+        let temporary = root + "Tasks/temp/VoiceOverStrategies\(index)"
+        defer { try? temporary.delete() }
+        let output = temporary + "PreviewTests.generated.swift"
+        var arguments: [String: NSObject] = ["file": "VoiceOverFixture.swift" as NSString]
+        if let strategies {
+            arguments["voiceOverSnapshots"] = strategies as NSString
+        }
+
+        try await PrefireGenerator.generate(
+            version: "1.0.0",
+            sources: [Path(fixtureTestPreviewSource)],
+            output: output,
+            arguments: arguments,
+            inlineTemplate: EmbeddedTemplates.previewTests,
+            defaultEnabled: true,
+            cacheDir: temporary + "cache",
+            useGroupedSnapshots: true
+        )
+
+        return try output.read(.utf8)
     }
 
     func testGeneratedTextConsumerMatchesTheCompiledFixture() async throws {
