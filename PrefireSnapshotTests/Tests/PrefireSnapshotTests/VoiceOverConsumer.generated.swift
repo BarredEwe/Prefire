@@ -9,6 +9,9 @@ import SnapshotTesting
     import AccessibilitySnapshotParser
     import PrefireVoiceOver
 #endif
+#if !os(iOS)
+    #warning("voiceover_snapshots lists text, which is iOS only: this platform records no VoiceOver text")
+#endif
 
 @MainActor class PreviewTests: XCTestCase {
     private let session = PrefireSnapshotSession(
@@ -71,44 +74,7 @@ import SnapshotTesting
         }
         #endif
 
-        switch capture.comparison {
-        #if os(macOS)
-        case let .view(size):
-            return verifySnapshot(
-                of: capture.view,
-                as: .wait(
-                    for: capture.delay,
-                    on: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, size: size)
-                ),
-                record: record,
-                testName: capture.name
-            )
-        #else
-        case let .image(image):
-            return verifySnapshot(
-                of: image,
-                as: .image(precision: capture.precision, perceptualPrecision: capture.perceptualPrecision, scale: capture.traits.displayScale),
-                record: record,
-                testName: capture.name
-            )
-        case let .view(device):
-            return verifySnapshot(
-                of: capture.view,
-                as: .wait(
-                    for: capture.delay,
-                    on: .image(
-                        drawHierarchyInKeyWindow: session.drawHierarchyInKeyWindow,
-                        precision: capture.precision,
-                        perceptualPrecision: capture.perceptualPrecision,
-                        layout: device.map { .device(config: ViewImageConfig(safeArea: $0.safeArea, size: $0.size, traits: $0.traits)) } ?? .sizeThatFits,
-                        traits: capture.traits
-                    )
-                ),
-                record: record,
-                testName: capture.name
-            )
-        #endif
-        }
+        return nil
     }
 
     #if os(iOS)

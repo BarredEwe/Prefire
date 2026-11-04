@@ -27,6 +27,14 @@ import SnapshotTesting
     import AccessibilitySnapshotParser
     import PrefireVoiceOver
 #endif
+#if !os(iOS)
+    #warning("voiceover_snapshots lists text, which is iOS only: this platform records no VoiceOver text")
+#endif
+{% endif %}
+{% if "image" in voiceOverStrategies %}
+#if !(canImport(AccessibilitySnapshot) && (os(iOS) || os(tvOS)))
+    #warning("voiceover_snapshots lists image, which needs AccessibilitySnapshot on iOS or tvOS: this target records no accessibility image")
+#endif
 {% endif %}
 
 @MainActor class {PREVIEW_FILE_NAME}Tests: XCTestCase {
@@ -163,6 +171,9 @@ import SnapshotTesting
         #endif
         {% endif %}
 
+        {% if ("text" in voiceOverStrategies) and not ("image" in voiceOverStrategies) %}
+        return nil
+        {% else %}
         switch capture.comparison {
         #if os(macOS)
         case let .view(size):
@@ -201,6 +212,7 @@ import SnapshotTesting
             )
         #endif
         }
+        {% endif %}
     }
     {% if "text" in voiceOverStrategies %}
 
