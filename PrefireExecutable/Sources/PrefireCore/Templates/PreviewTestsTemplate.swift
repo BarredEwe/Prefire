@@ -171,9 +171,6 @@ import SnapshotTesting
         #endif
         {% endif %}
 
-        {% if ("text" in voiceOverStrategies) and not ("image" in voiceOverStrategies) %}
-        return nil
-        {% else %}
         switch capture.comparison {
         #if os(macOS)
         case let .view(size):
@@ -212,7 +209,6 @@ import SnapshotTesting
             )
         #endif
         }
-        {% endif %}
     }
     {% if "text" in voiceOverStrategies %}
 

@@ -25,7 +25,7 @@ final class VoiceOverTemplateTests: XCTestCase {
             XCTAssertEqual(result.contains("import AccessibilitySnapshotParser\n"), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains(voiceOverAssertion), voiceOver, strategies ?? "default")
             XCTAssertEqual(result.contains("capture.voiceOverTranscript(elements: Self.voiceOverElements, timeout:"), voiceOver, strategies ?? "default")
-            XCTAssertEqual(result.contains("switch capture.comparison"), strategies != "text", strategies ?? "default")
+            XCTAssertTrue(result.contains("switch capture.comparison"), strategies ?? "default")
             XCTAssertEqual(result.contains("#warning(\"voiceover_snapshots lists text"), voiceOver, strategies ?? "default")
             XCTAssertEqual(
                 result.contains("#warning(\"voiceover_snapshots lists image"),
