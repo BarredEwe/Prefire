@@ -74,7 +74,7 @@ render_configuration:
 | `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
-| `voiceover_snapshots` | Which accessibility snapshots each test records: a list of `image` and `text`, or `none`. The preview PNG is recorded either way. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
+| `voiceover_snapshots` | Which accessibility snapshots each test records, on top of the preview PNG: a list of `image` (the accessibility PNG only) and `text`, or `none`. No value turns the preview PNG off. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
 
 ---
 
@@ -107,12 +107,15 @@ test_configuration:
     - text
 ```
 
+> [!IMPORTANT]
+> `image` means the accessibility PNG, not the regular snapshot. This setting never touches the preview PNG `<test>.1.png`: it is recorded with any value, including `[text]` and `none`.
+
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
-| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
+| `image` | The `AccessibilitySnapshot` product of [AccessibilitySnapshot](https://github.com/cashapp/AccessibilitySnapshot) | Only `<test>-accessibility.1.png`: the preview with its elements and activation points marked |
 | `text` | The `PrefireVoiceOver` product of Prefire, and `AccessibilitySnapshotParser` (or `AccessibilitySnapshot`, which brings it along) | `<test>-voiceover-text.1.txt`: what VoiceOver reads, compared with SnapshotTesting's existing `.lines` strategy |
 
-Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. The setting covers accessibility snapshots only: the preview PNG `<test>.1.png` is recorded with any value. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. A missing `PrefireVoiceOver` or `AccessibilitySnapshotParser` dependency is a compile error rather than a silently skipped assertion.
+Both can be listed as `[image, text]`. `none`, `[]` or an empty value turns them off. Without the key, or when it names no known strategy, Prefire keeps the existing `image` behavior. Unknown strategies produce a warning. PNG reference names stay unchanged; text has a separate test name and counter. A missing `PrefireVoiceOver` or `AccessibilitySnapshotParser` dependency is a compile error rather than a silently skipped assertion.
 
 `text` works on iOS, `image` needs AccessibilitySnapshot on iOS or tvOS. When a listed strategy cannot run, the generated file gives a compile warning and records nothing for that strategy.
 
