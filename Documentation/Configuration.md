@@ -74,7 +74,7 @@ render_configuration:
 | `snapshot_wait_timeout`                        | How long a wait may take before the test fails, in seconds, counted once the `delay` of the preview is spent. Used by `.snapshot(waitForIdle:)` and `.snapshot(waitUntil:)` when they do not set their own timeout. Default: `5`                                                                                                                                          |
 | `draw_hierarchy_in_key_window_default_enabled` | Specifies whether to use the simulator's key window to snapshot the UI, rendering `UIAppearance` and `UIVisualEffect`. This option requires a host application for testing and does not work with framework test targets. Optional. If omitted, uses swift-snapshot-testing's default value. |
 | `full_page_snapshots` | Capture the whole scrollable content of screen previews (the default `#Preview` layout) instead of only the first screen. iOS/tvOS only. See [Full-page snapshots](#full-page-snapshots). Default: `false` |
-| `voiceover_snapshots` | Which accessibility snapshots each test records, on top of the preview PNG: a list of `image` (the accessibility PNG only) and `text`, or `none`. No value turns the preview PNG off. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
+| `voiceover_snapshots` | Which accessibility snapshots each test records: a list of `image` (the accessibility PNG only) and `text`, or `none`. Does not affect the preview PNG. See [VoiceOver snapshots](#voiceover-snapshots). Default: `image` |
 
 ---
 
@@ -108,7 +108,7 @@ test_configuration:
 ```
 
 > [!IMPORTANT]
-> `image` means the accessibility PNG, not the regular snapshot. This setting never touches the preview PNG `<test>.1.png`: it is recorded with any value, including `[text]` and `none`.
+> `image` means the accessibility PNG, not the regular snapshot. This setting does not affect the preview PNG `<test>.1.png`.
 
 | Strategy | Test target needs | Reference |
 | --- | --- | --- |
