@@ -9,6 +9,9 @@ import SnapshotTesting
     import AccessibilitySnapshotParser
     import PrefireVoiceOver
 #endif
+#if !os(iOS)
+    #warning("voiceover_snapshots lists text, which is iOS only: this platform records no VoiceOver text")
+#endif
 
 @MainActor class PreviewTests: XCTestCase {
     private let session = PrefireSnapshotSession(
