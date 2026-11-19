@@ -209,4 +209,6 @@ Prefire will use these settings when generating files either via:
 
 To support different configurations per module, you may also use multiple `.prefire.yml` files — one per package, if needed.
 
-In an Xcode project, the tests plugin looks for `.prefire.yml` in `<project>/<test target name>/` and then next to the `.xcodeproj`. A test target kept somewhere else, such as one snapshot test target per module, can carry its own `.prefire.yml`: add the file to the test target, for example to its resources. Prefire reads that file first and resolves `template_file_path` and `__Snapshots__` from its directory.
+In an Xcode project, the tests plugin looks for `.prefire.yml` in `<project>/<test target name>/` and then next to the `.xcodeproj`, and uses `<project>/<test target name>` as the test target path. A test target kept somewhere else, such as one snapshot test target per module, can carry its own `.prefire.yml`: add the file to the test target, for example to its resources. Prefire then reads only that file, and its directory becomes the test target path, so `template_file_path` and `__Snapshots__` resolve from there unless the file sets `test_target_path`. Without `target:` in that file, Prefire picks the tested target from the test target's name, as it does without a `.prefire.yml`.
+
+Adding the `.prefire.yml` in `<project>/<test target name>/` or next to the `.xcodeproj` to the test target changes nothing. If a test target includes more than one other `.prefire.yml`, Prefire uses the one with the shortest path and shows a warning.
