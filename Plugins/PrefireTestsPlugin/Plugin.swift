@@ -53,9 +53,15 @@ struct PrefireTestsPlugin: BuildToolPlugin {
 
             let cacheURL = context.pluginWorkDirectoryURL.appending(path: "Cache")
             let outputURL = context.pluginWorkDirectoryURL.appending(path: "Generated")
-            let testTagetPath = context.xcodeProject.directoryURL.appending(path: target.displayName).path
+            let testTargetConfig = TestedTargetFinder.testTargetConfig(for: target, project: context.xcodeProject)
+            let testTargetURL = testTargetConfig?.deletingLastPathComponent()
+                ?? context.xcodeProject.directoryURL.appending(path: target.displayName)
 
-            guard let testedTarget = try TestedTargetFinder.findTestedTarget(for: target, project: context.xcodeProject) else {
+            guard let testedTarget = try TestedTargetFinder.findTestedTarget(
+                for: target,
+                testTargetConfig: testTargetConfig,
+                project: context.xcodeProject
+            ) else {
                 throw "Prefire cannot find target for testing. Please, use `.prefire.yml` file, for providing `Target Name`"
             }
 
@@ -64,7 +70,7 @@ struct PrefireTestsPlugin: BuildToolPlugin {
                 "--target", testedTarget.displayName,
                 "--test-target", target.displayName,
                 "--output", outputURL.path,
-                "--test-target-path", testTagetPath,
+                "--test-target-path", testTargetURL.path,
                 "--config", context.xcodeProject.directoryURL.path,
                 "--cache-base-path", cacheURL.path,
                 "--verbose",

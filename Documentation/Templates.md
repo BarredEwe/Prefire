@@ -26,7 +26,7 @@ playbook_configuration:
 
 Notes:
 
-- The path is relative to the resolved `test_target_path` / `target` directory, **not** to the location of `.prefire.yml`.
+- The path is relative to the resolved `test_target_path` / `target` directory, **not** to the location of `.prefire.yml`. In an Xcode project, a `.prefire.yml` that a test target includes makes its own directory the default `test_target_path` (see [Configuration](Configuration.md)).
 - Both `test_configuration.template_file_path` and `playbook_configuration.template_file_path` are independent — you can override one and keep the default for the other.
 - The same `template_file_path` can be reused by multiple targets if the relative path resolves correctly from each.
 
