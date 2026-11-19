@@ -36,8 +36,8 @@ enum TestedTargetFinder {
     /// - Returns: Target loaded from the first configuration file found
     private static func loadTargetNameFromConfig(in possibleConfigPaths: [String]) -> String? {
         for configPath in possibleConfigPaths {
-            guard let configUrl = URL(string: "file://\(configPath)/.prefire.yml"),
-                  FileManager.default.fileExists(atPath: configUrl.path) else { continue }
+            let configUrl = URL(filePath: configPath).appending(path: ".prefire.yml")
+            guard FileManager.default.fileExists(atPath: configUrl.path(percentEncoded: false)) else { continue }
 
             let configDataString = try? String(contentsOf: configUrl, encoding: .utf8).components(separatedBy: .newlines)
 
