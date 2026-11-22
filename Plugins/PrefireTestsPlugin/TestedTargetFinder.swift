@@ -22,31 +22,11 @@ enum TestedTargetFinder {
             }
 
         let targetDirectory = String(describing: target.directory)
-        let targetNameFromConfig = loadTargetNameFromConfig(in: [targetDirectory.appending("/\(target.name)"), targetDirectory])
+        let targetNameFromConfig = TestTargetConfig.loadTargetName(in: [targetDirectory.appending("/\(target.name)"), targetDirectory])
         let potentialTargetName = target.name.replacingOccurrences(of: "Tests", with: "")
         let targetName = targetNameFromConfig ?? potentialTargetName
 
         return targetDependencies?.first(where: { $0.name == targetName }) ?? targetDependencies?.first(where: { $0.kind == .generic })
-    }
-
-    // MARK: - Private
-
-    /// Easy loading of testTarget from a configuration file `.prefire.yml`
-    /// - Parameter possibleConfigPaths: Directories to look for `.prefire.yml` in, in order
-    /// - Returns: Target loaded from the first configuration file found
-    private static func loadTargetNameFromConfig(in possibleConfigPaths: [String]) -> String? {
-        for configPath in possibleConfigPaths {
-            let configUrl = URL(filePath: configPath).appending(path: ".prefire.yml")
-            guard FileManager.default.fileExists(atPath: configUrl.path(percentEncoded: false)) else { continue }
-
-            let configDataString = try? String(contentsOf: configUrl, encoding: .utf8).components(separatedBy: .newlines)
-
-            if let targetName = configDataString?.first(where: { $0.contains("target:") })?.components(separatedBy: ":").last {
-                return targetName.trimmingCharacters(in: .whitespaces)
-            }
-        }
-
-        return nil
     }
 }
 
@@ -94,7 +74,7 @@ extension TestedTargetFinder {
         // The CLI uses only the first `.prefire.yml` it finds, which is the test target's own one when it has one
         let configDirectories = testTargetConfig.map { [$0.deletingLastPathComponent()] }
             ?? defaultConfigDirectories(for: target, project: project)
-        let targetNameFromConfig = loadTargetNameFromConfig(in: configDirectories.map { $0.path(percentEncoded: false) })
+        let targetNameFromConfig = TestTargetConfig.loadTargetName(in: configDirectories.map { $0.path(percentEncoded: false) })
         let potentialTargetName = target.displayName.replacingOccurrences(of: "Tests", with: "")
         let targetName = targetNameFromConfig ?? potentialTargetName
 

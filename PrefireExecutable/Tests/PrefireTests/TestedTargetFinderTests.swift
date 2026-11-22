@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+@testable import prefire
 
 final class TestedTargetFinderTests: XCTestCase {
     private let testConfigString = """
@@ -30,7 +31,7 @@ final class TestedTargetFinderTests: XCTestCase {
     
     func test_loadTargetNameFromConfigWithoutConfig() {
         // Test that it returns nil when no config is found
-        let targetName = loadTargetNameFromConfig(in: ["/some/directory/SomeTests", "/some/directory"])
+        let targetName = TestTargetConfig.loadTargetName(in: ["/some/directory/SomeTests", "/some/directory"])
 
         XCTAssertNil(targetName, "Should return nil when no config is found in standard paths")
     }
@@ -48,7 +49,7 @@ final class TestedTargetFinderTests: XCTestCase {
         try! targetConfigString.write(to: targetConfigFile, atomically: true, encoding: .utf8)
 
         // Test that the config in the first directory wins over the one in tempDirectory
-        let targetName = loadTargetNameFromConfig(in: [targetDirectory.path, tempDirectory.path])
+        let targetName = TestTargetConfig.loadTargetName(in: [targetDirectory.path, tempDirectory.path])
 
         XCTAssertEqual(targetName, "TargetDirTarget", "Should use the config in the first directory")
     }
@@ -56,7 +57,7 @@ final class TestedTargetFinderTests: XCTestCase {
     func test_loadTargetNameFromConfigFallsBackToNextDirectory() {
         let missingDirectory = tempDirectory.appendingPathComponent("missing")
 
-        let targetName = loadTargetNameFromConfig(in: [missingDirectory.path, tempDirectory.path])
+        let targetName = TestTargetConfig.loadTargetName(in: [missingDirectory.path, tempDirectory.path])
 
         XCTAssertEqual(targetName, "MyTestTarget", "Should use the config in the next directory")
     }
@@ -67,28 +68,24 @@ final class TestedTargetFinderTests: XCTestCase {
         try! FileManager.default.createDirectory(at: targetDirectory, withIntermediateDirectories: true)
         try! testConfigString.write(to: targetDirectory.appendingPathComponent(".prefire.yml"), atomically: true, encoding: .utf8)
 
-        let targetName = loadTargetNameFromConfig(in: [targetDirectory.path])
+        let targetName = TestTargetConfig.loadTargetName(in: [targetDirectory.path])
 
         XCTAssertEqual(targetName, "MyTestTarget", "Should find config in a directory with `#` and a space in its name")
     }
 
-    // MARK: - Helper method extracted from TestedTargetFinder
+    func test_loadTargetNameFromConfigMatchesCLIWithAndWithoutDoubleQuotes() throws {
+        for value in ["FeatureA", "\"FeatureA\""] {
+            let contents = """
+            test_configuration:
+              target: \(value)
+            """
+            try contents.write(to: configFile, atomically: true, encoding: .utf8)
 
-    /// Easy loading of testTarget from a configuration file `.prefire.yml`
-    /// - Parameter possibleConfigPaths: Directories to look for `.prefire.yml` in, in order
-    /// - Returns: Target loaded from the first configuration file found
-    private func loadTargetNameFromConfig(in possibleConfigPaths: [String]) -> String? {
-        for configPath in possibleConfigPaths {
-            let configUrl = URL(filePath: configPath).appending(path: ".prefire.yml")
-            guard FileManager.default.fileExists(atPath: configUrl.path(percentEncoded: false)) else { continue }
+            let cliTarget = ConfigDecoder().decode(from: contents, env: [:]).tests.target
+            let pluginTarget = TestTargetConfig.loadTargetName(in: [tempDirectory.path])
 
-            let configDataString = try? String(contentsOf: configUrl, encoding: .utf8).components(separatedBy: .newlines)
-            
-            if let targetName = configDataString?.first(where: { $0.contains("target:") })?.components(separatedBy: ":").last {
-                return targetName.trimmingCharacters(in: .whitespaces)
-            }
+            XCTAssertEqual(cliTarget, "FeatureA")
+            XCTAssertEqual(pluginTarget, cliTarget, "Target names should match for \(value)")
         }
-        
-        return nil
     }
 }
